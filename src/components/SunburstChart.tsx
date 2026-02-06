@@ -53,7 +53,6 @@ function SunburstChart({ data }: SunburstChartProps) {
       .sunburst()
       .data(chartData)
       .encode('value', 'value')
-      .coordinate({ type: 'polar', innerRadius: 0.3 })
       .scale('color', {
         range: [
           '#1890ff',
