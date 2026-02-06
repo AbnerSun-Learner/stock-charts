@@ -1,46 +1,106 @@
 # 部署指南
 
-## GitHub 推送步骤
+## GitHub 托管
 
-1. 在 GitHub 上创建一个新仓库（例如：`stock-charts`）
+1. **初始化 Git 仓库（如果还没有）**
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit"
+   ```
 
-2. 添加远程仓库并推送代码：
+2. **创建 GitHub 仓库并推送**
+   ```bash
+   git remote add origin https://github.com/你的用户名/stock-charts.git
+   git branch -M main
+   git push -u origin main
+   ```
+
+## Vercel 部署
+
+### 方法一：通过 Vercel Dashboard
+
+1. 访问 [Vercel](https://vercel.com)
+2. 点击 "New Project"
+3. 导入你的 GitHub 仓库
+4. Vercel 会自动检测到 `vercel.json` 配置文件
+5. 点击 "Deploy"
+
+### 方法二：通过 Vercel CLI
 
 ```bash
-git remote add origin https://github.com/你的用户名/stock-charts.git
-git branch -M main
-git push -u origin main
+# 安装 Vercel CLI
+npm i -g vercel
+
+# 登录
+vercel login
+
+# 部署
+vercel
+
+# 生产环境部署
+vercel --prod
 ```
 
-## Vercel 部署步骤
+## 使用方式
 
-1. 登录 [Vercel](https://vercel.com)
+### 1. 上传数据文件
 
-2. 点击 "New Project"（新建项目）
+将 JSON 数据文件放在 `data/` 目录下，例如：
+- `data/position_distribution.json`
+- `data/positions.json`
 
-3. 导入你的 GitHub 仓库
+### 2. 访问图表
 
-4. Vercel 会自动检测项目配置：
-   - Framework Preset: Vite
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
+部署后，可以通过以下 URL 访问图表：
 
-5. 点击 "Deploy" 开始部署
+```
+https://你的域名.vercel.app/api/chart?filename=position_distribution.json
+或
+https://你的域名.vercel.app/chart/position_distribution.json
+```
 
-6. 部署完成后，你会获得一个生产环境的 URL
+### 3. 嵌入 Notion
 
-## 环境变量
+1. 在 Notion 中，输入 `/embed` 或点击 "Embed"
+2. 输入图表 URL：`https://你的域名.vercel.app/chart/position_distribution.json`
+3. Notion 会自动加载并显示图表
 
-当前项目不需要环境变量，所有数据都存储在 JSON 文件中。
+### 4. 更新数据
 
-## 后续数据库迁移
+1. 修改 `data/` 目录下的 JSON 文件
+2. 提交并推送到 GitHub：
+   ```bash
+   git add data/position_distribution.json
+   git commit -m "Update chart data"
+   git push
+   ```
+3. Vercel 会自动重新部署（如果启用了自动部署）
+4. 或者手动触发重新部署：
+   - 在 Vercel Dashboard 中点击 "Redeploy"
+   - 或使用 CLI：`vercel --prod`
 
-当需要将数据迁移到数据库时：
+## 数据文件格式
 
-1. 创建 API 路由（可以使用 Vercel Serverless Functions）
-2. 修改 `src/hooks/useCharts.ts` 从 API 获取数据
-3. 更新数据管理逻辑
+JSON 文件应包含以下结构：
 
-## 自定义域名
+```json
+{
+  "name": "长赢150",
+  "date": "2025-11-03",
+  "children": [
+    {
+      "name": "A股",
+      "shares": 80,
+      "percentage": "50.16%",
+      "children": [...]
+    }
+  ]
+}
+```
 
-在 Vercel 项目设置中可以配置自定义域名。
+## 注意事项
+
+- 确保 `requirements.txt` 包含所有依赖
+- 图表生成可能需要几秒钟，请耐心等待
+- 如果遇到问题，检查 Vercel 的 Function Logs

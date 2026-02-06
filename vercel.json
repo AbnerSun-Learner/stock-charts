@@ -1,8 +1,25 @@
 {
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "api/chart.py",
+      "use": "@vercel/python"
     }
-  ]
+  ],
+  "routes": [
+    {
+      "src": "/api/chart",
+      "dest": "/api/chart.py"
+    },
+    {
+      "src": "/chart/(?<filename>[^/]+)",
+      "dest": "/api/chart.py?filename=$filename"
+    }
+  ],
+  "functions": {
+    "api/chart.py": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  }
 }

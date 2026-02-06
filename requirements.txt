@@ -1,0 +1,2 @@
+pyecharts>=2.0.0
+snapshot-selenium>=0.1.0

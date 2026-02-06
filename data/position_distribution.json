@@ -1,0 +1,120 @@
+{
+  "metadata": {
+    "chart_type": "sunburst",
+    "version": "1.0"
+  },
+  "name": "长赢150",
+  "date": "2025-11-03",
+  "children": [
+    {
+      "name": "A股",
+      "shares": 80,
+      "percentage": "50.16%",
+      "children": [
+        {
+          "name": "行业", "shares": 36, "percentage": "20.82%",
+          "children": [
+            {"name": "医药", "shares": 19, "percentage": "10.46%"},
+            {"name": "消费", "shares": 6, "percentage": "4.24%"},
+            {"name": "养老", "shares": 7, "percentage": "3.13%"},
+            {"name": "环保", "shares": 1, "percentage": "0.97%"},
+            {"name": "证券", "shares": 1, "percentage": "0.76%"},
+            {"name": "金融", "shares": 1, "percentage": "0.64%"},
+            {"name": "传媒", "shares": 1, "percentage": "0.62%"}
+          ]
+        },
+        {
+          "name": "中小盘", "shares": 19, "percentage": "12.96%",
+          "children": [
+            {"name": "500", "shares": 19, "percentage": "12.96%"}
+          ]
+        },
+        {
+          "name": "大盘", "shares": 12, "percentage": "8.41%",
+          "children": [
+            {"name": "300", "shares": 9, "percentage": "6.55%"},
+            {"name": "50 Bond/Other", "shares": 3, "percentage": "1.86%"}
+          ]
+        },
+        {
+          "name": "价值", "shares": 13, "percentage": "7.97%",
+          "children": [
+            {"name": "红利", "shares": 13, "percentage": "7.97%"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "货币",
+      "shares": 37,
+      "percentage": "26.47%",
+      "children": [
+        {
+          "name": "货币", "shares": 37, "percentage": "26.47%",
+          "children": [
+            {"name": "货币", "shares": 37, "percentage": "26.47%"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "海外新兴",
+      "shares": 17,
+      "percentage": "11.56%",
+      "children": [
+        {
+          "name": "海外科技", "shares": 8, "percentage": "5.35%",
+          "children": [
+            {"name": "恒生科技", "shares": 3, "percentage": "2.53%"},
+            {"name": "海外互联", "shares": 5, "percentage": "2.82%"}
+          ]
+        },
+        {
+          "name": "香港", "shares": 9, "percentage": "6.21%",
+          "children": [
+            {"name": "恒生", "shares": 9, "percentage": "6.21%"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "债券",
+      "shares": 13,
+      "percentage": "9.23%",
+      "children": [
+        {
+          "name": "海外债券", "shares": 4, "percentage": "2.88%",
+          "children": [
+            {"name": "美元债", "shares": 4, "percentage": "2.88%"}
+          ]
+        },
+        {
+          "name": "国内债券", "shares": 9, "percentage": "6.35%",
+          "children": [
+            {"name": "可转债", "shares": 7, "percentage": "4.93%"},
+            {"name": "纯债", "shares": 2, "percentage": "1.42%"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "海外成熟",
+      "shares": 3,
+      "percentage": "2.58%",
+      "children": [
+        {
+          "name": "全球", "shares": 2, "percentage": "1.46%",
+          "children": [
+            {"name": "全球医疗", "shares": 2, "percentage": "1.46%"}
+          ]
+        },
+        {
+          "name": "美国", "shares": 1, "percentage": "1.12%",
+          "children": [
+            {"name": "标普500", "shares": 1, "percentage": "1.12%"}
+          ]
+        }
+      ]
+    }
+  ]
+}
