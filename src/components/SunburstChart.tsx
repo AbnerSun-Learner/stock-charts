@@ -29,7 +29,7 @@ function SunburstChart({ data }: SunburstChartProps) {
     const chart = new Chart({
       container: containerRef.current,
       autoFit: true,
-      padding: [20, 20, 20, 20],
+      padding: 20,
     })
 
     // 使用 options 配置图表
@@ -43,7 +43,7 @@ function SunburstChart({ data }: SunburstChartProps) {
       },
       coordinate: {
         type: 'polar',
-        innerRadius: 0.3,
+        innerRadius: 0.2, // 减小内半径，让中央核心更明显
       },
       scale: {
         color: {
@@ -71,15 +71,31 @@ function SunburstChart({ data }: SunburstChartProps) {
       },
       label: {
         text: (d: any) => {
+          // 根节点（中央核心）只显示名称
+          if (d.depth === 0) {
+            return d.name || ''
+          }
           const name = d.name || ''
           const percentage = d.percentage ? `${d.percentage.toFixed(2)}%` : ''
           const count = d.count !== undefined ? `[${d.count}]` : ''
+          // 格式：名称 [份数] 百分比
           return `${name} ${count} ${percentage}`.trim()
         },
         position: 'inside',
-        fontSize: 12,
-        fill: '#333',
-        fontWeight: 'bold',
+        fontSize: (d: any) => {
+          // 根节点字体更大更醒目
+          if (d.depth === 0) return 20
+          return 11
+        },
+        fill: (d: any) => {
+          // 根节点使用深色，其他使用深色但稍浅
+          if (d.depth === 0) return '#000'
+          return '#333'
+        },
+        fontWeight: (d: any) => {
+          if (d.depth === 0) return 'bold'
+          return 'normal'
+        },
       },
       tooltip: {
         title: (d: any) => d.name,
