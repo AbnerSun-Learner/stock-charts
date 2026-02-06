@@ -19,32 +19,11 @@ function SunburstChart({ data }: SunburstChartProps) {
       chartRef.current.destroy()
     }
 
-    // 转换数据格式为 G2 需要的格式
-    const transformData = (node: SunburstData): any => {
-      const result: any = {
-        name: node.name,
-        value: node.value,
-      }
-
-      if (node.count !== undefined) {
-        result.count = node.count
-      }
-
-      if (node.percentage !== undefined) {
-        result.percentage = node.percentage
-      }
-
-      if (node.children && node.children.length > 0) {
-        result.children = node.children.map((child) => transformData(child))
-      }
-
-      return result
-    }
-
-    const chartData = transformData(data)
-
     // 扩展 Chart 以支持 sunburst
-    const Chart = extend(Runtime, { ...corelib, ...plotlib() })
+    const Chart = extend(Runtime, {
+      ...corelib(),
+      ...plotlib(),
+    })
 
     // 创建图表实例
     const chart = new Chart({
@@ -53,34 +32,44 @@ function SunburstChart({ data }: SunburstChartProps) {
       padding: [20, 20, 20, 20],
     })
 
-    chart
-      .sunburst()
-      .data(chartData)
-      .encode('value', 'value')
-      .coordinate({ type: 'polar', innerRadius: 0.3 })
-      .scale('color', {
-        range: [
-          '#1890ff',
-          '#13c2c2',
-          '#52c41a',
-          '#faad14',
-          '#f5222d',
-          '#722ed1',
-          '#eb2f96',
-          '#fa8c16',
-          '#2f54eb',
-          '#a0d911',
-        ],
-      })
-      .style({
+    // 使用 options 配置图表
+    chart.options({
+      type: 'sunburst',
+      data: {
+        value: data,
+      },
+      encode: {
+        value: 'value',
+      },
+      coordinate: {
+        type: 'polar',
+        innerRadius: 0.3,
+      },
+      scale: {
+        color: {
+          range: [
+            '#1890ff',
+            '#13c2c2',
+            '#52c41a',
+            '#faad14',
+            '#f5222d',
+            '#722ed1',
+            '#eb2f96',
+            '#fa8c16',
+            '#2f54eb',
+            '#a0d911',
+          ],
+        },
+      },
+      style: {
         fillOpacity: (d: any) => {
           if (d.depth === 0) return 1
           return 0.8
         },
         stroke: '#fff',
         lineWidth: 2,
-      })
-      .label({
+      },
+      label: {
         text: (d: any) => {
           const name = d.name || ''
           const percentage = d.percentage ? `${d.percentage.toFixed(2)}%` : ''
@@ -91,8 +80,8 @@ function SunburstChart({ data }: SunburstChartProps) {
         fontSize: 12,
         fill: '#333',
         fontWeight: 'bold',
-      })
-      .tooltip({
+      },
+      tooltip: {
         title: (d: any) => d.name,
         items: [
           {
@@ -106,8 +95,8 @@ function SunburstChart({ data }: SunburstChartProps) {
             valueFormatter: (v: number) => `[${v}]`,
           },
         ],
-      })
-      .interaction({
+      },
+      interaction: {
         drillDown: {
           breadCrumb: {
             rootText: '根节点',
@@ -116,7 +105,8 @@ function SunburstChart({ data }: SunburstChartProps) {
             },
           },
         },
-      })
+      },
+    })
 
     chart.render()
 
