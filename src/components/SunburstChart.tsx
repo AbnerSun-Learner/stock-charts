@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { Chart } from '@antv/g2'
+import { plotlib } from '@antv/g2-extension-plot'
+import { Runtime, corelib, extend } from '@antv/g2'
 import type { SunburstData } from '../types'
 
 interface SunburstChartProps {
@@ -8,7 +9,7 @@ interface SunburstChartProps {
 
 function SunburstChart({ data }: SunburstChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const chartRef = useRef<Chart | null>(null)
+  const chartRef = useRef<any>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -42,6 +43,9 @@ function SunburstChart({ data }: SunburstChartProps) {
 
     const chartData = transformData(data)
 
+    // 扩展 Chart 以支持 sunburst
+    const Chart = extend(Runtime, { ...corelib, ...plotlib() })
+
     // 创建图表实例
     const chart = new Chart({
       container: containerRef.current,
@@ -53,6 +57,7 @@ function SunburstChart({ data }: SunburstChartProps) {
       .sunburst()
       .data(chartData)
       .encode('value', 'value')
+      .coordinate({ type: 'polar', innerRadius: 0.3 })
       .scale('color', {
         range: [
           '#1890ff',
