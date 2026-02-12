@@ -1,106 +1,120 @@
-# 部署指南
+# 部署指南（Next.js + Vercel）
 
-## GitHub 托管
+本应用为 Next.js 应用，部署在 Vercel 上。图表页面受「暗号」保护，仅带正确 `token` 的 URL 可访问；数据可存于 Supabase 私有表或本地 JSON 文件。
 
-1. **初始化 Git 仓库（如果还没有）**
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   ```
+---
 
-2. **创建 GitHub 仓库并推送**
-   ```bash
-   git remote add origin https://github.com/你的用户名/stock-charts.git
-   git branch -M main
-   git push -u origin main
-   ```
+## 1. 环境变量（必读）
 
-## Vercel 部署
+在 Vercel 项目 **Settings → Environment Variables** 中配置（生产与预览环境建议都配置）：
 
-### 方法一：通过 Vercel Dashboard
+| 变量名 | 必填 | 说明 |
+|--------|------|------|
+| `SECRET_TOKEN` | **是** | 访问 `/view/*` 的暗号。请使用长随机字符串，勿提交到仓库。 |
+| `SUPABASE_URL` | 否 | Supabase 项目 URL。不配置时，应用会从 `data/position_distribution.json` 读取数据（仅构建/运行时有该文件时可用）。 |
+| `SUPABASE_SERVICE_ROLE_KEY` | 否 | Supabase 的 service_role 密钥。与 `SUPABASE_URL` 同时配置时，图表数据从 Supabase 表读取。 |
 
-1. 访问 [Vercel](https://vercel.com)
-2. 点击 "New Project"
-3. 导入你的 GitHub 仓库
-4. Vercel 会自动检测到 `vercel.json` 配置文件
-5. 点击 "Deploy"
+- 本地开发：复制 `.env.example` 为 `.env.local`，填入 `SECRET_TOKEN`（及可选的 Supabase 变量）。
+- **切勿**将 `SECRET_TOKEN` 或 `SUPABASE_SERVICE_ROLE_KEY` 写入代码或提交到 Git。
 
-### 方法二：通过 Vercel CLI
+---
+
+## 2. Supabase 配置（可选）
+
+若希望图表数据来自 Supabase 私有表：
+
+1. 在 [Supabase](https://supabase.com) 创建项目。
+2. 在 SQL Editor 中执行项目中的建表与种子脚本：
+   - 打开 `supabase/seed_chart_position_distribution.sql`
+   - 复制全部内容到 Supabase SQL Editor 并执行（会创建表、启用 RLS、插入一条仓位分布数据）。
+3. 在 Vercel 中配置 `SUPABASE_URL` 与 `SUPABASE_SERVICE_ROLE_KEY`（在 Supabase 项目 Settings → API 中获取）。
+
+未配置 Supabase 时，应用会尝试从仓库内的 `data/position_distribution.json` 提供数据（仅适用于未移除该文件且构建包含该文件的部署）。
+
+---
+
+## 3. 部署到 Vercel
+
+### 通过 Vercel Dashboard（推荐）
+
+1. 登录 [Vercel](https://vercel.com)，点击 **Add New... → Project**。
+2. 从 GitHub 导入本仓库。
+3. Vercel 会自动识别为 **Next.js** 项目，无需改 Framework。
+4. 在 **Environment Variables** 中添加 `SECRET_TOKEN`（以及可选的 `SUPABASE_URL`、`SUPABASE_SERVICE_ROLE_KEY`）。
+5. 点击 **Deploy**，等待构建完成。
+
+### 通过 Vercel CLI
 
 ```bash
-# 安装 Vercel CLI
 npm i -g vercel
-
-# 登录
 vercel login
-
-# 部署
+cd /path/to/stock-charts
 vercel
-
-# 生产环境部署
-vercel --prod
+# 按提示关联或创建项目；环境变量需在 Dashboard 中配置
+vercel --prod   # 生产环境
 ```
 
-## 使用方式
+---
 
-### 1. 上传数据文件
+## 4. 访问与嵌入
 
-将 JSON 数据文件放在 `data/` 目录下，例如：
-- `data/position_distribution.json`
-- `data/positions.json`
+### 带签名的访问链接
 
-### 2. 访问图表
-
-部署后，可以通过以下 URL 访问图表：
+只有 URL 中带有与 `SECRET_TOKEN` 一致的 `token` 时，才能打开 `/view/*` 页面：
 
 ```
-https://你的域名.vercel.app/api/chart?filename=position_distribution.json
-或
-https://你的域名.vercel.app/chart/position_distribution.json
+https://你的域名.vercel.app/view/sunburst?token=你的SECRET_TOKEN
 ```
 
-### 3. 嵌入 Notion
+- 将上面的 `你的SECRET_TOKEN` 替换为你在 Vercel 中配置的 `SECRET_TOKEN` 值。
+- 请勿在公开场合泄露该链接或 token。
 
-1. 在 Notion 中，输入 `/embed` 或点击 "Embed"
-2. 输入图表 URL：`https://你的域名.vercel.app/chart/position_distribution.json`
-3. Notion 会自动加载并显示图表
+### 在 Notion 中嵌入
 
-### 4. 更新数据
-
-1. 修改 `data/` 目录下的 JSON 文件
-2. 提交并推送到 GitHub：
-   ```bash
-   git add data/position_distribution.json
-   git commit -m "Update chart data"
-   git push
+1. 在 Notion 页面输入 `/embed` 或点击 **Embed**。
+2. 嵌入链接填写（注意带上 `token` 参数）：
    ```
-3. Vercel 会自动重新部署（如果启用了自动部署）
-4. 或者手动触发重新部署：
-   - 在 Vercel Dashboard 中点击 "Redeploy"
-   - 或使用 CLI：`vercel --prod`
+   https://你的域名.vercel.app/view/sunburst?token=你的SECRET_TOKEN
+   ```
+3. 保存后，仅允许本站与 Notion 通过 iframe 加载该页面（通过 CSP `frame-ancestors` 控制）。
 
-## 数据文件格式
+### 安全与防爬
 
-JSON 文件应包含以下结构：
+- 页面会设置 `X-Robots-Tag: noindex, nofollow`，降低被搜索引擎收录的可能。
+- iframe 仅允许 `'self'`、`https://www.notion.so`、`https://notion.so` 嵌入。
 
-```json
-{
-  "name": "长赢150",
-  "date": "2025-11-03",
-  "children": [
-    {
-      "name": "A股",
-      "shares": 80,
-      "percentage": "50.16%",
-      "children": [...]
-    }
-  ]
-}
+---
+
+## 5. 本地开发
+
+```bash
+cp .env.example .env.local
+# 编辑 .env.local，至少设置 SECRET_TOKEN=某个测试用字符串
+
+npm install
+npm run dev
 ```
 
-## 注意事项
+在浏览器访问（将 `testtoken` 换成你在 `.env.local` 里设置的 `SECRET_TOKEN`）：
 
-- 确保 `requirements.txt` 包含所有依赖
-- 图表生成可能需要几秒钟，请耐心等待
-- 如果遇到问题，检查 Vercel 的 Function Logs
+- 首页：http://localhost:3000
+- 旭日图：http://localhost:3000/view/sunburst?token=testtoken
+
+---
+
+## 6. 更新图表数据
+
+- **使用 Supabase 时**：在 Supabase 中更新 `chart_position_distribution` 表（或重新执行/编写 SQL），无需重新部署。
+- **使用本地 JSON 时**：修改 `data/position_distribution.json` 后提交并推送，触发 Vercel 重新部署即可。
+
+---
+
+## 7. 故障排除
+
+| 现象 | 可能原因 | 处理 |
+|------|-----------|------|
+| 打开 `/view/sunburst` 返回 403 | 未带 `token` 或 `token` 与 `SECRET_TOKEN` 不一致 | 在 URL 加上 `?token=你的SECRET_TOKEN`，并确认环境变量已配置且已重新部署。 |
+| 旭日图显示「暂无数据」或报错 | 数据源未配置或失败 | 若用 Supabase，检查 `SUPABASE_URL`、`SUPABASE_SERVICE_ROLE_KEY` 及表是否已创建并插入数据；若用本地 JSON，确认 `data/position_distribution.json` 存在且格式正确。 |
+| Notion 中嵌入不显示 | 链接未带 token 或域名被限制 | 使用带 `?token=...` 的完整 URL；确认部署域名与 CSP 中允许的域名一致。 |
+
+构建或运行时错误可到 Vercel 项目 **Deployments → 某次部署 → Logs / Function Logs** 查看。

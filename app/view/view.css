@@ -1,0 +1,318 @@
+/* View layout — investment dashboard */
+.view-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-main);
+}
+
+/* 嵌入模式（如 Notion iframe）：隐藏侧栏、收紧内边距，图表占满宽度 */
+.view-layout--embed .view-sidebar {
+  display: none;
+}
+
+.view-layout--embed .view-main {
+  padding: 0.5rem 0.75rem;
+  max-width: 100%;
+}
+
+.view-layout--embed .sunburst-header {
+  margin-bottom: 0.75rem;
+}
+
+.view-layout--embed .sunburst-title {
+  font-size: 1.25rem;
+}
+
+.view-layout--embed .sunburst-chart-wrap {
+  padding: 0.5rem;
+  border-radius: 12px;
+}
+
+/* Sidebar */
+.view-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  transition: width var(--duration-fast, 0.2s) var(--ease-out-expo, ease);
+}
+
+.view-sidebar--collapsed {
+  width: 64px;
+}
+
+.view-sidebar-brand {
+  padding: 1.5rem 1.5rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+}
+
+.view-sidebar--collapsed .view-sidebar-brand {
+  padding: 1rem 0;
+  justify-content: center;
+}
+
+.view-sidebar-brand-text {
+  font-family: var(--font-display), 'Outfit', system-ui, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.view-sidebar--collapsed .view-sidebar-brand-text {
+  display: none;
+}
+
+.view-sidebar-toggle {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: var(--bg-sidebar-hover, rgba(0, 0, 0, 0.05));
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.view-sidebar-toggle:hover {
+  background: var(--bg-sidebar-active, rgba(0, 0, 0, 0.08));
+  color: var(--text-primary);
+}
+
+.view-sidebar-toggle-icon {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.view-sidebar--collapsed .view-sidebar-toggle-icon {
+  transform: rotate(0deg);
+}
+
+.view-nav {
+  padding: 1.75rem 0;
+}
+
+.view-nav-title {
+  font-family: var(--font-display), 'Outfit', system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.view-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.75rem;
+}
+
+.view-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-family: var(--font-body), 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition:
+    background var(--duration-fast) var(--ease-out-expo),
+    color var(--duration-fast) var(--ease-out-expo),
+    box-shadow var(--duration-fast) var(--ease-out-expo);
+}
+
+.view-nav-link-icon {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  width: 1.25em;
+  text-align: center;
+}
+
+.view-sidebar--collapsed .view-nav-title,
+.view-sidebar--collapsed .view-nav-link-label {
+  overflow: hidden;
+  width: 0;
+  height: 0;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.view-sidebar--collapsed .view-nav-list {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.view-sidebar--collapsed .view-nav-link {
+  justify-content: center;
+  padding: 0.75rem;
+}
+
+.view-nav-link:hover {
+  background: var(--bg-sidebar-hover);
+  color: var(--text-primary);
+}
+
+.view-nav-link--active {
+  background: var(--bg-sidebar-active);
+  color: var(--text-accent);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.22);
+}
+
+.view-nav-link--active:hover {
+  color: var(--text-accent-soft);
+}
+
+/* Main content area */
+.view-main {
+  flex: 1;
+  overflow: auto;
+  padding: 2rem 2.5rem;
+}
+
+/* Sunburst page */
+.sunburst-page {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Light scheme is now the global default. Keep this class for compatibility. */
+.sunburst-page--light {
+  color: var(--text-primary);
+}
+
+/* Staggered reveal on load */
+.sunburst-header {
+  margin-bottom: 1.75rem;
+  animation: viewFadeIn 0.6s var(--ease-out-expo) both;
+}
+
+.sunburst-chart-wrap {
+  flex: 1;
+  min-height: min(360px, 80vh);
+  max-height: 900px;
+  height: min(85vh, 900px);
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 0.75rem;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 12px 32px rgba(2, 6, 23, 0.06);
+  animation: viewFadeIn 0.6s var(--ease-out-expo) 0.08s both;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.sunburst-chart-wrap:focus-within {
+  border-color: var(--border-focus);
+  box-shadow:
+    0 12px 32px rgba(2, 6, 23, 0.06),
+    0 0 0 1px var(--border-focus);
+}
+
+@keyframes viewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sunburst-title {
+  font-family: var(--font-display), 'Outfit', system-ui, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin: 0 0 0.35rem 0;
+}
+
+.sunburst-date {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Loading & error states */
+.sunburst-page--loading,
+.sunburst-page--error {
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  color: var(--text-muted);
+}
+
+.sunburst-page--loading p {
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Loading spinner */
+.sunburst-page--loading p::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-muted);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sunburst-page--error p {
+  padding: 1.25rem 1.75rem;
+  background: var(--bg-elevated);
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.sunburst-chart-wrap canvas,
+.sunburst-chart-wrap > div {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+/* 旭日图 tooltip：只保留 title（名称 [份数] 百分比），隐藏默认的 list（「y」那一行） */
+.sunburst-page .g2-tooltip-list {
+  display: none;
+}

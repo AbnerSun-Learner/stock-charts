@@ -6,10 +6,18 @@ import json
 import sys
 import os
 import tempfile
+import urllib.parse
 from pathlib import Path
 
 # 添加项目根目录到路径
-project_root = Path(__file__).parent.parent
+# Vercel 上文件在 /var/task/ 目录下
+if Path('/var/task').exists():
+    # Vercel 环境
+    project_root = Path('/var/task')
+else:
+    # 本地环境
+    project_root = Path(__file__).parent.parent
+
 sys.path.insert(0, str(project_root))
 
 from tasks.sunburst_pos import generate_sunburst, optimize_html_for_notion
@@ -17,33 +25,33 @@ from utils.json_loader import load_json
 from utils.validator import validate_metadata
 
 
-def handler(request):
-    """Vercel serverless function handler"""
-    # 从 URL 参数或路径中获取文件名
+def handler(request_dict):
+    """处理请求并生成图表"""
+    # 从请求中获取文件名
     filename = None
     
-    # Vercel 会将 query string 参数传递给 request
-    # 尝试从 query string 获取
-    if hasattr(request, 'args') and request.args:
-        filename = request.args.get('filename')
-    elif hasattr(request, 'query') and request.query:
-        filename = request.query.get('filename')
+    # 从 query string 获取
+    query = request_dict.get('query', {})
+    if isinstance(query, dict):
+        filename = query.get('filename')
     
-    # 尝试从 URL path 获取（通过 vercel.json 路由配置）
+    # 从 URL path 获取
     if not filename:
-        if hasattr(request, 'path') and request.path:
-            # 从路径中提取文件名，例如 /chart/position_distribution.json
-            path_parts = [p for p in request.path.strip('/').split('/') if p]
-            if len(path_parts) > 1:
-                filename = path_parts[-1]
-        elif hasattr(request, 'url'):
-            # 从完整 URL 中提取
-            import urllib.parse
-            parsed = urllib.parse.urlparse(request.url)
+        path = request_dict.get('path', '')
+        if path:
+            path_parts = [p for p in path.strip('/').split('/') if p]
+            if len(path_parts) >= 2 and path_parts[0] == 'chart':
+                filename = path_parts[1]
+    
+    # 从 URL 获取
+    if not filename:
+        url = request_dict.get('url', '')
+        if url:
+            parsed = urllib.parse.urlparse(url)
             path_parts = [p for p in parsed.path.strip('/').split('/') if p]
-            if len(path_parts) > 1:
-                filename = path_parts[-1]
-            # 也检查 query string
+            if len(path_parts) >= 2 and path_parts[0] == 'chart':
+                filename = path_parts[1]
+            # 也从 query string 获取
             if not filename:
                 query_params = urllib.parse.parse_qs(parsed.query)
                 if 'filename' in query_params:
@@ -67,7 +75,7 @@ def handler(request):
             "headers": {
                 "Content-Type": "text/html; charset=utf-8"
             },
-            "body": f"<html><body><h1>404 - 文件未找到</h1><p>数据文件 {filename} 不存在</p></body></html>"
+            "body": f"<html><body><h1>404 - 文件未找到</h1><p>数据文件 {filename} 不存在</p><p>路径: {data_file}</p></body></html>"
         }
     
     try:
@@ -106,8 +114,8 @@ def handler(request):
                 "statusCode": 200,
                 "headers": {
                     "Content-Type": "text/html; charset=utf-8",
-                    "X-Frame-Options": "ALLOWALL",  # 允许嵌入 iframe (Notion)
-                    "Access-Control-Allow-Origin": "*"  # 允许跨域
+                    "X-Frame-Options": "ALLOWALL",
+                    "Access-Control-Allow-Origin": "*"
                 },
                 "body": html_content
             }
@@ -146,6 +154,17 @@ def handler(request):
         }
 
 
-# Vercel 使用这个函数
+# Vercel Python runtime 入口函数
+# request 参数是字典格式: {'path': '/chart/xxx', 'query': {}, 'headers': {}, 'url': '...'}
 def main(request):
+    """Vercel serverless function entry point"""
+    # 确保 request 是字典
+    if not isinstance(request, dict):
+        request = {
+            'path': getattr(request, 'path', ''),
+            'query': getattr(request, 'query', {}) if hasattr(request, 'query') else {},
+            'url': getattr(request, 'url', ''),
+            'headers': getattr(request, 'headers', {}) if hasattr(request, 'headers') else {}
+        }
+    
     return handler(request)

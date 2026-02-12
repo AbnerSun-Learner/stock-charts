@@ -43,3 +43,13 @@ charts/*.html
 # Local data (optional, uncomment if you don't want to commit data)
 # data/*.json
 # !data/.gitkeep
+.vercel
+.env*.local
+
+# Next.js
+.next/
+out/
+node_modules/
+
+# Jest
+coverage/
