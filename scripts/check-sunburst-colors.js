@@ -7,7 +7,7 @@
 const { chromium } = require('playwright');
 const path = require('path');
 
-const URL = 'http://localhost:3000/view/sunburst?token=d01d9047-8dae-408d-adbf-e8034abace04';
+const URL = 'http://localhost:3000/view/sunburst';
 const OUT = path.join(__dirname, '..', 'sunburst-screenshot.png');
 
 (async () => {

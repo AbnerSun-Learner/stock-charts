@@ -194,6 +194,152 @@
   padding: 2rem 2.5rem;
 }
 
+/* 配置区 */
+.sunburst-config {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-elevated, #f8fafc);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+}
+
+.sunburst-config-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sunburst-config-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sunburst-config-label {
+  font-family: var(--font-body), 'DM Sans', system-ui, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.sunburst-config-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.sunburst-config-actions--panel {
+  margin-top: 0.75rem;
+}
+
+.sunburst-config-file-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sunburst-config-btn {
+  padding: 0.5rem 1rem;
+  font-family: var(--font-body), 'DM Sans', system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: #fff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.sunburst-config-btn:hover:not(:disabled) {
+  background: var(--bg-sidebar-hover, rgba(0, 0, 0, 0.05));
+  border-color: var(--border-muted);
+}
+
+.sunburst-config-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.sunburst-config-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sunburst-config-btn--primary {
+  background: var(--accent, #2563eb);
+  color: #fff;
+  border-color: var(--accent, #2563eb);
+}
+
+.sunburst-config-btn--primary:hover:not(:disabled) {
+  background: var(--text-accent-soft, #3b82f6);
+  border-color: var(--text-accent-soft, #3b82f6);
+}
+
+.sunburst-config-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--red-600, #dc2626);
+}
+
+.sunburst-config-error--standalone {
+  margin-bottom: 1rem;
+}
+
+.sunburst-json-panel {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sunburst-json-textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 0.75rem 1rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: #fff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.sunburst-json-textarea:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 1px var(--border-focus);
+}
+
+.sunburst-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: min(360px, 50vh);
+  padding: 2rem;
+  background: var(--bg-elevated, #f8fafc);
+  border: 1px dashed var(--border-muted);
+  border-radius: 16px;
+}
+
+.sunburst-empty p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 36ch;
+}
+
 /* Sunburst page */
 .sunburst-page {
   min-height: 60vh;

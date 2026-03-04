@@ -1,13 +1,15 @@
+import Link from 'next/link';
+
 export default function HomePage() {
   return (
     <main className="home-page">
       <div className="home-page-inner">
         <h1 className="home-page-title">仓位视图</h1>
         <p className="home-page-desc">
-          请使用带签名的链接访问图表，例如在 Notion 中嵌入时使用带 token 的 URL。
+          上传与 position_distribution.json 格式一致的 JSON 即可生成旭日图。
         </p>
         <p className="home-page-hint">
-          <code>/view/sunburst?token=你的密钥</code>
+          <Link href="/view/sunburst">/view/sunburst</Link>
         </p>
       </div>
     </main>

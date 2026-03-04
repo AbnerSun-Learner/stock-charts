@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Outfit, DM_Sans } from 'next/font/google';
+import { AntdProvider } from './AntdProvider';
 import './globals.css';
 
 const outfit = Outfit({
@@ -43,7 +44,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN" className={`${outfit.variable} ${dmSans.variable}`}>
-      <body>{children}</body>
+      <body>
+        <AntdProvider>{children}</AntdProvider>
+      </body>
     </html>
   );
 }

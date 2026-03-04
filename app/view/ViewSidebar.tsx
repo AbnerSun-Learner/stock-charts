@@ -1,19 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const MENU_ITEMS = [
-  { href: '/view/sunburst', label: '仓位分布（旭日图）', icon: '☀' },
+  { href: '/view/sunburst', label: '仓位分布（旭日图）', icon: '\u2600' },
 ] as const;
 
 const STORAGE_KEY = 'view-sidebar-collapsed';
 
 export function ViewSidebar() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token');
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
@@ -55,12 +53,11 @@ export function ViewSidebar() {
         <div className="view-nav-title">图表</div>
         <ul className="view-nav-list">
           {MENU_ITEMS.map(({ href, label, icon }) => {
-            const hrefWithToken = token ? `${href}?token=${encodeURIComponent(token)}` : href;
             const isActive = pathname === href;
             return (
               <li key={href}>
                 <Link
-                  href={hrefWithToken}
+                  href={href}
                   className={`view-nav-link ${isActive ? 'view-nav-link--active' : ''}`}
                   title={collapsed ? label : undefined}
                 >
