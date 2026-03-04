@@ -176,15 +176,20 @@ export default function SunburstPage() {
     }
     try {
       const url = canvas.toDataURL('image/png');
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      const dateStr = `${y}${m}${d}`;
       const a = document.createElement('a');
       a.href = url;
-      a.download = `sunburst-${meta?.name ?? 'chart'}-${meta?.date ?? ''}.png`.replace(/\s+/g, '-') || 'sunburst.png';
+      a.download = `资产配置-${dateStr}.png`;
       a.click();
       message.success('图片已下载');
     } catch {
       message.error('下载失败，请重试');
     }
-  }, [meta?.name, meta?.date]);
+  }, []);
 
   const formatTooltipLabel = useCallback((d: unknown): string => {
     if (!d || typeof d !== 'object') return '—';
