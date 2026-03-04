@@ -13,6 +13,8 @@ interface SunburstNode {
 interface ChartNode {
   name: string;
   value: number;
+  /** 一级分类名，用于同色 */
+  category?: string;
   shares?: number;
   percentage?: string;
   children?: ChartNode[];
@@ -24,17 +26,31 @@ function parsePct(p: string | number | undefined): number {
   return 0;
 }
 
-function toChartData(node: SunburstNode): ChartNode {
+const L1_COLOR_MAP: Record<string, string> = {
+  A股: '#6891A7',
+  货币: '#00516C',
+  海外新兴: '#EA8F74',
+  债券: '#02A4DC',
+  海外成熟: '#00968F',
+};
+const DEFAULT_SECTOR_COLOR = '#fff';
+
+const L1_ORDER = ['A股', '海外新兴', '货币', '海外成熟', '债券'] as const;
+
+/** l1Category: 当前所属一级分类；写入 category 供 colorField 使用 */
+function toChartData(node: SunburstNode, l1Category?: string): ChartNode {
   const pctValue = parsePct(node.percentage);
   const value = pctValue || node.shares || 0;
+  const category = l1Category ?? node.name;
   const out: ChartNode = {
     name: node.name,
     value,
+    category,
     shares: node.shares,
     percentage: node.percentage ?? (pctValue ? `${pctValue.toFixed(2)}%` : undefined),
   };
   if (node.children?.length) {
-    out.children = node.children.map(toChartData);
+    out.children = node.children.map((c) => toChartData(c, category));
   }
   return out;
 }
@@ -136,9 +152,10 @@ export default function SunburstPage() {
         : Number.isFinite(Number(percentage))
           ? `${Number(percentage).toFixed(2)}%`
           : '';
-    if (shares != null && pctText) return `${name} [${shares}] ${pctText}`;
-    if (shares != null) return `${name} [${shares}]`;
-    if (pctText) return `${name} ${pctText}`;
+    // 旭日图标签：name 与 percentage 换行展示
+    if (shares != null && pctText) return `${name}\n[${shares}] ${pctText}`;
+    if (shares != null) return `${name}\n[${shares}]`;
+    if (pctText) return `${name}\n${pctText}`;
     return String(name);
   };
 
@@ -148,13 +165,19 @@ export default function SunburstPage() {
     (window as any).__sunburstLabel = getLabelText;
   }
 
+  const L1_COLORS = L1_ORDER.map((name) => L1_COLOR_MAP[name] ?? DEFAULT_SECTOR_COLOR);
   const config = {
     data: { value: rootData },
     width: chartSize.width,
     height: chartSize.height,
     innerRadius: 0.22,
     radius: 0.9,
-    colorField: 'name',
+    colorField: 'category',
+    color: L1_COLORS,
+    scale: {
+      category: { domain: [...L1_ORDER], range: L1_COLORS },
+      color: { domain: [...L1_ORDER], range: L1_COLORS },
+    },
     legend: false as const,
     hierarchyConfig: {
       field: 'value',
@@ -166,10 +189,11 @@ export default function SunburstPage() {
           'var f=typeof window!=="undefined"&&window.__sunburstLabel;return f?f(d):"";'
         ) as (d: unknown) => string,
         style: {
-          fill: 'rgba(15,23,42,0.85)',
+          fill: 'white',
           fontSize: 10,
           fontWeight: 500,
           lineHeight: 13,
+          textAlign: 'center',
         },
       },
     ],
@@ -183,6 +207,9 @@ export default function SunburstPage() {
     sunburstStyle: {
       stroke: '#fff',
       lineWidth: 1.5,
+    },
+    style: {
+      fillOpacity: 1,
     },
   };
 

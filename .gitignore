@@ -53,3 +53,6 @@ node_modules/
 
 # Jest
 coverage/
+
+# Playwright / 本地截屏
+sunburst-screenshot.png

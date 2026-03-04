@@ -5,9 +5,11 @@ import { join } from 'path';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+/** 设为 true 时优先使用本地 data/position_distribution.json，不读 Supabase */
+const useLocalChartData = process.env.USE_LOCAL_CHART_DATA === 'true';
 
 export async function GET() {
-  if (supabaseUrl && supabaseServiceKey) {
+  if (!useLocalChartData && supabaseUrl && supabaseServiceKey) {
     try {
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
       const { data, error } = await supabase
