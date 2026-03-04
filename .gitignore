@@ -1,30 +1,3 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual Environment
-venv/
-ENV/
-env/
-
 # IDE
 .vscode/
 .idea/
@@ -36,15 +9,11 @@ env/
 .DS_Store
 Thumbs.db
 
-# Charts (generated files)
-charts/*.html
-!charts/.gitkeep
-
-# Local data (optional, uncomment if you don't want to commit data)
-# data/*.json
-# !data/.gitkeep
 .vercel
 .env*.local
+
+# 本地数据（不提交 data 下 JSON）
+data/*.json
 
 # Next.js
 .next/
@@ -53,6 +22,3 @@ node_modules/
 
 # Jest
 coverage/
-
-# Playwright / 本地截屏
-sunburst-screenshot.png

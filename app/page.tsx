@@ -1,16 +1,12 @@
-import Link from 'next/link';
+import { HomeToolGrid } from './HomeToolGrid';
 
 export default function HomePage() {
   return (
     <main className="home-page">
       <div className="home-page-inner">
-        <h1 className="home-page-title">仓位视图</h1>
-        <p className="home-page-desc">
-          上传与 position_distribution.json 格式一致的 JSON 即可生成旭日图。
-        </p>
-        <p className="home-page-hint">
-          <Link href="/view/sunburst">/view/sunburst</Link>
-        </p>
+        <h1 className="home-page-title">工具集</h1>
+        <p className="home-page-desc">在线小工具，点击卡片进入对应功能。</p>
+        <HomeToolGrid />
       </div>
     </main>
   );

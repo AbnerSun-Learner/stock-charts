@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>仓位分布</title>
+                <script type="text/javascript" src="https://assets.pyecharts.org/assets/v5/echarts.min.js"></script>
+            <script type="text/javascript" src="https://assets.pyecharts.org/assets/v5/themes/macarons.js"></script>
+
+    
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow: hidden;
+        }
+        
+        /* 优化图表容器 */
+        .chart-container {
+            width: 100vw !important;
+            height: 100vh !important;
+            min-height: 800px;
+            margin: 0;
+            padding: 0;
+            position: relative;
+            background: #ffffff;
+        }
+        
+        /* 优化 ECharts 容器 */
+        div[id^="_echarts"] {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        /* 优化 tooltip 样式 - 浅色主题 */
+        .echarts-tooltip {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 1px solid rgba(0, 0, 0, 0.15) !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+            backdrop-filter: blur(10px) !important;
+            padding: 12px 16px !important;
+            color: #333333 !important;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .chart-container {
+                min-height: 600px;
+            }
+        }
+    </style>
+    </head>
+<body >
+    <div id="c3bb583e62994fcca47db45360a827a8" class="chart-container" style="width:100%; height:800px; "></div>
+    <script>
+        var chart_c3bb583e62994fcca47db45360a827a8 = echarts.init(
+            document.getElementById('c3bb583e62994fcca47db45360a827a8'), 'macarons', {renderer: 'canvas', locale: 'ZH'});
+        var option_c3bb583e62994fcca47db45360a827a8 = {
+    "backgroundColor": "#ffffff",
+    "animation": true,
+    "animationThreshold": 2000,
+    "animationDuration": 1000,
+    "animationEasing": "cubicOut",
+    "animationDelay": 0,
+    "animationDurationUpdate": 300,
+    "animationEasingUpdate": "cubicOut",
+    "animationDelayUpdate": 0,
+    "aria": {
+        "enabled": false
+    },
+    "series": [
+        {
+            "type": "sunburst",
+            "data": [
+                {
+                    "name": "A\u80a1",
+                    "value": 50.16,
+                    "itemStyle": {
+                        "color": "#4A90E2"
+                    },
+                    "shares": 80,
+                    "percentage": "50.16%",
+                    "children": [
+                        {
+                            "name": "\u884c\u4e1a",
+                            "value": 20.82,
+                            "itemStyle": {
+                                "color": "#FFB74D"
+                            },
+                            "shares": 36,
+                            "percentage": "20.82%",
+                            "children": [
+                                {
+                                    "name": "\u533b\u836f",
+                                    "value": 10.46,
+                                    "itemStyle": {
+                                        "color": "#BA68C8"
+                                    },
+                                    "shares": 19,
+                                    "percentage": "10.46%"
+                                },
+                                {
+                                    "name": "\u6d88\u8d39",
+                                    "value": 4.24,
+                                    "itemStyle": {
+                                        "color": "#64B5F6"
+                                    },
+                                    "shares": 6,
+                                    "percentage": "4.24%"
+                                },
+                                {
+                                    "name": "\u517b\u8001",
+                                    "value": 3.13,
+                                    "itemStyle": {
+                                        "color": "#4DB6AC"
+                                    },
+                                    "shares": 7,
+                                    "percentage": "3.13%"
+                                },
+                                {
+                                    "name": "\u73af\u4fdd",
+                                    "value": 0.97,
+                                    "itemStyle": {
+                                        "color": "#BA68C8"
+                                    },
+                                    "shares": 1,
+                                    "percentage": "0.97%"
+                                },
+                                {
+                                    "name": "\u8bc1\u5238",
+                                    "value": 0.76,
+                                    "itemStyle": {
+                                        "color": "#BA68C8"
+                                    },
+                                    "shares": 1,
+                                    "percentage": "0.76%"
+                                },
+                                {
+                                    "name": "\u91d1\u878d",
+                                    "value": 0.64,
+                                    "itemStyle": {
+                                        "color": "#81C784"
+                                    },
+                                    "shares": 1,
+                                    "percentage": "0.64%"
+                                },
+                                {
+                                    "name": "\u4f20\u5a92",
+                                    "value": 0.62,
+                                    "itemStyle": {
+                                        "color": "#FF8A65"
+                                    },
+                                    "shares": 1,
+                                    "percentage": "0.62%"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "\u4e2d\u5c0f\u76d8",
+                            "value": 12.96,
+                            "itemStyle": {
+                                "color": "#81C784"
+                            },
+                            "shares": 19,
+                            "percentage": "12.96%",
+                            "children": [
+                                {
+                                    "name": "500",
+                                    "value": 12.96,
+                                    "itemStyle": {
+                                        "color": "#64B5F6"
+                                    },
+                                    "shares": 19,
+                                    "percentage": "12.96%"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "\u5927\u76d8",
+                            "value": 8.41,
+                            "itemStyle": {
+                                "color": "#BA68C8"
+                            },
+                            "shares": 12,
+                            "percentage": "8.41%",
+                            "children": [
+                                {
+                                    "name": "300",
+                                    "value": 6.55,
+                                    "itemStyle": {
+                                        "color": "#81C784"
+                                    },
+                                    "shares": 9,
+                                    "percentage": "6.55%"
+                                },
+                                {
+                                    "name": "50 Bond/Other",
+                                    "value": 1.86,
+                                    "itemStyle": {
+                                        "color": "#64B5F6"
+                                    },
+                                    "shares": 3,
+                                    "percentage": "1.86%"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "\u4ef7\u503c",
+                            "value": 7.97,
+                            "itemStyle": {
+                                "color": "#4DB6AC"
+                            },
+                            "shares": 13,
+                            "percentage": "7.97%",
+                            "children": [
+                                {
+                                    "name": "\u7ea2\u5229",
+                                    "value": 7.97,
+                                    "itemStyle": {
+                                        "color": "#81C784"
+                                    },
+                                    "shares": 13,
+                                    "percentage": "7.97%"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "\u8d27\u5e01",
+                    "value": 26.47,
+                    "itemStyle": {
+                        "color": "#50C878"
+                    },
+                    "shares": 37,
+                    "percentage": "26.47%",
+                    "children": [
+                        {
+                            "name": "\u8d27\u5e01",
+                            "value": 26.47,
+                            "itemStyle": {
+                                "color": "#64B5F6"
+                            },
+                            "shares": 37,
+                            "percentage": "26.47%",
+                            "children": [
+                                {
+                                    "name": "\u8d27\u5e01",
+                                    "value": 26.47,
+                                    "itemStyle": {
+                                        "color": "#64B5F6"
+                                    },
+                                    "shares": 37,
+                                    "percentage": "26.47%"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "\u6d77\u5916\u65b0\u5174",
+                    "value": 11.56,
+                    "itemStyle": {
+                        "color": "#FF6B6B"
+                    },
+                    "shares": 17,
+                    "percentage": "11.56%",
+                    "children": [
+                        {
+                            "name": "\u6d77\u5916\u79d1\u6280",
+                            "value": 5.35,
+                            "itemStyle": {
+                                "color": "#BA68C8"
+                            },
+                            "shares": 8,
+                            "percentage": "5.35%",
+                            "children": [
+                                {
+                                    "name": "\u6052\u751f\u79d1\u6280",
+                                    "value": 2.53,
+                                    "itemStyle": {
+                                        "color": "#FF8A65"
+                                    },
+                                    "shares": 3,
+                                    "percentage": "2.53%"
+                                },
+                                {
+                                    "name": "\u6d77\u5916\u4e92\u8054",
+                                    "value": 2.82,
+                                    "itemStyle": {
+                                        "color": "#BA68C8"
+                                    },
+                                    "shares": 5,
+                                    "percentage": "2.82%"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "\u9999\u6e2f",
+                            "value": 6.21,
+                            "itemStyle": {
+                                "color": "#FF8A65"
+                            },
+                            "shares": 9,
+                            "percentage": "6.21%",
+                            "children": [
+                                {
+                                    "name": "\u6052\u751f",
+                                    "value": 6.21,
+                                    "itemStyle": {
+                                        "color": "#64B5F6"
+                                    },
+                                    "shares": 9,
+                                    "percentage": "6.21%"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "\u503a\u5238",
+                    "value": 9.23,
+                    "itemStyle": {
+                        "color": "#9B59B6"
+                    },
+                    "shares": 13,
+                    "percentage": "9.23%",
+                    "children": [
+                        {
+                            "name": "\u6d77\u5916\u503a\u5238",
+                            "value": 2.88,
+                            "itemStyle": {
+                                "color": "#FF8A65"
+                            },
+                            "shares": 4,
+                            "percentage": "2.88%",
+                            "children": [
+                                {
+                                    "name": "\u7f8e\u5143\u503a",
+                                    "value": 2.88,
+                                    "itemStyle": {
+                                        "color": "#4DB6AC"
+                                    },
+                                    "shares": 4,
+                                    "percentage": "2.88%"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "\u56fd\u5185\u503a\u5238",
+                            "value": 6.35,
+                            "itemStyle": {
+                                "color": "#BA68C8"
+                            },
+                            "shares": 9,
+                            "percentage": "6.35%",
+                            "children": [
+                                {
+                                    "name": "\u53ef\u8f6c\u503a",
+                                    "value": 4.93,
+                                    "itemStyle": {
+                                        "color": "#FFB74D"
+                                    },
+                                    "shares": 7,
+                                    "percentage": "4.93%"
+                                },
+                                {
+                                    "name": "\u7eaf\u503a",
+                                    "value": 1.42,
+                                    "itemStyle": {
+                                        "color": "#81C784"
+                                    },
+                                    "shares": 2,
+                                    "percentage": "1.42%"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "\u6d77\u5916\u6210\u719f",
+                    "value": 2.58,
+                    "itemStyle": {
+                        "color": "#F39C12"
+                    },
+                    "shares": 3,
+                    "percentage": "2.58%",
+                    "children": [
+                        {
+                            "name": "\u5168\u7403",
+                            "value": 1.46,
+                            "itemStyle": {
+                                "color": "#81C784"
+                            },
+                            "shares": 2,
+                            "percentage": "1.46%",
+                            "children": [
+                                {
+                                    "name": "\u5168\u7403\u533b\u7597",
+                                    "value": 1.46,
+                                    "itemStyle": {
+                                        "color": "#64B5F6"
+                                    },
+                                    "shares": 2,
+                                    "percentage": "1.46%"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "\u7f8e\u56fd",
+                            "value": 1.12,
+                            "itemStyle": {
+                                "color": "#4DB6AC"
+                            },
+                            "shares": 1,
+                            "percentage": "1.12%",
+                            "children": [
+                                {
+                                    "name": "\u6807\u666e500",
+                                    "value": 1.12,
+                                    "itemStyle": {
+                                        "color": "#4DB6AC"
+                                    },
+                                    "shares": 1,
+                                    "percentage": "1.12%"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "center": [
+                "50%",
+                "50%"
+            ],
+            "radius": [
+                0,
+                "95%"
+            ],
+            "highlightPolicy": "ancestor",
+            "nodeClick": "rootToNode",
+            "sort": "desc",
+            "renderLabelForZeroData": false,
+            "clockwise": true,
+            "startAngle": 90,
+            "levels": [
+                {},
+                {
+                    "r0": "15%",
+                    "r": "50%",
+                    "itemStyle": {
+                        "borderWidth": 2,
+                        "borderColor": "rgba(0, 0, 0, 0.2)"
+                    },
+                    "label": {
+                        "rotate": "tangential",
+                        "fontSize": 11,
+                        "color": "#333333"
+                    }
+                },
+                {
+                    "r0": "50%",
+                    "r": "80%",
+                    "itemStyle": {
+                        "borderWidth": 1.5,
+                        "borderColor": "rgba(0, 0, 0, 0.15)"
+                    },
+                    "label": {
+                        "rotate": "radial",
+                        "fontSize": 9,
+                        "color": "#333333"
+                    }
+                },
+                {
+                    "r0": "80%",
+                    "r": "95%",
+                    "itemStyle": {
+                        "borderWidth": 1,
+                        "borderColor": "rgba(0, 0, 0, 0.1)"
+                    },
+                    "label": {
+                        "rotate": "radial",
+                        "fontSize": 8,
+                        "color": "#333333"
+                    }
+                }
+            ],
+            "label": {
+                "show": true,
+                "color": "#333333",
+                "margin": 8,
+                "fontSize": 10,
+                "formatter": "{b}\n\u3010{c}\u3011 {d}%",
+                "valueAnimation": false
+            },
+            "tooltip": {
+                "show": true,
+                "trigger": "item",
+                "triggerOn": "mousemove|click",
+                "axisPointer": {
+                    "type": "line"
+                },
+                "showContent": true,
+                "alwaysShowContent": false,
+                "showDelay": 0,
+                "hideDelay": 100,
+                "enterable": false,
+                "confine": false,
+                "appendToBody": false,
+                "transitionDuration": 0.4,
+                "formatter": "{b}",
+                "textStyle": {
+                    "fontSize": 14
+                },
+                "borderWidth": 0,
+                "padding": 5,
+                "order": "seriesAsc"
+            }
+        }
+    ],
+    "legend": [
+        {
+            "data": [],
+            "selected": {},
+            "show": false,
+            "padding": 5,
+            "itemGap": 10,
+            "itemWidth": 25,
+            "itemHeight": 14,
+            "backgroundColor": "transparent",
+            "borderColor": "#ccc",
+            "borderRadius": 0,
+            "pageButtonItemGap": 5,
+            "pageButtonPosition": "end",
+            "pageFormatter": "{current}/{total}",
+            "pageIconColor": "#2f4554",
+            "pageIconInactiveColor": "#aaa",
+            "pageIconSize": 15,
+            "animationDurationUpdate": 800,
+            "selector": false,
+            "selectorPosition": "auto",
+            "selectorItemGap": 7,
+            "selectorButtonGap": 10
+        }
+    ],
+    "tooltip": {
+        "show": true,
+        "trigger": "item",
+        "triggerOn": "mousemove|click",
+        "axisPointer": {
+            "type": "line"
+        },
+        "showContent": true,
+        "alwaysShowContent": false,
+        "showDelay": 0,
+        "hideDelay": 100,
+        "enterable": false,
+        "confine": false,
+        "appendToBody": false,
+        "transitionDuration": 0.4,
+        "textStyle": {
+            "fontSize": 14
+        },
+        "borderWidth": 0,
+        "padding": 5,
+        "order": "seriesAsc"
+    },
+    "title": [
+        {
+            "show": true,
+            "text": "\u4ed3\u4f4d\u5206\u5e03",
+            "target": "blank",
+            "subtarget": "blank",
+            "left": "left",
+            "top": "20",
+            "padding": 5,
+            "itemGap": 10,
+            "textAlign": "auto",
+            "textVerticalAlign": "auto",
+            "triggerEvent": false,
+            "textStyle": {
+                "color": "#333333",
+                "fontWeight": "600",
+                "fontFamily": "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif",
+                "fontSize": 18
+            }
+        }
+    ]
+};
+        chart_c3bb583e62994fcca47db45360a827a8.setOption(option_c3bb583e62994fcca47db45360a827a8);
+            
+        // 修复标签格式化，正确显示 shares 和 percentage
+        (function() {
+            setTimeout(function() {
+                var chart = chart_c3bb583e62994fcca47db45360a827a8;
+                if (chart) {
+                    var option = chart.getOption();
+                    if (option && option.series && option.series[0] && option.series[0].label) {
+                        option.series[0].label.formatter = function(params) {
+                            var data = params.data;
+                            var name = data.name || '';
+                            var shares = data.shares || 0;
+                            var percentage = data.percentage || '0%';
+                            return name + '\n【' + shares + '】 ' + percentage;
+                        };
+                        chart.setOption(option, true);
+                    }
+                }
+            }, 100);
+        })();
+                    window.addEventListener('resize', function(){
+                chart_c3bb583e62994fcca47db45360a827a8.resize();
+            })
+    </script>
+</body>
+</html>

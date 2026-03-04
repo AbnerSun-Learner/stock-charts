@@ -1,167 +1,85 @@
-# stock-charts - 个人投资复盘图表生成系统
+# stock-charts
 
-一个基于 Python 的轻量级图表生成框架，用于生成适配 Notion 嵌入的交互式 HTML 图表。
+基于 Next.js 的在线图表工具集。首页以一行多列展示工具入口，当前支持旭日图生成：上传 JSON 即可生成资产配置旭日图，支持导出配置与下载 PNG。
 
-🚀 **已支持 GitHub + Vercel 部署，实时同步到 Notion！**
+## 技术栈
 
-## 项目架构
-
-```
-stock-charts/
-├── data/              # JSON 数据源
-├── charts/            # 生成的 HTML 图表
-├── tasks/             # 独立的生成脚本
-├── utils/             # 共享工具
-└── requirements.txt   # Python 依赖
-```
-
-## 核心特性
-
-- **数据契约校验**: 所有 JSON 必须包含 `metadata` 字段（`chart_type` 和 `version`）
-- **单脚本单输出**: 每个脚本独立消费一个 JSON 文件，生成一个 HTML 图表
-- **Notion 适配**: 生成的图表可直接嵌入 Notion，支持深色主题
-- **预期 vs 实际对比**: 旭日图支持展示预期仓位和实际仓位的差异
+- **Next.js 14**（App Router）
+- **React 18**
+- **Ant Design 5**（UI 与 Message 全局提示）
+- **@ant-design/charts**（旭日图）
 
 ## 快速开始
 
-### 1. 安装依赖
+### 安装与运行
 
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/你的用户名/stock-charts.git
+cd stock-charts
+npm install
+npm run dev
 ```
 
-### 2. 准备数据
+浏览器访问：
 
-在 `data/` 目录下创建 JSON 文件，必须包含以下结构：
+- 首页：http://localhost:3000
+- 旭日图：http://localhost:3000/view/sunburst
 
-```json
-{
-  "metadata": {
-    "chart_type": "sunburst",
-    "version": "1.0"
-  },
-  "data": {
-    "name": "总仓位",
-    "expected": 100.0,
-    "actual": 100.0,
-    "children": [
-      {
-        "name": "行业A",
-        "expected": 30.0,
-        "actual": 28.5,
-        "children": [...]
-      }
-    ]
-  }
-}
-```
-
-### 3. 运行生成脚本
+### 环境变量（可选）
 
 ```bash
-python tasks/sunburst_pos.py
+cp .env.example .env.local
 ```
 
-生成的 HTML 文件将保存在 `charts/sunburst_pos.html`
+可选在 `.env.local` 中配置 `NEXT_PUBLIC_APP_URL`，用于 og:image / 链接预览。无敏感数据，访问无需 token。
 
-### 4. 部署到 Vercel（推荐）
+## 功能说明
 
-详细部署步骤请参考 [DEPLOYMENT.md](./DEPLOYMENT.md)
+### 首页
 
-**快速部署：**
-1. 将代码推送到 GitHub
-2. 在 [Vercel](https://vercel.com) 导入项目
-3. 自动部署完成
+- 一行 4 列网格展示工具入口卡片。
+- 当前提供「旭日图生成」入口，点击「开始使用」进入旭日图页面。
 
-**访问图表：**
-```
-https://你的域名.vercel.app/chart/position_distribution.json
-```
+### 旭日图
 
-### 5. 嵌入 Notion
+- **上传 JSON**：选择与 `data/position_distribution.json` 格式一致的 JSON 文件。
+- **生成图表**：点击后根据当前 JSON 渲染旭日图。
+- **显示 / 隐藏 JSON 配置**：在页面内展开或收起 JSON 文本框，可编辑后「应用配置」。
+- **导出当前配置**：将当前 JSON 下载为 `position_distribution.json`。
+- **下载 PNG**：将当前旭日图导出为 PNG 图片。
+- 操作结果通过 Ant Design 的 Message 做成功 / 失败提示。
+- 页面顶部有面包屑，可从「首页」返回首页。
 
-1. 在 Notion 中创建 `/embed` 块
-2. 输入图表 URL：`https://你的域名.vercel.app/chart/position_distribution.json`
-3. 图表将自动加载并适配 Notion 主题
+## JSON 格式
 
-**更新数据：**
-- 修改 `data/` 目录下的 JSON 文件
-- 推送到 GitHub，Vercel 会自动重新部署
-- Notion 中的图表会自动更新（刷新页面即可）
+旭日图所需 JSON 需包含 `name`、可选 `date`，以及 **`children` 数组**。每项可有 `name`、`percentage`（如 `"63.13%"`）及嵌套的 `children`。示例结构参考仓库内 `data/position_distribution.json`。
 
-## 数据契约
+## 项目结构
 
-所有 JSON 数据文件必须遵循以下契约：
+| 路径 | 说明 |
+|------|------|
+| `app/page.tsx` | 首页（工具入口网格） |
+| `app/HomeToolGrid.tsx` | 首页工具卡片列表（客户端组件） |
+| `app/view/layout.tsx` | `/view` 布局（面包屑 + 主内容，无侧栏） |
+| `app/view/ViewBreadcrumb.tsx` | 面包屑（首页 / 当前页） |
+| `app/view/sunburst/page.tsx` | 旭日图页面（上传、生成、导出、下载 PNG） |
+| `app/AntdProvider.tsx` | Ant Design ConfigProvider + 中文 locale |
+| `data/position_distribution.json` | 示例 JSON，格式参考 |
+| `scripts/xlsx-to-sunburst-json.js` | 将 Excel 转为旭日图 JSON 的脚本 |
 
-### 必需字段
+## 脚本
 
-- `metadata.chart_type`: 图表类型（必须与脚本期望的类型匹配）
-- `metadata.version`: 数据版本号
-- `data.name`: 根节点名称
-- `data.expected`: 预期仓位百分比
-- `data.actual`: 实际仓位百分比
-- `data.children`: 子节点数组（可选）
+- **Excel 转 JSON**：`node scripts/xlsx-to-sunburst-json.js [输入.xlsx] [输出.json]`  
+  默认读取桌面 `资产配置.xlsx`，输出到 `data/position_distribution.json`。
 
-### 数据契约校验
+## 构建与部署
 
-脚本运行时会自动验证：
-- `metadata` 字段存在性
-- `chart_type` 是否匹配脚本类型
-- `version` 字段存在性
-
-如果校验失败，脚本将抛出 `ValueError` 并停止执行。
-
-## 旭日图说明
-
-### 颜色映射
-
-- **蓝色** (#6366f1): 实际仓位与预期仓位差异 < 5%（符合预期）
-- **绿色系**: 实际仓位 > 预期仓位（超配）
-- **红色系**: 实际仓位 < 预期仓位（低配）
-
-### 交互功能
-
-- **Hover 提示**: 显示名称、预期仓位、实际仓位和差异
-- **点击下钻**: 点击扇形可查看子层级
-- **缩放**: 支持鼠标滚轮缩放
-
-## 开发指南
-
-### 添加新的图表类型
-
-1. 在 `tasks/` 目录创建新的脚本（如 `line_signal.py`）
-2. 在 `data/` 目录创建对应的 JSON 文件
-3. 在 JSON 的 `metadata.chart_type` 中指定新的图表类型
-4. 在脚本中调用 `validate_metadata(data, "your_chart_type")`
-
-### 工具函数
-
-#### `utils.json_loader.load_json(file_path)`
-
-加载并解析 JSON 文件。
-
-```python
-from utils.json_loader import load_json
-
-data = load_json("data/positions.json")
+```bash
+npm run build
+npm run start
 ```
 
-#### `utils.validator.validate_metadata(data, expected_chart_type)`
-
-验证数据契约。
-
-```python
-from utils.validator import validate_metadata
-
-validate_metadata(data, "sunburst")  # 如果失败会抛出 ValueError
-```
-
-## 文件说明
-
-- `tasks/sunburst_pos.py`: 旭日图生成脚本
-- `utils/json_loader.py`: JSON 文件加载工具
-- `utils/validator.py`: 数据契约校验工具
-- `data/positions.json`: 仓位数据模板
+可部署到 Vercel 等平台，无需必填环境变量。在 Vercel 项目设置中可选的 `NEXT_PUBLIC_APP_URL` 用于链接预览。
 
 ## 许可证
 

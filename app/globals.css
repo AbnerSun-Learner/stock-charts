@@ -81,47 +81,76 @@ body::after {
   z-index: -1;
 }
 
-/* Home / landing */
+/* Home / landing — 一行 4 列工具入口 */
 .home-page {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
+  padding: 2.5rem 2rem;
 }
 
 .home-page-inner {
-  text-align: center;
-  max-width: 420px;
+  max-width: 1280px;
+  margin: 0 auto;
 }
 
 .home-page-title {
   font-family: var(--font-display), 'Outfit', system-ui, sans-serif;
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 600;
   letter-spacing: -0.03em;
   color: var(--text-primary);
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.35rem 0;
 }
 
 .home-page-desc {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0 0 2rem 0;
+}
+
+.home-tool-grid {
+  margin-top: 0;
+}
+
+.home-tool-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.home-tool-card .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 1.5rem;
+}
+
+.home-tool-card-icon {
   color: var(--text-secondary);
-  line-height: 1.6;
+  margin-bottom: 1rem;
+  line-height: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.home-tool-card-title {
+  font-family: var(--font-display), 'Outfit', system-ui, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+  text-align: center;
+}
+
+.home-tool-card-desc {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
   margin: 0 0 1.25rem 0;
+  flex: 1;
 }
 
-.home-page-hint {
-  margin: 0;
-  font-size: 0.85rem;
-}
-
-.home-page-hint code {
-  display: inline-block;
-  padding: 0.5rem 0.75rem;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-muted);
+.home-tool-card-btn {
   border-radius: 8px;
-  color: var(--text-accent-soft);
-  font-family: var(--font-body), monospace;
 }
