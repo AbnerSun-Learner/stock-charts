@@ -4,6 +4,9 @@ export const alt = '仓位分布旭日图';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
+/**
+ * 生成旭日图视图的 Open Graph 分享图。
+ */
 export default async function OpenGraphImage() {
   return new ImageResponse(
     (

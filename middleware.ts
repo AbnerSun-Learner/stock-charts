@@ -3,6 +3,9 @@ import type { NextRequest } from 'next/server';
 
 const VIEW_PATH_PREFIX = '/view';
 
+/**
+ * 针对 /view/* 路径的中间件，目前只做占位放行，后续可扩展鉴权等逻辑。
+ */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 

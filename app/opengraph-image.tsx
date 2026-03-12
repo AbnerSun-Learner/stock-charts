@@ -4,6 +4,9 @@ export const alt = '仓位视图';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
+/**
+ * 生成首页的 Open Graph 分享图。
+ */
 export default async function OpenGraphImage() {
   return new ImageResponse(
     (

@@ -1,46 +1,94 @@
-/* Design tokens — investment / data dashboard */
+@import 'tailwindcss';
+
+/* 确保 Tailwind v4 扫描 app 下所有组件以生成工具类 */
+@source "./**/*.{ts,tsx}";
+
+/* Design tokens — Professional Financial Terminal */
 :root {
-  /* Surfaces */
-  --bg-deep: #f6f8fb;
-  --bg-main: #f3f6fb;
+  --bg-deep: #f8fafc;
+  --bg-main: #f1f5f9;
   --bg-elevated: #ffffff;
   --bg-card: #ffffff;
   --bg-sidebar: #ffffff;
-  --bg-sidebar-hover: rgba(2, 6, 23, 0.04);
+  --bg-sidebar-hover: rgba(15, 23, 42, 0.04);
   --bg-sidebar-active: rgba(37, 99, 235, 0.08);
-
-  /* Borders & dividers */
   --border-subtle: rgba(15, 23, 42, 0.08);
-  --border-muted: rgba(15, 23, 42, 0.12);
+  --border-muted: rgba(15, 23, 42, 0.15);
   --border-focus: rgba(37, 99, 235, 0.35);
-
-  /* Text */
   --text-primary: #0f172a;
   --text-secondary: rgba(15, 23, 42, 0.72);
   --text-muted: rgba(15, 23, 42, 0.52);
   --text-accent: #2563eb;
   --text-accent-soft: #1d4ed8;
-
-  /* Accent — blue (finance / trust) */
   --accent: #2563eb;
   --accent-soft: rgba(37, 99, 235, 0.12);
   --accent-glow: rgba(37, 99, 235, 0.2);
-
-  /* Gold for key metrics / highlights */
-  --gold: #eab308;
-  --gold-soft: rgba(234, 179, 8, 0.12);
-
-  /* Typography: set by next/font in layout (--font-display, --font-body) */
-
-  /* Motion */
+  --success: #10b981;
+  --success-soft: rgba(16, 185, 129, 0.12);
+  --gold: #f59e0b;
+  --gold-soft: rgba(245, 158, 11, 0.12);
+  --font-display: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out-smooth: cubic-bezier(0.65, 0, 0.35, 1);
   --duration-fast: 0.2s;
   --duration-normal: 0.35s;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='dark'] {
+  --bg-deep: #0a0c10;
+  --bg-main: #0d1117;
+  --bg-elevated: #161b22;
+  --bg-card: #1c2128;
+  --bg-sidebar: #161b22;
+  --bg-sidebar-hover: rgba(88, 166, 255, 0.08);
+  --bg-sidebar-active: rgba(88, 166, 255, 0.15);
+  --border-subtle: rgba(139, 148, 158, 0.15);
+  --border-muted: rgba(139, 148, 158, 0.25);
+  --border-focus: rgba(88, 166, 255, 0.4);
+  --text-primary: #e6edf3;
+  --text-secondary: rgba(139, 148, 158, 0.9);
+  --text-muted: rgba(139, 148, 158, 0.65);
+  --text-accent: #58a6ff;
+  --text-accent-soft: #79b8ff;
+  --accent: #58a6ff;
+  --accent-soft: rgba(88, 166, 255, 0.12);
+  --accent-glow: rgba(88, 166, 255, 0.25);
+  --success: #3fb950;
+  --success-soft: rgba(63, 185, 80, 0.12);
+  --gold: #d29922;
+  --gold-soft: rgba(210, 153, 34, 0.12);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 * {
   box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 148, 158, 0.4);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text-primary);
 }
 
 html {
@@ -59,98 +107,118 @@ body {
   line-height: 1.5;
 }
 
-/* Subtle gradient + noise atmosphere */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(37, 99, 235, 0.08) 0%, transparent 55%),
-    radial-gradient(ellipse 90% 70% at 10% 10%, rgba(234, 179, 8, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 100% 60% at 50% -10%, rgba(37, 99, 235, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 50% at 90% 90%, rgba(16, 185, 129, 0.04) 0%, transparent 40%),
     var(--bg-deep);
   pointer-events: none;
   z-index: -2;
+}
+
+[data-theme='dark'] body::before {
+  background:
+    radial-gradient(ellipse 100% 60% at 50% -10%, rgba(88, 166, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 50% at 90% 90%, rgba(63, 185, 80, 0.05) 0%, transparent 40%),
+    var(--bg-deep);
 }
 
 body::after {
   content: '';
   position: fixed;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");
   pointer-events: none;
   z-index: -1;
 }
 
-/* Home / landing — 一行 4 列工具入口 */
-.home-page {
-  min-height: 100vh;
-  padding: 2.5rem 2rem;
-}
-
-.home-page-inner {
-  max-width: 1280px;
-  margin: 0 auto;
-}
-
-.home-page-title {
-  font-family: var(--font-display), 'Outfit', system-ui, sans-serif;
-  font-size: 1.75rem;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
-  margin: 0 0 0.35rem 0;
-}
-
-.home-page-desc {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  margin: 0 0 2rem 0;
-}
-
-.home-tool-grid {
-  margin-top: 0;
-}
-
+/* 首页工具卡片：仅作用于带 .home-tool-card 的 Card，避免影响其他 antd Card */
 .home-tool-card {
   height: 100%;
   display: flex;
   flex-direction: column;
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.25s var(--ease-out-expo);
+  overflow: hidden;
+}
+
+.home-tool-card:hover {
+  border-color: var(--border-muted);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevated), 0 0 0 1px var(--accent-glow);
 }
 
 .home-tool-card .ant-card-body {
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 1.5rem;
-}
-
-.home-tool-card-icon {
-  color: var(--text-secondary);
-  margin-bottom: 1rem;
-  line-height: 0;
-  display: flex;
-  justify-content: center;
-}
-
-.home-tool-card-title {
-  font-family: var(--font-display), 'Outfit', system-ui, sans-serif;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
-  text-align: center;
-}
-
-.home-tool-card-desc {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-  line-height: 1.55;
-  margin: 0 0 1.25rem 0;
-  flex: 1;
+  padding: 1.75rem 1.5rem;
+  position: relative;
 }
 
 .home-tool-card-btn {
   border-radius: 8px;
+  height: 38px;
+  font-weight: 500;
+  background: var(--bg-elevated);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.home-tool-card-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* Sunburst chart: hide default tooltip list, keep title only */
+.sunburst-page .g2-tooltip-list {
+  display: none;
+}
+
+/* Chart container: full size for canvas/div */
+.sunburst-chart-wrap canvas,
+.sunburst-chart-wrap > div {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes viewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

@@ -1,19 +1,8 @@
 import type { Metadata } from 'next';
-import { Outfit, DM_Sans } from 'next/font/google';
-import { AntdProvider } from './AntdProvider';
+import { AntdProvider } from './antd-provider';
+import { ThemeProvider } from './theme-context';
+import { ThemeToggle } from './theme-toggle';
 import './globals.css';
-
-const outfit = Outfit({
-  subsets: ['latin'],
-  variable: '--font-display',
-  display: 'swap',
-});
-
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  variable: '--font-body',
-  display: 'swap',
-});
 
 const baseUrl =
   process.env.NEXT_PUBLIC_APP_URL ||
@@ -37,15 +26,23 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * 应用根布局：挂载全局字体、主题与 Ant Design Provider。
+ */
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN" className={`${outfit.variable} ${dmSans.variable}`}>
+    <html lang="zh-CN">
       <body>
-        <AntdProvider>{children}</AntdProvider>
+        <ThemeProvider>
+          <AntdProvider>
+            <ThemeToggle />
+            {children}
+          </AntdProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
