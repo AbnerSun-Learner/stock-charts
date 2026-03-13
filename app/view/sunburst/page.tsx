@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { message } from 'antd';
 import type { WindowWithSunburst } from '@/types/sunburst';
 import { parseConfigJson, type ConfigBody, type SunburstNode } from './parse-config-json';
+import SunburstForm from './sunburst-form';
 
 const Sunburst = dynamic(
   () => import('@ant-design/charts').then((mod) => mod.Sunburst),
@@ -100,6 +101,7 @@ export default function SunburstPage() {
   const [chartData, setChartData] = useState<ChartNode[] | null>(null);
   const [meta, setMeta] = useState<{ name?: string; date?: string } | null>(null);
   const [showJsonPanel, setShowJsonPanel] = useState(false);
+  const [showFormPanel, setShowFormPanel] = useState(false);
   const [jsonPanelText, setJsonPanelText] = useState('');
   const chartWrapRef = useRef<HTMLDivElement>(null);
   const [chartSize, setChartSize] = useState({ width: 800, height: 600 });
@@ -186,6 +188,21 @@ export default function SunburstPage() {
     setRawJson(text);
     message.success('配置已应用，可点击「生成图表」更新图表');
   }, [jsonPanelText]);
+
+  // 处理从表单生成的 JSON
+  const handleFormJsonGenerated = useCallback((json: string) => {
+    setRawJson(json);
+    setJsonPanelText(json);
+    // 自动生成图表
+    const parsed = parseConfigJson(json);
+    if (parsed.ok) {
+      setConfigError(null);
+      setMeta({ name: parsed.body.name, date: parsed.body.date });
+      const children = parsed.body.children ?? [];
+      setChartData(children.map((c) => toChartData(c)));
+      message.success('图表已生成');
+    }
+  }, []);
 
   // 使用固定文件名格式，不再依赖 meta 数据
   const handleDownloadPng = useCallback(() => {
@@ -284,6 +301,19 @@ export default function SunburstPage() {
                 type="button"
                 className={SUNBURST_BTN_BASE}
                 onClick={() => {
+                  setShowFormPanel((p) => {
+                    const next = !p;
+                    message.success(next ? '已显示表单编辑' : '已隐藏表单编辑');
+                    return next;
+                  });
+                }}
+              >
+                {showFormPanel ? '隐藏表单编辑' : '表单编辑'}
+              </button>
+              <button
+                type="button"
+                className={SUNBURST_BTN_BASE}
+                onClick={() => {
                   setShowJsonPanel((p) => {
                     const next = !p;
                     message.success(next ? '已显示 JSON 配置' : '已隐藏 JSON 配置');
@@ -327,6 +357,16 @@ export default function SunburstPage() {
                 应用配置
               </button>
             </div>
+          </div>
+        )}
+
+        {/* 表单编辑面板 */}
+        {showFormPanel && (
+          <div className="mt-4 pt-4 border-t border-[var(--border-subtle)]">
+            <SunburstForm
+              onGenerateJson={handleFormJsonGenerated}
+              initialJson={rawJson}
+            />
           </div>
         )}
       </section>
