@@ -1,0 +1,15 @@
+{
+  "files.exclude": {
+    ".cursor": true,
+    ".github": true,
+    ".next": true,
+    ".vercel": true,
+    ".vscode": true
+  },
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "package.json": "package-lock.json, tsconfig.json, jest.config.js, next.config.mjs, postcss.config.mjs, vercel.json, .eslintrc.json, next-env.d.ts",
+    "ci.yml": "claude.yml, claude-code-review.yml"
+  }
+}
