@@ -10,7 +10,7 @@ import { useTheme } from './theme-context';
 function AntdConfig({ children }: { children: React.ReactNode }) {
   const { theme: appTheme, mounted } = useTheme();
 
-  // Default to light theme during SSR and initial render
+  // SSR 与首次渲染阶段默认使用明亮主题，避免水合前主题不一致。
   const isDark = mounted && appTheme === 'dark';
 
   return (

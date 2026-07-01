@@ -39,7 +39,7 @@ export default async function OpenGraphImage() {
               letterSpacing: '-0.02em',
             }}
           >
-            仓位视图
+            Stock Charts
           </div>
           <div
             style={{
@@ -48,7 +48,7 @@ export default async function OpenGraphImage() {
               fontWeight: 500,
             }}
           >
-            投资图表与仓位分布
+            Investment Charts & Allocation
           </div>
           <div
             style={{

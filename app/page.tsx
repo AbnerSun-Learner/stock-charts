@@ -1,4 +1,4 @@
-import { HomeToolGrid } from './home-tool-grid';
+import { HomeToolGrid } from '@/components/home/home-tool-grid';
 
 /**
  * 应用首页：展示投研工具集的入口网格。

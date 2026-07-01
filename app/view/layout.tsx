@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { ViewBreadcrumb } from './view-breadcrumb';
+import { ViewBreadcrumb } from '@/components/navigation/view-breadcrumb';
 
 export const metadata: Metadata = {
   robots: 'noindex, nofollow',

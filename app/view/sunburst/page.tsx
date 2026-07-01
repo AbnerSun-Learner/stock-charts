@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { message } from 'antd';
+import { parseConfigJson, type ConfigBody, type SunburstNode } from '@/lib/sunburst/parse-config-json';
 import type { WindowWithSunburst } from '@/types/sunburst';
-import { parseConfigJson, type ConfigBody, type SunburstNode } from './parse-config-json';
 
 const Sunburst = dynamic(
   () => import('@ant-design/charts').then((mod) => mod.Sunburst),
@@ -252,7 +252,10 @@ export default function SunburstPage() {
     }
   }, [formatTooltipLabel, getLabelText]);
 
-  const L1_COLORS = L1_ORDER.map((name) => L1_COLOR_MAP[name] ?? DEFAULT_SECTOR_COLOR);
+  const l1Colors = useMemo(
+    () => L1_ORDER.map(name => L1_COLOR_MAP[name] ?? DEFAULT_SECTOR_COLOR),
+    []
+  );
 
   return (
     <div className="sunburst-page min-h-[60vh] flex flex-col text-[var(--text-primary)]">
@@ -344,7 +347,7 @@ export default function SunburstPage() {
           chartWrapRef={chartWrapRef}
           chartSize={chartSize}
           setChartSize={setChartSize}
-          L1_COLORS={L1_COLORS}
+          l1Colors={l1Colors}
         />
       ) : (
         <div className="flex-1 flex items-center justify-center min-h-[min(360px,50vh)] p-8 bg-[var(--bg-card)] border border-dashed border-[var(--border-muted)] rounded-2xl">
@@ -363,14 +366,14 @@ function SunburstChartBlock({
   chartWrapRef,
   chartSize,
   setChartSize,
-  L1_COLORS,
+  l1Colors,
 }: {
   chartData: ChartNode[];
   meta: { name?: string; date?: string } | null;
   chartWrapRef: React.RefObject<HTMLDivElement>;
   chartSize: { width: number; height: number };
   setChartSize: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>;
-  L1_COLORS: string[];
+  l1Colors: string[];
 }) {
   useEffect(() => {
     const el = chartWrapRef.current;
@@ -395,46 +398,48 @@ function SunburstChartBlock({
     return () => ro.disconnect();
   }, [chartWrapRef, setChartSize]);
 
-  const rootData = { name: 'root', value: 100, children: chartData };
+  const config = useMemo(() => {
+    const rootData = { name: 'root', value: 100, children: chartData };
 
-  const config = {
-    data: { value: rootData },
-    width: chartSize.width,
-    height: chartSize.height,
-    innerRadius: 0.22,
-    radius: 0.9,
-    colorField: 'category' as const,
-    color: L1_COLORS,
-    scale: {
-      category: { domain: [...L1_ORDER], range: L1_COLORS },
-      color: { domain: [...L1_ORDER], range: L1_COLORS },
-    },
-    legend: false as const,
-    hierarchyConfig: { field: 'value' as const },
-    labels: [
-      {
-        text: (d: unknown): string => {
-          const win = typeof window !== 'undefined' ? (window as WindowWithSunburst) : undefined;
-          return win?.__sunburstLabel ? win.__sunburstLabel(d) : '';
+    return {
+      data: { value: rootData },
+      width: chartSize.width,
+      height: chartSize.height,
+      innerRadius: 0.22,
+      radius: 0.9,
+      colorField: 'category' as const,
+      color: l1Colors,
+      scale: {
+        category: { domain: [...L1_ORDER], range: l1Colors },
+        color: { domain: [...L1_ORDER], range: l1Colors },
+      },
+      legend: false as const,
+      hierarchyConfig: { field: 'value' as const },
+      labels: [
+        {
+          text: (d: unknown): string => {
+            const win = typeof window !== 'undefined' ? (window as WindowWithSunburst) : undefined;
+            return win?.__sunburstLabel ? win.__sunburstLabel(d) : '';
+          },
+          style: { fill: 'white', fontSize: 10, fontWeight: 500, lineHeight: 13, textAlign: 'center' as const },
         },
-        style: { fill: 'white', fontSize: 10, fontWeight: 500, lineHeight: 13, textAlign: 'center' as const },
+      ],
+      tooltip: {
+        title: (d: unknown): string => {
+          const win = typeof window !== 'undefined' ? (window as WindowWithSunburst) : undefined;
+          try {
+            const x = Array.isArray(d) ? d[0] : d;
+            return win?.__sunburstFormat ? win.__sunburstFormat(x) : '—';
+          } catch {
+            return '—';
+          }
+        },
+        items: (): { name: string; value: string }[] => [],
       },
-    ],
-    tooltip: {
-      title: (d: unknown): string => {
-        const win = typeof window !== 'undefined' ? (window as WindowWithSunburst) : undefined;
-        try {
-          const x = Array.isArray(d) ? d[0] : d;
-          return win?.__sunburstFormat ? win.__sunburstFormat(x) : '—';
-        } catch {
-          return '—';
-        }
-      },
-      items: (): { name: string; value: string }[] => [],
-    },
-    sunburstStyle: { stroke: '#fff', lineWidth: 1.5 },
-    style: { fillOpacity: 1 },
-  };
+      sunburstStyle: { stroke: '#fff', lineWidth: 1.5 },
+      style: { fillOpacity: 1 },
+    };
+  }, [chartData, chartSize.height, chartSize.width, l1Colors]);
 
   return (
     <>

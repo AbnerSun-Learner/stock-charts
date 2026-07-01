@@ -224,42 +224,30 @@ export function StrategyComparisonChart({
   basePrice,
   priceDecimals,
 }: StrategyComparisonChartProps) {
-  // 计算策略对比数据 - 以网格买入点为基准
+  // 计算策略对比数据，以单次遍历累计买入金额和股数，避免随档位增加反复扫描。
   const chartData = useMemo(() => {
     if (gridData.length === 0) return [];
 
-    // 计算总买入金额
     const totalBuyAmount = gridData.reduce(
       (sum, row) => sum + row.buyAmount,
       0
     );
-
-    // 一次性买入的平均成本（基准价）
     const lumpSumBuyPrice = basePrice;
+    let gridBoughtAmount = 0;
+    let gridBoughtShares = 0;
 
-    // 为每个网格买入点生成数据点
     const dataPoints: ChartDataPoint[] = gridData.map((row, index) => {
-      const price = row.buyPrice; // 使用实际买入价而不是触发价
+      const price = row.buyPrice;
 
       // === 一次全仓死拿的计算 ===
-      // 跌幅 = (基准价 - 当前买入价) / 基准价
       const lumpSumDropRate =
         ((lumpSumBuyPrice - price) / lumpSumBuyPrice) * 100;
-      // 亏损金额 = 总买入金额 * 跌幅
       const lumpSumFloatingLoss = totalBuyAmount * (lumpSumDropRate / 100);
-      // Y轴显示为负数（跌幅为负）
       const lumpSumFloatingLossRate = -Math.abs(lumpSumDropRate);
 
       // === 本策略的计算（累计到当前档位） ===
-      const gridBoughtData = gridData.slice(0, index + 1);
-      const gridBoughtAmount = gridBoughtData.reduce(
-        (sum, r) => sum + r.buyAmount,
-        0
-      );
-      const gridBoughtShares = gridBoughtData.reduce(
-        (sum, r) => sum + r.buyShares,
-        0
-      );
+      gridBoughtAmount += row.buyAmount;
+      gridBoughtShares += row.buyShares;
 
       // 平均成本 = 总买入金额 / 总买入股数
       const gridAverageCost = gridBoughtAmount / gridBoughtShares;

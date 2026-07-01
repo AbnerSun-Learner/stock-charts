@@ -39,7 +39,7 @@ export default async function OpenGraphImage() {
               letterSpacing: '-0.02em',
             }}
           >
-            仓位分布（旭日图）
+            Sunburst Allocation
           </div>
           <div
             style={{
@@ -48,7 +48,7 @@ export default async function OpenGraphImage() {
               fontWeight: 500,
             }}
           >
-            投资仓位占比与结构可视化
+            Portfolio Structure Visualization
           </div>
           <div
             style={{

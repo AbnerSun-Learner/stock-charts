@@ -1,7 +1,7 @@
 /**
  * 测试 Sunburst 配置 JSON 解析：大小限制、格式校验
  */
-import { parseConfigJson } from '@/app/view/sunburst/parse-config-json';
+import { parseConfigJson } from '@/lib/sunburst/parse-config-json';
 
 const validJson = JSON.stringify({
   name: '资产配置',

@@ -58,12 +58,15 @@ cp .env.example .env.local
 
 | 路径 | 说明 |
 |------|------|
-| `app/page.tsx` | 首页（工具入口网格） |
-| `app/HomeToolGrid.tsx` | 首页工具卡片列表（客户端组件） |
-| `app/view/layout.tsx` | `/view` 布局（面包屑 + 主内容，无侧栏） |
-| `app/view/ViewBreadcrumb.tsx` | 面包屑（首页 / 当前页） |
-| `app/view/sunburst/page.tsx` | 旭日图页面（上传、生成、导出、下载 PNG） |
-| `app/AntdProvider.tsx` | Ant Design ConfigProvider + 中文 locale |
+| `app/` | Next.js App Router 路由、布局、全局样式与 OG 入口 |
+| `components/app-shell/` | 应用级 Provider 与主题切换组件 |
+| `components/home/` | 首页工具入口组件 |
+| `components/navigation/` | 页面导航组件 |
+| `components/grid/` | 网格交易策略页面组件 |
+| `components/shared/` | 跨页面共享 UI 组件 |
+| `hooks/` | 前端业务 Hook |
+| `lib/` | 纯业务逻辑与解析函数 |
+| `types/` | TypeScript 类型声明 |
 | `data/position_distribution.json` | 示例 JSON，格式参考 |
 | `scripts/xlsx-to-sunburst-json.js` | 将 Excel 转为旭日图 JSON 的脚本 |
 

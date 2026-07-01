@@ -30,10 +30,9 @@
   --shadow-accent-lg: 0 8px 24px rgba(0, 82, 255, 0.35);
   --z-tooltip: 10000;
   --font-english: Arial, 'Helvetica Neue', Helvetica, sans-serif;
-  --font-display: var(--font-calistoga), var(--font-noto-sans-sc), 'PingFang SC',
-    'Songti SC', Georgia, serif;
-  --font-sans: var(--font-inter), var(--font-noto-sans-sc), 'PingFang SC',
-    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-display: 'PingFang SC', 'Songti SC', Georgia, serif;
+  --font-sans: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Helvetica,
+    Arial, sans-serif;
 
   background: var(--page-bg);
   color: var(--foreground);
@@ -59,8 +58,7 @@
 }
 
 .grid-shell .ds-section-label__text {
-  font-family: var(--font-english), var(--font-noto-sans-sc), 'PingFang SC',
-    sans-serif;
+  font-family: var(--font-english), 'PingFang SC', sans-serif;
   font-size: 0.75rem;
   line-height: 1rem;
   font-weight: 600;
@@ -70,8 +68,7 @@
 }
 
 .grid-shell .ds-card-eyebrow {
-  font-family: var(--font-english), var(--font-noto-sans-sc), 'PingFang SC',
-    sans-serif;
+  font-family: var(--font-english), 'PingFang SC', sans-serif;
   font-size: 0.75rem;
   line-height: 1rem;
   font-weight: 600;

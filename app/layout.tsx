@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import { AntdProvider } from './antd-provider';
-import { ThemeProvider } from './theme-context';
-import { ThemeToggle } from './theme-toggle';
+import { AntdProvider } from '@/components/app-shell/antd-provider';
+import { ThemeProvider } from '@/components/app-shell/theme-context';
+import { ThemeToggle } from '@/components/app-shell/theme-toggle';
 import './globals.css';
 
 const baseUrl =

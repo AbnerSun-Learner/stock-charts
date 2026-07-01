@@ -2,6 +2,7 @@
 
 import { HelpTooltip } from "@/components/shared/help-tooltip";
 import type { GridRow } from "@/types/grid";
+import { useMemo } from "react";
 
 interface GridTableProps {
   gridData: GridRow[];
@@ -26,13 +27,16 @@ const GRID_TYPE_META = {
 } satisfies Record<GridRow["gridType"], string>;
 
 export function GridTable({ gridData, priceDecimals }: GridTableProps) {
-  const sortedData = [...gridData].sort((a, b) => b.position - a.position);
-  const firstPositionByType = new Map<string, number>();
-  sortedData.forEach((row) => {
-    if (!firstPositionByType.has(row.gridType)) {
-      firstPositionByType.set(row.gridType, row.position);
-    }
-  });
+  const { sortedData, firstPositionByType } = useMemo(() => {
+    const data = [...gridData].sort((a, b) => b.position - a.position);
+    const firstByType = new Map<string, number>();
+    data.forEach(row => {
+      if (!firstByType.has(row.gridType)) {
+        firstByType.set(row.gridType, row.position);
+      }
+    });
+    return { sortedData: data, firstPositionByType: firstByType };
+  }, [gridData]);
 
   return (
     <div className="overflow-hidden rounded-xl border border-[var(--border)] shadow-[var(--ds-shadow-sm)]">
