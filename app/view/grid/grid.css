@@ -1,0 +1,218 @@
+/**
+ * 网格策略页设计体系（源自 stock-view，全部作用域限定在 .grid-shell 内）
+ * https://github.com/AbnerSunLabs/stock-view
+ */
+
+.grid-shell {
+  --page-bg: #fafafa;
+  --background: var(--page-bg);
+  --foreground: #0f172a;
+  --muted-foreground: #64748b;
+  --muted: #f1f5f9;
+  --card: #ffffff;
+  --accent-secondary: #4d7cff;
+  --accent-foreground: #ffffff;
+  --border: #e2e8f0;
+  --primary: #0052ff;
+  --accent: #0052ff;
+  --accent-warm: #ff6b00;
+  --accent-electric-end: var(--accent-secondary);
+  --profit: #009933;
+  --loss: #ee2500;
+  --surface-subtle: #f1f5f9;
+  --hover-bg: color-mix(in srgb, #0052ff 9%, transparent);
+  --border-color: var(--border);
+  --correlation-on-brand: #ffffff;
+  --ds-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --ds-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --ds-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08);
+  --shadow-accent: 0 4px 14px rgba(0, 82, 255, 0.25);
+  --shadow-accent-lg: 0 8px 24px rgba(0, 82, 255, 0.35);
+  --z-tooltip: 10000;
+  --font-english: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+  --font-display: var(--font-calistoga), var(--font-noto-sans-sc), 'PingFang SC',
+    'Songti SC', Georgia, serif;
+  --font-sans: var(--font-inter), var(--font-noto-sans-sc), 'PingFang SC',
+    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  background: var(--page-bg);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.grid-shell .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.grid-shell .ds-section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  background: color-mix(in srgb, var(--accent) 5%, var(--card));
+}
+
+.grid-shell .ds-section-label__text {
+  font-family: var(--font-english), var(--font-noto-sans-sc), 'PingFang SC',
+    sans-serif;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+}
+
+.grid-shell .ds-card-eyebrow {
+  font-family: var(--font-english), var(--font-noto-sans-sc), 'PingFang SC',
+    sans-serif;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+}
+
+.grid-shell .ds-hero-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(
+      ellipse 85% 65% at 18% 12%,
+      color-mix(in srgb, var(--accent) 8%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 75% 55% at 88% 78%,
+      color-mix(in srgb, var(--accent-secondary) 6%, transparent),
+      transparent 52%
+    );
+}
+
+.grid-shell .site-container {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .grid-shell .site-container {
+    padding-inline: 1.5rem;
+  }
+}
+
+.grid-shell .site-container--grid {
+  max-width: 80rem;
+  padding-inline: 0.5rem;
+}
+
+@media (min-width: 1024px) {
+  .grid-shell .site-container--grid {
+    padding-inline: 0.75rem;
+  }
+}
+
+.grid-shell .marketing-primary-btn {
+  background: linear-gradient(
+    90deg,
+    var(--primary),
+    var(--accent-electric-end)
+  );
+  color: var(--correlation-on-brand);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-accent);
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    filter 200ms ease;
+}
+
+.grid-shell .marketing-primary-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-accent-lg);
+  filter: brightness(1.08);
+}
+
+.grid-shell .marketing-primary-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.grid-shell .marketing-primary-btn:disabled {
+  pointer-events: none;
+  opacity: 0.35;
+  box-shadow: none;
+}
+
+.grid-shell table {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+.grid-shell .ant-input-number {
+  width: 100%;
+  border-radius: 0.75rem;
+  border-color: var(--border);
+  background: var(--card);
+}
+
+.grid-shell .ant-input-number .ant-input-number-input {
+  text-align: center;
+  font-weight: 600;
+  font-size: 16px;
+  height: 48px;
+  color: var(--foreground);
+}
+
+.grid-shell .ant-input-number .ant-input-number-group-addon {
+  background: color-mix(in srgb, var(--accent) 6%, var(--card));
+  border-color: var(--border);
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+
+.grid-shell .ant-input-number:hover,
+.grid-shell .ant-input-number:focus,
+.grid-shell .ant-input-number-focused {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+/* Tooltip 挂到 grid-shell 内时继承 token */
+.grid-shell .ant-tooltip {
+  z-index: var(--z-tooltip) !important;
+  --antd-arrow-background-color: #ffffff;
+}
+
+.grid-shell .ant-tooltip .ant-tooltip-container {
+  color: var(--foreground) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border);
+  box-shadow: var(--ds-shadow-lg);
+}
+
+.grid-shell .ds-help-tooltip .ant-tooltip-container {
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  border-radius: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grid-shell .marketing-primary-btn,
+  .grid-shell .marketing-primary-btn:hover,
+  .grid-shell .marketing-primary-btn:active {
+    transform: none;
+    filter: none;
+  }
+}

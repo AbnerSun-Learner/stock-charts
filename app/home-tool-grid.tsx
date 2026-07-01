@@ -20,17 +20,17 @@ const TOOLS = [
     stats: '资产分布 · 多层级',
   },
   {
-    id: 'coming-soon-1',
-    title: '收益归因',
-    description: '分析投资组合收益来源，分解_alpha、beta 等因子贡献',
-    href: '#',
+    id: 'grid',
+    title: '网格交易策略',
+    description: '配置小/中/大网步长与资金系数，生成网格档位并推演抗跌优势',
+    href: '/view/grid',
     icon: (
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-        <path d="M3 20L8 15L13 18L21 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M17 9H21V13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M4 4h7v7H4V4zM13 4h7v7h-7V4zM4 13h7v7H4v-7zM13 13h7v7h-7v-7z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+        <path d="M7.5 7.5h.01M16.5 7.5h.01M7.5 16.5h.01M16.5 16.5h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       </svg>
     ),
-    coming: true,
+    stats: '步长配置 · 压力测试',
   },
   {
     id: 'coming-soon-2',
