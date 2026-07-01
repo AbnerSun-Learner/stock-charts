@@ -14,6 +14,7 @@ const config = {
     'app/**/*.{ts,tsx}',
     'hooks/**/*.{ts,tsx}',
     'lib/**/*.{ts,tsx}',
+    'utils/**/*.ts',
     '!**/*.d.ts',
     '!**/node_modules/**',
     '!**/.next/**',

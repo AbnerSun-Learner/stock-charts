@@ -1,6 +1,6 @@
 # stock-charts
 
-基于 Next.js 的在线图表工具集。首页以一行多列展示工具入口，当前支持旭日图生成：上传 JSON 即可生成资产配置旭日图，支持导出配置与下载 PNG。
+基于 Next.js 的在线图表工具集。首页以一行多列展示工具入口，当前支持资产旭日图：按分类填写持仓金额，生成占比可视化图表。
 
 ## 技术栈
 
@@ -42,17 +42,15 @@ cp .env.example .env.local
 
 ### 旭日图
 
-- **上传 JSON**：选择与 `data/position_distribution.json` 格式一致的 JSON 文件。
-- **生成图表**：点击后根据当前 JSON 渲染旭日图。
-- **显示 / 隐藏 JSON 配置**：在页面内展开或收起 JSON 文本框，可编辑后「应用配置」。
-- **导出当前配置**：将当前 JSON 下载为 `position_distribution.json`。
+- **填写持仓**：在页面配置区输入总投资额（元）及各叶子分类持仓金额，占比自动计算并展示。
+- **生成图表**：点击后根据当前金额配置渲染旭日图。
 - **下载 PNG**：将当前旭日图导出为 PNG 图片。
 - 操作结果通过 Ant Design 的 Message 做成功 / 失败提示。
 - 页面顶部有面包屑，可从「首页」返回首页。
 
-## JSON 格式
+## 分类结构
 
-旭日图所需 JSON 需包含 `name`、可选 `date`，以及 **`children` 数组**。每项可有 `name`、`percentage`（如 `"63.13%"`）及嵌套的 `children`。示例结构参考仓库内 `data/position_distribution.json`。
+旭日图分类树固定为三级结构（A股 / 海外成熟 / 海外新兴及其子分类），参考本地 `data/position_distribution_from_image.json`。用户只需填写各叶子节点的持仓金额，系统按「节点金额 / 总投资额」计算占比。
 
 ## 项目结构
 
@@ -63,11 +61,13 @@ cp .env.example .env.local
 | `components/home/` | 首页工具入口组件 |
 | `components/navigation/` | 页面导航组件 |
 | `components/grid/` | 网格交易策略页面组件 |
+| `components/sunburst/` | 旭日图持仓配置表单与图表组件 |
 | `components/shared/` | 跨页面共享 UI 组件 |
 | `hooks/` | 前端业务 Hook |
 | `lib/` | 纯业务逻辑与解析函数 |
+| `utils/` | 旭日图分类树与持仓占比计算 |
 | `types/` | TypeScript 类型声明 |
-| `data/position_distribution.json` | 示例 JSON，格式参考 |
+| `data/position_distribution_from_image.json` | 分类结构参考（本地） |
 | `scripts/xlsx-to-sunburst-json.js` | 将 Excel 转为旭日图 JSON 的脚本 |
 
 ## 脚本

@@ -179,14 +179,41 @@ body::after {
   color: #fff;
 }
 
-/* Sunburst chart: hide default tooltip list, keep title only */
+/* Sunburst 金额输入：保证亮/暗主题下文字与背景对比度 */
+.sunburst-page .sunburst-amount-input.ant-input-number {
+  width: 100%;
+  background: var(--bg-elevated);
+  border-color: var(--border-subtle);
+}
+
+.sunburst-page .sunburst-amount-input .ant-input-number-input {
+  color: var(--text-primary);
+  background: transparent;
+}
+
+.sunburst-page .sunburst-amount-input .ant-input-number-input::placeholder {
+  color: var(--text-muted);
+}
+
+.sunburst-page .sunburst-amount-input .ant-input-number-group-addon {
+  color: var(--text-secondary);
+  background: var(--bg-sidebar-hover);
+  border-color: var(--border-subtle);
+}
+
+.sunburst-page .sunburst-amount-input:hover,
+.sunburst-page .sunburst-amount-input.ant-input-number-focused {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 1px var(--border-focus);
+}
+
 .sunburst-page .g2-tooltip-list {
   display: none;
 }
 
-/* Chart container: full size for canvas/div */
+/* 仅作用于图表库容器 */
 .sunburst-chart-wrap canvas,
-.sunburst-chart-wrap > div {
+.sunburst-chart-wrap > div:first-child {
   width: 100% !important;
   height: 100% !important;
   min-height: 0 !important;

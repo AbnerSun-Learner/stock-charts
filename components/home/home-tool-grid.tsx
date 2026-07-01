@@ -8,7 +8,7 @@ const TOOLS = [
   {
     id: 'sunburst',
     title: '资产旭日图',
-    description: '上传 JSON 数据生成资产配置可视化图表，支持导出配置与 PNG 图片',
+    description: '按分类填写持仓金额，自动生成占比旭日图并支持下载 PNG',
     href: '/view/sunburst',
     icon: (
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
