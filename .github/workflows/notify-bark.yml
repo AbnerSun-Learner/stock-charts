@@ -31,7 +31,7 @@ jobs:
           BRANCH=$(gh api "repos/${REPO_NAME}/commits/${COMMIT_SHA}/branches-where-head" --jq '.[0].name // "main"')
           COMMIT_MSG=$(gh api "repos/${REPO_NAME}/commits/${COMMIT_SHA}" --jq '.commit.message | split("\n") | .[0]')
 
-          BODY=$(printf "仓库: %s\n分支: %s\nCommit: %s %s" "$REPO_NAME" "$BRANCH" "$SHORT_SHA" "$COMMIT_MSG")
+          BODY=$(printf "仓库: %s\n分支: %s\nCommit Message: %s" "$REPO_NAME" "$BRANCH" "$COMMIT_MSG")
 
           curl -sf -X POST "https://api.day.app/push" \
             -H 'Content-Type: application/json; charset=utf-8' \
