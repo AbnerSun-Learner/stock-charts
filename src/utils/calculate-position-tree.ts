@@ -3,7 +3,7 @@ import {
   CASH_LEAF_PATH,
   type CategoryNode,
 } from '@/utils/position-category-tree';
-import type { SunburstNode } from '@/lib/sunburst/parse-config-json';
+import type { SunburstNode } from '@/types/sunburst';
 
 /** 用户输入：总投资额与各叶子持仓金额 */
 export interface PositionInput {

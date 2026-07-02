@@ -12,7 +12,6 @@ import type { ChartNode } from '@/utils/sunburst-chart-data';
 import { calculatePositionTree, roundAmount } from '@/utils/calculate-position-tree';
 import {
   POSITION_CATEGORY_TREE,
-  POSITION_META,
 } from '@/utils/position-category-tree';
 
 const SUNBURST_BTN_SHARED =
@@ -73,7 +72,6 @@ export default function SunburstPage() {
   const [totalInvestment, setTotalInvestment] = useState<number | null>(null);
   const [leafAmounts, setLeafAmounts] = useState<Record<string, number>>({});
   const [chartData, setChartData] = useState<ChartNode[] | null>(null);
-  const [meta, setMeta] = useState<{ name?: string; date?: string } | null>(null);
   const chartWrapRef = useRef<HTMLDivElement>(null);
   const chartSectionRef = useRef<HTMLElement>(null);
   const [chartSize, setChartSize] = useState({ width: 800, height: 600 });
@@ -109,7 +107,6 @@ export default function SunburstPage() {
       message.error('请先填写总投资额（大于 0）');
       return;
     }
-    setMeta({ name: POSITION_META.name, date: POSITION_META.date });
     setChartData(buildSunburstChartDataFromNodes(calculatedNodes, total));
     message.success('图表已生成');
   }, [totalInvestment, calculatedNodes]);
@@ -182,7 +179,6 @@ export default function SunburstPage() {
         <section ref={chartSectionRef} aria-label="旭日图预览">
           <LazySunburstChart
             chartData={chartData}
-            meta={meta}
             chartWrapRef={chartWrapRef}
             chartSize={chartSize}
             setChartSize={setChartSize}

@@ -36,12 +36,3 @@ export interface GridParams {
   amountMultiplier: number;
   profitReserveMultiplier: number;
 }
-
-export interface SavedScheme {
-  id: string;
-  name: string;
-  timestamp: number;
-  params: GridParams;
-  gridData: GridRow[];
-  stressTest: StressTest;
-}

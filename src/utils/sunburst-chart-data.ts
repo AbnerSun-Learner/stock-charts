@@ -1,4 +1,4 @@
-import type { SunburstNode } from '@/lib/sunburst/parse-config-json';
+import type { SunburstNode } from '@/types/sunburst';
 
 export interface ChartNode {
   name: string;

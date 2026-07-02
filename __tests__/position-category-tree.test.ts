@@ -1,9 +1,15 @@
 import {
   CASH_LEAF_PATH,
   collectAllPaths,
-  collectLeafPaths,
   POSITION_CATEGORY_TREE,
 } from '@/utils/position-category-tree';
+
+/** 从全路径列表中筛出叶子路径（无更深层级） */
+function filterLeafPaths(paths: string[]): string[] {
+  return paths.filter(
+    path => !paths.some(other => other !== path && other.startsWith(`${path}/`))
+  );
+}
 
 describe('position-category-tree', () => {
   it('collectAllPaths 包含典型叶子路径', () => {
@@ -13,8 +19,9 @@ describe('position-category-tree', () => {
     expect(paths).toContain('A股');
   });
 
-  it('collectLeafPaths 仅返回叶子路径', () => {
-    const leafPaths = collectLeafPaths(POSITION_CATEGORY_TREE);
+  it('collectAllPaths 可筛出叶子路径', () => {
+    const allPaths = collectAllPaths(POSITION_CATEGORY_TREE);
+    const leafPaths = filterLeafPaths(allPaths);
     expect(leafPaths).toContain('A股/价值/红利');
     expect(leafPaths).not.toContain('A股');
     expect(leafPaths).not.toContain('A股/价值');
@@ -22,7 +29,7 @@ describe('position-category-tree', () => {
 
   it('每个一级分类至少有一个叶子节点', () => {
     for (const l1 of POSITION_CATEGORY_TREE) {
-      const leaves = collectLeafPaths([l1]);
+      const leaves = filterLeafPaths(collectAllPaths([l1]));
       expect(leaves.length).toBeGreaterThan(0);
     }
   });

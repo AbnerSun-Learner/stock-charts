@@ -73,7 +73,6 @@ function readNodeFields(payload: ChartDatumPayload) {
 
 interface SunburstChartProps {
   chartData: ChartNode[];
-  meta: { name?: string; date?: string } | null;
   chartWrapRef: React.RefObject<HTMLDivElement>;
   chartSize: { width: number; height: number };
   setChartSize: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>;
@@ -84,7 +83,6 @@ interface SunburstChartProps {
  */
 export function SunburstChart({
   chartData,
-  meta,
   chartWrapRef,
   chartSize,
   setChartSize,

@@ -50,7 +50,7 @@ cp .env.example .env.local
 
 ## 分类结构
 
-旭日图分类树固定为三级结构（A股 / 海外成熟 / 海外新兴及其子分类），参考本地 `data/position_distribution_from_image.json`。用户只需填写各叶子节点的持仓金额，系统按「节点金额 / 总投资额」计算占比。
+旭日图分类树固定为三级结构（A股 / 海外成熟 / 海外新兴及其子分类），定义在 `src/utils/position-category-tree.ts`。用户只需填写各叶子节点的持仓金额，系统按「节点金额 / 总投资额」计算占比。
 
 ## 项目结构
 
@@ -65,17 +65,10 @@ cp .env.example .env.local
 | `src/components/shared/` | 跨页面共享 UI 组件 |
 | `src/hooks/` | 前端业务 Hook |
 | `src/lib/` | 纯业务逻辑与解析函数 |
-| `src/utils/` | 旭日图分类树与持仓占比计算（TypeScript） |
+| `src/utils/` | 旭日图分类树与持仓占比计算 |
 | `src/types/` | TypeScript 类型声明 |
-| `utils/` | Python 遗留工具（`json_loader.py` 等，Web 应用不依赖） |
 | `__tests__/` | Jest 单元测试 |
-| `data/position_distribution_from_image.json` | 分类结构参考（本地） |
-| `scripts/xlsx-to-sunburst-json.js` | 将 Excel 转为旭日图 JSON 的脚本 |
-
-## 脚本
-
-- **Excel 转 JSON**：`node scripts/xlsx-to-sunburst-json.js [输入.xlsx] [输出.json]`  
-  默认读取桌面 `资产配置.xlsx`，输出到 `data/position_distribution.json`。
+| `e2e/` | Playwright E2E 测试 |
 
 ## 测试
 

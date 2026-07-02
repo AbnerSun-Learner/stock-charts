@@ -1,5 +1,5 @@
 /**
- * 资产配置旭日图固定分类树（来源：position_distribution_from_image.json）
+ * 资产配置旭日图固定分类树（三级：A股 / 海外成熟 / 海外新兴）。
  */
 
 export interface CategoryNode {
@@ -64,22 +64,6 @@ export const POSITION_CATEGORY_TREE: CategoryNode[] = [
     ],
   },
 ];
-
-/**
- * 收集所有叶子节点路径（如 "A股/价值/红利"）
- */
-export function collectLeafPaths(nodes: CategoryNode[], parentPath = ''): string[] {
-  const paths: string[] = [];
-  for (const node of nodes) {
-    const path = parentPath ? `${parentPath}/${node.name}` : node.name;
-    if (!node.children?.length) {
-      paths.push(path);
-    } else {
-      paths.push(...collectLeafPaths(node.children, path));
-    }
-  }
-  return paths;
-}
 
 /**
  * 收集所有节点路径，供 Collapse 默认展开
