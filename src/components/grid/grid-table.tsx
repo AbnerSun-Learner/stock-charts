@@ -39,8 +39,11 @@ export function GridTable({ gridData, priceDecimals }: GridTableProps) {
   }, [gridData]);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[var(--border)] shadow-[var(--ds-shadow-sm)]">
-      <table className="w-full border-collapse">
+    <div
+      className="overflow-x-auto rounded-xl border border-[var(--border)] shadow-[var(--ds-shadow-sm)] [-webkit-overflow-scrolling:touch]"
+      aria-label="网格结果表，可横向滚动"
+    >
+      <table className="w-full min-w-[720px] border-collapse">
         <thead>
           <tr className="border-b border-[var(--border)] bg-[var(--surface-subtle)]">
             {[
@@ -59,7 +62,7 @@ export function GridTable({ gridData, priceDecimals }: GridTableProps) {
             ].map((col) => (
               <th
                 key={col.label}
-                className="p-4 text-left text-[10px] font-medium uppercase text-[var(--muted-foreground)]"
+                className="p-2 sm:p-4 text-left text-[10px] font-medium uppercase text-[var(--muted-foreground)] whitespace-nowrap"
                 style={{ letterSpacing: "0.08em" }}
               >
                 {col.tooltip ? (
@@ -96,21 +99,21 @@ export function GridTable({ gridData, priceDecimals }: GridTableProps) {
                 key={getGridRowKey(row)}
                 className="border-b border-[var(--border)] transition-colors duration-200 last:border-b-0 hover:bg-[var(--hover-bg)]"
               >
-                <td className="p-4">
+                <td className="p-2 sm:p-4">
                   <span
                     className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide ${typeMeta}`}
                   >
                     {row.gridType}
                   </span>
                 </td>
-                <td className="p-4 text-sm text-[var(--foreground)]">
+                <td className="p-2 sm:p-4 text-sm text-[var(--foreground)] whitespace-nowrap">
                   {row.position.toFixed(2)}
                 </td>
-                <td className="p-4 text-sm text-[var(--foreground)]">
+                <td className="p-2 sm:p-4 text-sm text-[var(--foreground)] whitespace-nowrap">
                   {row.buyPrice.toFixed(priceDecimals)}
                 </td>
                 <td
-                  className="p-4 text-sm font-medium"
+                  className="p-2 sm:p-4 text-sm font-medium whitespace-nowrap"
                   style={{
                     color:
                       displayDropRate < 0 ? "var(--loss)" : "var(--foreground)",
@@ -120,19 +123,19 @@ export function GridTable({ gridData, priceDecimals }: GridTableProps) {
                     ? "—"
                     : `${displayDropRate.toFixed(2)}%`}
                 </td>
-                <td className="p-4 text-sm text-[var(--foreground)]">
+                <td className="p-2 sm:p-4 text-sm text-[var(--foreground)] whitespace-nowrap">
                   {row.buyAmount.toLocaleString()}
                 </td>
-                <td className="p-4 text-sm text-[var(--foreground)]">
+                <td className="p-2 sm:p-4 text-sm text-[var(--foreground)] whitespace-nowrap">
                   {row.buyShares.toLocaleString()}
                 </td>
-                <td className="p-4 text-sm text-[var(--foreground)]">
+                <td className="p-2 sm:p-4 text-sm text-[var(--foreground)] whitespace-nowrap">
                   {row.sellPrice.toFixed(priceDecimals)}
                 </td>
-                <td className="p-4 text-sm text-[var(--foreground)]">
+                <td className="p-2 sm:p-4 text-sm text-[var(--foreground)] whitespace-nowrap">
                   {row.sellShares.toLocaleString()}
                 </td>
-                <td className="p-4 text-sm text-[var(--foreground)]">
+                <td className="p-2 sm:p-4 text-sm text-[var(--foreground)] whitespace-nowrap">
                   {row.sellAmount.toLocaleString()}
                 </td>
               </tr>

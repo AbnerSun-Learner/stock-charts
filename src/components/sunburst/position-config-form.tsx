@@ -35,7 +35,7 @@ function parseAmountDisplay(value: string | undefined): number {
   return Number(cleaned);
 }
 
-const AMOUNT_INPUT_CLASS = 'sunburst-amount-input w-full min-w-[160px] max-w-[240px]';
+const AMOUNT_INPUT_CLASS = 'sunburst-amount-input w-full min-w-0 max-w-full sm:max-w-[240px]';
 
 interface PositionConfigFormProps {
   totalInvestment: number | null;
@@ -251,11 +251,11 @@ export function PositionConfigForm({
 
   return (
     <section
-      className="mb-6 py-5 px-6 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl"
+      className="mb-6 py-4 px-4 sm:py-5 sm:px-6 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl"
       aria-label="持仓配置"
     >
-      <header className="mb-5">
-        <h1 className="font-[var(--font-display)] text-[1.25rem] font-semibold text-[var(--text-primary)] m-0 mb-1">
+      <header className="mb-5 pr-12 sm:pr-0">
+        <h1 className="font-[var(--font-display)] text-lg sm:text-[1.25rem] font-semibold text-[var(--text-primary)] m-0 mb-1">
           {POSITION_META.name}
         </h1>
       </header>

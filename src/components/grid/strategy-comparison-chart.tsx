@@ -7,7 +7,7 @@
  */
 
 import { TOOLTIP_Z_INDEX } from "@/components/shared/help-tooltip";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -114,7 +114,7 @@ function CustomTooltip({
       style={{
         backgroundColor: colors.tooltipBg,
         borderColor: colors.tooltipBorder,
-        minWidth: "320px",
+        minWidth: "min(320px, calc(100vw - 2rem))",
         zIndex: TOOLTIP_Z_INDEX,
       }}
     >
@@ -224,6 +224,16 @@ export function StrategyComparisonChart({
   basePrice,
   priceDecimals,
 }: StrategyComparisonChartProps) {
+  const [isCompactChart, setIsCompactChart] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsCompactChart(mediaQuery.matches);
+    update();
+    mediaQuery.addEventListener("change", update);
+    return () => mediaQuery.removeEventListener("change", update);
+  }, []);
+
   // 计算策略对比数据，以单次遍历累计买入金额和股数，避免随档位增加反复扫描。
   const chartData = useMemo(() => {
     if (gridData.length === 0) return [];
@@ -300,6 +310,16 @@ export function StrategyComparisonChart({
     buyPointBorder: "#60a5fa",
   };
 
+  const chartMargin = isCompactChart
+    ? { top: 16, right: 12, left: 0, bottom: 48 }
+    : { top: 20, right: 30, left: 20, bottom: 60 };
+  const xAxisTick = isCompactChart
+    ? { fill: colors.textLight, fontSize: 10 }
+    : { fill: colors.textLight, fontSize: 12 };
+  const yAxisTick = isCompactChart
+    ? { fill: colors.textLight, fontSize: 10 }
+    : { fill: colors.textLight, fontSize: 12 };
+
   // 格式化 Y 轴 - 百分比显示（负数格式）
   function formatYAxis(value: number) {
     if (value === 0) return "0%";
@@ -319,11 +339,11 @@ export function StrategyComparisonChart({
       </div>
 
       {/* 图表 */}
-      <div className="h-[400px] w-full">
+      <div className="h-[280px] sm:h-[350px] md:h-[400px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+            margin={chartMargin}
           >
             <CartesianGrid
               strokeDasharray="3 3"
@@ -333,18 +353,26 @@ export function StrategyComparisonChart({
             <XAxis
               dataKey="priceLabel"
               stroke={colors.textLight}
-              tick={{ fill: colors.textLight, fontSize: 12 }}
+              tick={xAxisTick}
+              {...(isCompactChart
+                ? {
+                    angle: -35,
+                    textAnchor: "end" as const,
+                    height: 50,
+                    interval: "preserveStartEnd" as const,
+                  }
+                : { tickCount: 6 })}
               label={{
                 value: "股价",
                 position: "insideBottom",
                 offset: -10,
                 style: { fill: colors.text, fontSize: 14, fontWeight: 500 },
               }}
-              tickCount={6}
             />
             <YAxis
               stroke={colors.textLight}
-              tick={{ fill: colors.textLight, fontSize: 12 }}
+              tick={yAxisTick}
+              width={isCompactChart ? 40 : undefined}
               tickFormatter={formatYAxis}
               domain={[(dataMin: number) => Math.floor(dataMin * 1.1), 0]}
               label={{

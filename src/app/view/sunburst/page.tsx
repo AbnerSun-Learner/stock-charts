@@ -155,7 +155,7 @@ export default function SunburstPage() {
       />
 
       <section
-        className="mb-6 flex flex-wrap gap-2 items-center"
+        className="mb-6 flex flex-wrap gap-2 items-center [&_button]:flex-1 sm:[&_button]:flex-none sm:min-w-[7rem]"
         aria-label="图表操作"
       >
         <button
@@ -185,7 +185,7 @@ export default function SunburstPage() {
           />
         </section>
       ) : (
-        <div className="flex-1 flex items-center justify-center min-h-[min(360px,50vh)] p-8 bg-[var(--bg-card)] border border-dashed border-[var(--border-muted)] rounded-2xl">
+        <div className="flex-1 flex items-center justify-center min-h-[min(280px,50vh)] p-4 sm:p-8 bg-[var(--bg-card)] border border-dashed border-[var(--border-muted)] rounded-2xl">
           <p className="m-0 text-[0.9375rem] text-[var(--text-muted)] text-center max-w-[40ch]">
             填写总投资额与各分类持仓金额后，点击「生成图表」查看旭日图。
           </p>

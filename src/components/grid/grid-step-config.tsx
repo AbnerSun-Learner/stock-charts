@@ -51,7 +51,7 @@ export function GridStepConfig({
   }
 
   return (
-    <div className="space-y-4 p-6 md:p-7">
+    <div className="space-y-4 p-4 sm:p-6 md:p-7">
       {/* 头部 */}
       <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -151,7 +151,7 @@ export function GridStepConfig({
         </div>
 
         {/* 中网步长和大网步长配置区 - 一行两列 */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* 中网步长配置区 */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -231,7 +231,7 @@ export function GridStepConfig({
               感官模式
             </h4>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* 稳健模式卡片 */}
               <button
                 type="button"

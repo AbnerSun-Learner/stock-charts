@@ -33,8 +33,13 @@ const L1_COLOR_MAP: Record<string, string> = {
 const DEFAULT_SECTOR_COLOR = '#fff';
 const L1_ORDER = ['A股', '海外新兴', '现金', '海外成熟', '债券'] as const;
 
-const CHART_MIN_SIZE = 360;
+const CHART_MIN_SIZE = 200;
 const CHART_MAX_SIZE = 920;
+
+function resolveChartSize(width: number, height: number): number {
+  const available = Math.floor(Math.min(width, height, CHART_MAX_SIZE));
+  return available > 0 ? available : CHART_MIN_SIZE;
+}
 
 function getPayloadRaw(payload: ChartDatumPayload): ChartDatumPayload | Record<string, unknown> {
   const inner = payload?.data;
@@ -142,21 +147,15 @@ export function SunburstChart({
     const ro = new ResizeObserver(entries => {
       const { width, height } = entries[0]?.contentRect ?? {};
       if (width != null && height != null) {
-        const size = Math.min(width, height, CHART_MAX_SIZE);
-        setChartSize({
-          width: Math.max(CHART_MIN_SIZE, Math.floor(size)),
-          height: Math.max(CHART_MIN_SIZE, Math.floor(size)),
-        });
+        const size = resolveChartSize(width, height);
+        setChartSize({ width: size, height: size });
       }
     });
     ro.observe(el);
     const { width, height } = el.getBoundingClientRect();
     if (width && height) {
-      const size = Math.min(width, height, CHART_MAX_SIZE);
-      setChartSize({
-        width: Math.max(CHART_MIN_SIZE, Math.floor(size)),
-        height: Math.max(CHART_MIN_SIZE, Math.floor(size)),
-      });
+      const size = resolveChartSize(width, height);
+      setChartSize({ width: size, height: size });
     }
     return () => ro.disconnect();
   }, [chartWrapRef, setChartSize]);

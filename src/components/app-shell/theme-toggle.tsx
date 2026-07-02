@@ -11,7 +11,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="fixed top-5 right-5 z-[1000] w-10 h-10 flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-[10px] text-[var(--text-secondary)] cursor-pointer transition-all duration-200 shadow-[var(--shadow-elevated)] hover:bg-[var(--bg-card)] hover:border-[var(--border-muted)] hover:text-[var(--accent)] hover:scale-105 active:scale-95 [&_svg]:transition-transform [&_svg]:duration-300 hover:[&_svg]:rotate-[15deg]"
+      className="fixed top-3 right-3 sm:top-5 sm:right-5 z-[1000] min-w-11 min-h-11 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-[10px] text-[var(--text-secondary)] cursor-pointer transition-all duration-200 shadow-[var(--shadow-elevated)] hover:bg-[var(--bg-card)] hover:border-[var(--border-muted)] hover:text-[var(--accent)] hover:scale-105 active:scale-95 [&_svg]:transition-transform [&_svg]:duration-300 hover:[&_svg]:rotate-[15deg]"
       aria-label={`切换到${theme === 'light' ? '暗黑' : '明亮'}模式`}
       title={`当前: ${theme === 'light' ? '明亮模式' : '暗黑模式'}`}
     >

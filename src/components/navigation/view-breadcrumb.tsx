@@ -22,7 +22,7 @@ export function ViewBreadcrumb() {
 
   return (
     <nav
-      className="mb-4 [&_.ant-breadcrumb-link]:text-[var(--text-muted)] [&_.ant-breadcrumb-link:hover]:text-[var(--text-accent)] [&_.ant-breadcrumb-separator]:text-[var(--text-muted)] [&_.ant-breadcrumb-separator]:opacity-60"
+      className="mb-4 pr-12 sm:pr-0 [&_.ant-breadcrumb-link]:text-[var(--text-muted)] [&_.ant-breadcrumb-link:hover]:text-[var(--text-accent)] [&_.ant-breadcrumb-separator]:text-[var(--text-muted)] [&_.ant-breadcrumb-separator]:opacity-60"
       aria-label="面包屑"
     >
       <Breadcrumb items={items} />

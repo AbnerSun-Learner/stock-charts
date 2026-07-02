@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { AntdProvider } from '@/components/app-shell/antd-provider';
 import { ThemeProvider } from '@/components/app-shell/theme-context';
 import { ThemeToggle } from '@/components/app-shell/theme-toggle';
@@ -8,6 +8,12 @@ const baseUrl =
   process.env.NEXT_PUBLIC_APP_URL ||
   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
   'http://localhost:3000';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),

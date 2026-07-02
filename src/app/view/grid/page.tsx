@@ -73,7 +73,7 @@ export default function GridStrategyPage() {
           <div className="site-container site-container--grid">
             <ErrorAlert errors={errors} />
 
-            <div className="grid grid-cols-12 gap-8 xl:gap-10">
+            <div className="grid grid-cols-12 gap-4 sm:gap-8 xl:gap-10">
               <div className="col-span-12 xl:col-span-4">
                 <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--ds-shadow-md)]">
                   <div className="border-b border-[var(--border)]">
@@ -135,7 +135,7 @@ export default function GridStrategyPage() {
                     />
                   </div>
 
-                  <div className="border-t border-[var(--border)] bg-[color-mix(in_srgb,var(--surface-subtle)_55%,var(--card))] p-6">
+                  <div className="border-t border-[var(--border)] bg-[color-mix(in_srgb,var(--surface-subtle)_55%,var(--card))] p-4 sm:p-6">
                     <button
                       type="button"
                       onClick={handleGenerateStrategy}
@@ -150,7 +150,7 @@ export default function GridStrategyPage() {
 
               <div className="col-span-12 space-y-8 xl:col-span-8">
                 {gridData.length === 0 || !stressTest ? (
-                  <div className="flex min-h-[480px] items-center justify-center rounded-xl border border-dashed border-[var(--border)] bg-[color-mix(in_srgb,var(--card)_88%,transparent)] px-6 shadow-[var(--ds-shadow-sm)] backdrop-blur-[2px] lg:min-h-[520px]">
+                  <div className="flex min-h-[320px] sm:min-h-[480px] items-center justify-center rounded-xl border border-dashed border-[var(--border)] bg-[color-mix(in_srgb,var(--card)_88%,transparent)] px-4 sm:px-6 shadow-[var(--ds-shadow-sm)] backdrop-blur-[2px] lg:min-h-[520px]">
                     <div className="max-w-sm text-center">
                       <p className="mb-2 text-sm font-medium text-[var(--foreground)]">
                         尚无计算结果
@@ -162,7 +162,7 @@ export default function GridStrategyPage() {
                   </div>
                 ) : (
                   <>
-                    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--ds-shadow-md)] md:p-8">
+                    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-[var(--ds-shadow-md)] sm:p-6 md:p-8">
                       <LazyStrategyComparisonChart
                         gridData={gridData}
                         basePrice={params.basePrice}
@@ -170,8 +170,8 @@ export default function GridStrategyPage() {
                       />
                     </div>
 
-                    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--ds-shadow-md)] md:p-8">
-                      <div className="mb-8 border-b border-[var(--border)] pb-6">
+                    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-[var(--ds-shadow-md)] sm:p-6 md:p-8">
+                      <div className="mb-6 sm:mb-8 border-b border-[var(--border)] pb-4 sm:pb-6">
                         <p className="ds-card-eyebrow mb-2">Results</p>
                         <h3 className="text-lg font-semibold tracking-[-0.01em] text-[var(--foreground)]">
                           网格计算结果

@@ -53,7 +53,7 @@ export function FundCoefficientConfig({
   ];
 
   return (
-    <div className="space-y-4 p-6 md:p-7">
+    <div className="space-y-4 p-4 sm:p-6 md:p-7">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <p className="ds-card-eyebrow mb-1.5">Capital</p>
@@ -104,7 +104,7 @@ export function FundCoefficientConfig({
         </div>
 
         {/* 第二行：金额加码系数和保留利润系数（一行2列） */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {fields.slice(1).map((field) => (
             <div key={field.key} className="space-y-2">
               <label
