@@ -5,16 +5,11 @@ import { message } from 'antd';
 import { PositionConfigForm } from '@/components/sunburst/position-config-form';
 import { LazySunburstChart } from '@/components/sunburst/lazy-sunburst-chart';
 import {
-  filterChartNodesWithValue,
-  sunburstNodesToChartData,
-  type ChartNode,
-} from '@/utils/sunburst-chart-data';
-import {
-  calculatePositionTree,
-  appendCashToChartNodes,
-  positionNodesToSunburst,
-  roundAmount,
-} from '@/utils/calculate-position-tree';
+  buildSunburstChartDataFromNodes,
+  canGenerateSunburstChart,
+} from '@/lib/sunburst/build-sunburst-chart-data';
+import type { ChartNode } from '@/utils/sunburst-chart-data';
+import { calculatePositionTree, roundAmount } from '@/utils/calculate-position-tree';
 import {
   POSITION_CATEGORY_TREE,
   POSITION_META,
@@ -110,14 +105,12 @@ export default function SunburstPage() {
 
   const handleGenerateChart = useCallback(() => {
     const total = totalInvestment ?? 0;
-    if (total <= 0) {
+    if (!canGenerateSunburstChart(total)) {
       message.error('请先填写总投资额（大于 0）');
       return;
     }
-    const chartNodes = appendCashToChartNodes(calculatedNodes, total);
-    const sunburstNodes = positionNodesToSunburst(chartNodes);
     setMeta({ name: POSITION_META.name, date: POSITION_META.date });
-    setChartData(filterChartNodesWithValue(sunburstNodesToChartData(sunburstNodes)));
+    setChartData(buildSunburstChartDataFromNodes(calculatedNodes, total));
     message.success('图表已生成');
   }, [totalInvestment, calculatedNodes]);
 

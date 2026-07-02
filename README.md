@@ -77,6 +77,17 @@ cp .env.example .env.local
 - **Excel 转 JSON**：`node scripts/xlsx-to-sunburst-json.js [输入.xlsx] [输出.json]`  
   默认读取桌面 `资产配置.xlsx`，输出到 `data/position_distribution.json`。
 
+## 测试
+
+```bash
+npm test              # Jest 单元测试 + 管线集成
+npm run test:ci       # CI 模式（含覆盖率）
+npm run test:e2e      # Playwright E2E（首次需 npx playwright install chromium）
+npm run test:all      # 单元 + E2E
+```
+
+GitHub Actions 在 push / PR 时自动运行 `npm test`、`npm run test:e2e` 与 `npm run build`。
+
 ## 构建与部署
 
 ```bash
