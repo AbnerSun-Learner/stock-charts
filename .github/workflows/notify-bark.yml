@@ -3,6 +3,9 @@ name: Notify Bark on Deploy
 on:
   deployment_status:
 
+permissions:
+  contents: read
+
 jobs:
   notify:
     if: >
@@ -15,19 +18,27 @@ jobs:
         env:
           BARK_KEY: ${{ secrets.BARK_KEY }}
           DEPLOY_URL: ${{ github.event.deployment_status.environment_url }}
-          DEPLOY_REF: ${{ github.event.deployment.ref }}
+          REPO_NAME: ${{ github.repository }}
           COMMIT_SHA: ${{ github.event.deployment.sha }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ -z "$BARK_KEY" ]; then
             echo "::warning::未配置 BARK_KEY，跳过通知"
             exit 0
           fi
+
+          SHORT_SHA="${COMMIT_SHA:0:7}"
+          BRANCH=$(gh api "repos/${REPO_NAME}/commits/${COMMIT_SHA}/branches-where-head" --jq '.[0].name // "main"')
+          COMMIT_MSG=$(gh api "repos/${REPO_NAME}/commits/${COMMIT_SHA}" --jq -r '.commit.message | split("\n")[0]')
+
+          BODY=$(printf "仓库: %s\n分支: %s\nCommit: %s %s" "$REPO_NAME" "$BRANCH" "$SHORT_SHA" "$COMMIT_MSG")
+
           curl -sf -X POST "https://api.day.app/push" \
             -H 'Content-Type: application/json; charset=utf-8' \
             -d "$(jq -n \
               --arg key "$BARK_KEY" \
               --arg title "Vercel 部署成功" \
-              --arg body "分支 ${DEPLOY_REF} (${COMMIT_SHA:0:7}) 已上线" \
+              --arg body "$BODY" \
               --arg group "stock-charts" \
-              --arg url "${DEPLOY_URL:-https://github.com/AbnerSunLabs/stock-charts}" \
+              --arg url "${DEPLOY_URL:-https://github.com/${REPO_NAME}}" \
               '{device_key: $key, title: $title, body: $body, group: $group, url: $url, sound: "minuet"}')"
