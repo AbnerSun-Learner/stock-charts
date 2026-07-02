@@ -80,4 +80,27 @@ describe('calculateGridStrategy', () => {
     expect(dynamicResult.stressTest).not.toBeNull();
     expect(dynamicResult.gridData).not.toEqual(staticResult.gridData);
   });
+
+  it('amountMultiplier 增大时低价位网格买入金额应提高', () => {
+    const base = calculateGridStrategy(DEFAULT_PARAMS, {
+      dynamicGridEnabled: false,
+      dynamicGridMode: 'stable',
+    });
+    const boosted = calculateGridStrategy(
+      { ...DEFAULT_PARAMS, amountMultiplier: 2 },
+      { dynamicGridEnabled: false, dynamicGridMode: 'stable' }
+    );
+    const lowPriceRow = base.gridData.find(row => row.position < 1);
+    const boostedRow = boosted.gridData.find(row => row.position === lowPriceRow?.position);
+    expect(lowPriceRow).toBeDefined();
+    expect(boostedRow?.buyAmount).toBeGreaterThan(lowPriceRow?.buyAmount ?? 0);
+  });
+
+  it('stressTest 应包含 profitRate', () => {
+    const { stressTest } = calculateGridStrategy(DEFAULT_PARAMS, {
+      dynamicGridEnabled: false,
+      dynamicGridMode: 'stable',
+    });
+    expect(stressTest?.profitRate).toEqual(expect.any(Number));
+  });
 });

@@ -2,6 +2,7 @@ import {
   appendCashToChartNodes,
   buildCashPositionNode,
   calculatePositionTree,
+  formatYuan,
   getUnallocatedAmount,
   roundAmount,
   sumAllocatedAmount,
@@ -148,5 +149,12 @@ describe('roundAmount', () => {
     expect(roundAmount(1.01)).toBe(1.01);
     expect(roundAmount(1.004)).toBe(1);
     expect(roundAmount(10.556)).toBe(10.56);
+  });
+});
+
+describe('formatYuan', () => {
+  it('格式化为千分位与两位小数', () => {
+    expect(formatYuan(200000)).toMatch(/200,000\.00/);
+    expect(formatYuan(1234.5)).toMatch(/1,234\.50/);
   });
 });

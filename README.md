@@ -50,30 +50,36 @@ cp .env.example .env.local
 
 ## 分类结构
 
-旭日图分类树固定为三级结构（A股 / 海外成熟 / 海外新兴及其子分类），参考本地 `data/position_distribution_from_image.json`。用户只需填写各叶子节点的持仓金额，系统按「节点金额 / 总投资额」计算占比。
+旭日图分类树固定为三级结构（A股 / 海外成熟 / 海外新兴及其子分类），定义在 `src/utils/position-category-tree.ts`。用户只需填写各叶子节点的持仓金额，系统按「节点金额 / 总投资额」计算占比。
 
 ## 项目结构
 
 | 路径 | 说明 |
 |------|------|
-| `app/` | Next.js App Router 路由、布局、全局样式与 OG 入口 |
-| `components/app-shell/` | 应用级 Provider 与主题切换组件 |
-| `components/home/` | 首页工具入口组件 |
-| `components/navigation/` | 页面导航组件 |
-| `components/grid/` | 网格交易策略页面组件 |
-| `components/sunburst/` | 旭日图持仓配置表单与图表组件 |
-| `components/shared/` | 跨页面共享 UI 组件 |
-| `hooks/` | 前端业务 Hook |
-| `lib/` | 纯业务逻辑与解析函数 |
-| `utils/` | 旭日图分类树与持仓占比计算 |
-| `types/` | TypeScript 类型声明 |
-| `data/position_distribution_from_image.json` | 分类结构参考（本地） |
-| `scripts/xlsx-to-sunburst-json.js` | 将 Excel 转为旭日图 JSON 的脚本 |
+| `src/app/` | Next.js App Router 路由、布局、全局样式与 OG 入口 |
+| `src/components/app-shell/` | 应用级 Provider 与主题切换组件 |
+| `src/components/home/` | 首页工具入口组件 |
+| `src/components/navigation/` | 页面导航组件 |
+| `src/components/grid/` | 网格交易策略页面组件 |
+| `src/components/sunburst/` | 旭日图持仓配置表单与图表组件 |
+| `src/components/shared/` | 跨页面共享 UI 组件 |
+| `src/hooks/` | 前端业务 Hook |
+| `src/lib/` | 纯业务逻辑与解析函数 |
+| `src/utils/` | 旭日图分类树与持仓占比计算 |
+| `src/types/` | TypeScript 类型声明 |
+| `__tests__/` | Jest 单元测试 |
+| `e2e/` | Playwright E2E 测试 |
 
-## 脚本
+## 测试
 
-- **Excel 转 JSON**：`node scripts/xlsx-to-sunburst-json.js [输入.xlsx] [输出.json]`  
-  默认读取桌面 `资产配置.xlsx`，输出到 `data/position_distribution.json`。
+```bash
+npm test              # Jest 单元测试 + 管线集成
+npm run test:ci       # CI 模式（含覆盖率）
+npm run test:e2e      # Playwright E2E（首次需 npx playwright install chromium）
+npm run test:all      # 单元 + E2E
+```
+
+GitHub Actions 在 push / PR 时自动运行 `npm test`、`npm run test:e2e` 与 `npm run build`。
 
 ## 构建与部署
 

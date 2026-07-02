@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## 1. 项目概览
 - **项目描述**：当前项目主要是一个投研工具的集成网站，给用户提供一些工具从宏观层面了解自己的投资现状
-- **技术栈**：Next.js 14 (App Router)、React 18、TypeScript 5、Ant Design 5、@ant-design/charts（Sunburst 等图表）、Tailwind CSS（Design Tokens 亮/暗主题）、Google Fonts（Outfit、DM Sans）、Jest + Playwright 测试、Vercel 部署；数据为本地 JSON + xlsx 脚本，无后端/数据库
+- **技术栈**：Next.js 14 (App Router)、React 18、TypeScript 5、Ant Design 5、@ant-design/charts（Sunburst 等图表）、Tailwind CSS（Design Tokens 亮/暗主题）、Google Fonts（Outfit、DM Sans）、Jest + Playwright 测试、Vercel 部署；无后端/数据库
 - **当前阶段**：开发阶段
 
 ## 2. 代码规范
@@ -35,11 +35,10 @@ alwaysApply: true
 
 ### 必须行为
 - 所有输入必须验证和消毒
-- 数据库查询必须使用参数化
 - API必须有速率限制
 
 ## 4. 测试要求
-- 新功能必须有单元测试
+- 新功能必须覆盖单元测试，E2E测试
 - 核心逻辑测试覆盖率>80%
 - 集成测试必须覆盖主要用户流程
 
@@ -57,4 +56,3 @@ alwaysApply: true
 
 ## 6. 项目特殊说明
 - 修改代码之后自动使用 /code-review 命令进行代码 CR
-- 代码code review 完毕后，自动部署到 vercel上面

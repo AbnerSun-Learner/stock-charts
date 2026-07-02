@@ -11,16 +11,17 @@ const config = {
   modulePathIgnorePatterns: ['<rootDir>/.next/'],
   watchPathIgnorePatterns: ['<rootDir>/.next/'],
   collectCoverageFrom: [
-    'app/**/*.{ts,tsx}',
-    'hooks/**/*.{ts,tsx}',
-    'lib/**/*.{ts,tsx}',
-    'utils/**/*.ts',
+    'src/app/**/*.{ts,tsx}',
+    'src/components/**/*.{ts,tsx}',
+    'src/hooks/**/*.{ts,tsx}',
+    'src/lib/**/*.{ts,tsx}',
+    'src/utils/**/*.ts',
     '!**/*.d.ts',
     '!**/node_modules/**',
     '!**/.next/**',
   ],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/$1',
+    '^@/(.*)$': '<rootDir>/src/$1',
   },
 };
 
