@@ -1,9 +1,10 @@
 @import 'tailwindcss';
 
-/* 确保 Tailwind v4 扫描 app 下所有组件以生成工具类 */
+/* 确保 Tailwind v4 扫描 src 下所有组件以生成工具类 */
 @source "./**/*.{ts,tsx}";
 @source "../components/**/*.{ts,tsx}";
 @source "../hooks/**/*.{ts,tsx}";
+@source "../lib/**/*.{ts,tsx}";
 
 /* Design tokens — Professional Financial Terminal */
 :root {

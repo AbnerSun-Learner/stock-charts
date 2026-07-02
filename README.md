@@ -56,17 +56,19 @@ cp .env.example .env.local
 
 | 路径 | 说明 |
 |------|------|
-| `app/` | Next.js App Router 路由、布局、全局样式与 OG 入口 |
-| `components/app-shell/` | 应用级 Provider 与主题切换组件 |
-| `components/home/` | 首页工具入口组件 |
-| `components/navigation/` | 页面导航组件 |
-| `components/grid/` | 网格交易策略页面组件 |
-| `components/sunburst/` | 旭日图持仓配置表单与图表组件 |
-| `components/shared/` | 跨页面共享 UI 组件 |
-| `hooks/` | 前端业务 Hook |
-| `lib/` | 纯业务逻辑与解析函数 |
-| `utils/` | 旭日图分类树与持仓占比计算 |
-| `types/` | TypeScript 类型声明 |
+| `src/app/` | Next.js App Router 路由、布局、全局样式与 OG 入口 |
+| `src/components/app-shell/` | 应用级 Provider 与主题切换组件 |
+| `src/components/home/` | 首页工具入口组件 |
+| `src/components/navigation/` | 页面导航组件 |
+| `src/components/grid/` | 网格交易策略页面组件 |
+| `src/components/sunburst/` | 旭日图持仓配置表单与图表组件 |
+| `src/components/shared/` | 跨页面共享 UI 组件 |
+| `src/hooks/` | 前端业务 Hook |
+| `src/lib/` | 纯业务逻辑与解析函数 |
+| `src/utils/` | 旭日图分类树与持仓占比计算（TypeScript） |
+| `src/types/` | TypeScript 类型声明 |
+| `utils/` | Python 遗留工具（`json_loader.py` 等，Web 应用不依赖） |
+| `__tests__/` | Jest 单元测试 |
 | `data/position_distribution_from_image.json` | 分类结构参考（本地） |
 | `scripts/xlsx-to-sunburst-json.js` | 将 Excel 转为旭日图 JSON 的脚本 |
 
