@@ -1,0 +1,33 @@
+name: Notify Bark on Deploy
+
+on:
+  deployment_status:
+
+jobs:
+  notify:
+    if: >
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment.creator.login == 'vercel[bot]' &&
+      github.event.deployment.environment == 'Production'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Bark notification
+        env:
+          BARK_KEY: ${{ secrets.BARK_KEY }}
+          DEPLOY_URL: ${{ github.event.deployment_status.environment_url }}
+          DEPLOY_REF: ${{ github.event.deployment.ref }}
+          COMMIT_SHA: ${{ github.event.deployment.sha }}
+        run: |
+          if [ -z "$BARK_KEY" ]; then
+            echo "::warning::未配置 BARK_KEY，跳过通知"
+            exit 0
+          fi
+          curl -sf -X POST "https://api.day.app/push" \
+            -H 'Content-Type: application/json; charset=utf-8' \
+            -d "$(jq -n \
+              --arg key "$BARK_KEY" \
+              --arg title "Vercel 部署成功" \
+              --arg body "分支 ${DEPLOY_REF} (${COMMIT_SHA:0:7}) 已上线" \
+              --arg group "stock-charts" \
+              --arg url "${DEPLOY_URL:-https://github.com/AbnerSunLabs/stock-charts}" \
+              '{device_key: $key, title: $title, body: $body, group: $group, url: $url, sound: "minuet"}')"
