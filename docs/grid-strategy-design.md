@@ -1202,7 +1202,7 @@ Phase 2 数据层必须遵守：
 2. 所有外部请求通过 Next.js API Routes 代理，前端不直接请求第三方源。
 3. API Route 返回必须包含 `source`、`timestamp`、`stale`、`fallbackUsed`。
 4. 日频数据默认缓存 24 小时，盘中数据使用短缓存和 stale-while-revalidate。
-5. 主源失败自动降级备源，不能让单一免费源拖垮页面。
+5. 有独立备源的路由必须实现 provider 主备降级；暂无备源的路由须诚实标注为单源，并依赖缓存 + stale 兜底，不得伪装成已降级。
 6. 指标计算放在 `src/lib/indicators/`，保持纯函数，便于单测。
 
 ### 6.2 字段映射总表
@@ -1481,19 +1481,23 @@ DOD：
 
 交付物：
 
-- 数据源 spike 报告。
-- API Routes 主备降级与缓存。
+- 数据源 spike 报告（见 `docs/data-source-spike-report.md`）。
+- API Routes 缓存与分级降级（K 线 provider 主备；估值单源 + 缓存兜底）。
 - `src/lib/indicators/` 纯函数指标。
 - 指标单测。
 
+**Phase 2 完成界定**：可宣称「K 线链路 + 指标库」完成；**不可**宣称全部 market API 均已满足 provider 主备降级。估值接口（`index-valuation`）在 Spike 阶段未找到独立备源，当前为单源 + 24h 缓存 + stale 兜底，属于已知未完成项。
+
 DOD：
 
-| 验收项 | 验证方式 |
-| --- | --- |
-| 数据源可降级 | mock 主源失败，断言备源成功且 `fallbackUsed = true` |
-| 指标可复算 | 固定样本数据单测 ATR、相关性、估值百分位 |
-| 数据新鲜度可见 | API 响应和 UI 均展示 `timestamp` 和 `stale` |
-| 免费源不可用不崩页 | 所有源失败时返回 503 或缓存，前端展示错误状态 |
+| 验收项 | 范围 | 验证方式 | Phase 2 状态 |
+| --- | --- | --- | --- |
+| K 线 provider 可降级 | `etf-kline` | mock 主源失败，断言备源成功且 `fallbackUsed = true` | ✅ 已完成 |
+| 估值缓存兜底 | `index-valuation` | TTL 内命中缓存不请求第三方；全失败时 stale 或 503 | ✅ 已完成 |
+| 估值 provider 可降级 | `index-valuation` | mock 主源失败，断言**独立**备源成功 | ❌ 未完成（Spike 无可用备源） |
+| 指标可复算 | 指标库 | 固定样本数据单测 ATR、相关性、估值百分位 | ✅ 已完成 |
+| 数据新鲜度可见 | 全部已接入 route | API 响应和 UI 均展示 `timestamp` 和 `stale` | ✅ 已完成 |
+| 免费源不可用不崩页 | 全部已接入 route | 所有源失败时返回 503 或缓存，前端展示错误状态 | ✅ 已完成 |
 
 ### 8.3 Phase 3：标的筛选仪表盘
 
