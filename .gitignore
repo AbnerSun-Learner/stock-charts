@@ -22,6 +22,7 @@ data/*.json
 .swc/
 out/
 node_modules/
+pnpm-lock.yaml
 
 # Jest
 coverage/

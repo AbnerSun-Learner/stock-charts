@@ -8,11 +8,14 @@ import {
   getGridRowKey,
   GRID_TYPE_META,
 } from '@/components/grid/grid-table-row-helpers';
+import { exportGridTablePng } from '@/lib/grid/export-grid-table-png';
 import type { GridRow } from '@/types/grid';
 import type { AggregatedGridRow, GridLeg } from '@/types/grid-v2';
-import { Table } from 'antd';
+import { message, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useMemo } from 'react';
+import { Download } from 'lucide-react';
+import { useCallback, useMemo, useRef, useState, type RefObject } from 'react';
+import { flushSync } from 'react-dom';
 
 interface GridResultTableProps {
   aggregatedRows: AggregatedGridRow[];
@@ -157,12 +160,78 @@ function ExpandedLegRows({
   );
 }
 
+interface GridResultTableViewProps {
+  tableRows: ResultTableRow[];
+  columns: ColumnsType<ResultTableRow>;
+  expandedRowKeys: string[];
+  onExpandedRowsChange?: (keys: string[]) => void;
+  legRowMap: Map<string, GridRow>;
+  firstPositionByType: Map<string, number>;
+  priceDecimals: number;
+  containerRef?: RefObject<HTMLDivElement>;
+  containerClassName?: string;
+  ariaHidden?: boolean;
+}
+
+function GridResultTableView({
+  tableRows,
+  columns,
+  expandedRowKeys,
+  onExpandedRowsChange,
+  legRowMap,
+  firstPositionByType,
+  priceDecimals,
+  containerRef,
+  containerClassName = '',
+  ariaHidden = false,
+}: GridResultTableViewProps) {
+  return (
+    <div
+      ref={containerRef}
+      aria-hidden={ariaHidden || undefined}
+      className={`overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--ds-shadow-sm)] [-webkit-overflow-scrolling:touch] ${containerClassName}`}
+      aria-label="网格结果表，可横向滚动"
+    >
+      <Table<ResultTableRow>
+        columns={columns}
+        dataSource={tableRows}
+        rowKey="key"
+        pagination={false}
+        tableLayout="fixed"
+        className="grid-result-table min-w-[800px]"
+        expandable={{
+          expandedRowKeys,
+          onExpandedRowsChange: onExpandedRowsChange
+            ? keys => onExpandedRowsChange(keys.map(String))
+            : undefined,
+          expandedRowClassName: () => 'grid-result-expanded-row',
+          expandedRowRender: record =>
+            record.kind === 'group' ? (
+              <ExpandedLegRows
+                legIds={record.childLegIds}
+                legRowMap={legRowMap}
+                firstPositionByType={firstPositionByType}
+                priceDecimals={priceDecimals}
+              />
+            ) : null,
+          rowExpandable: record =>
+            record.kind === 'group' && record.childLegIds.length > 1,
+        }}
+      />
+    </div>
+  );
+}
+
 export function GridResultTable({
   aggregatedRows,
   legs,
   basePrice,
   priceDecimals,
 }: GridResultTableProps) {
+  const exportCaptureRef = useRef<HTMLDivElement>(null);
+  const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isExportSnapshotActive, setIsExportSnapshotActive] = useState(false);
   const legRowMap = useMemo(
     () => buildLegGridRowMap(legs, basePrice),
     [legs, basePrice]
@@ -211,6 +280,17 @@ export function GridResultTable({
       };
     });
   }, [aggregatedRows, legRowMap]);
+
+  const exportGroupKeys = useMemo(
+    () =>
+      tableRows
+        .filter(
+          (row): row is GroupTableRow =>
+            row.kind === 'group' && row.childLegIds.length > 1
+        )
+        .map(row => row.key),
+    [tableRows]
+  );
 
   const columns: ColumnsType<ResultTableRow> = [
     {
@@ -325,41 +405,82 @@ export function GridResultTable({
     },
   ];
 
+  const handleDownloadPng = useCallback(async (): Promise<string> => {
+    flushSync(() => {
+      setIsExportSnapshotActive(true);
+    });
+
+    await new Promise<void>(resolve => {
+      window.setTimeout(resolve, 300);
+    });
+
+    const element = exportCaptureRef.current;
+    if (!element) {
+      throw new Error('导出表格未就绪');
+    }
+
+    try {
+      return await exportGridTablePng(element);
+    } finally {
+      setIsExportSnapshotActive(false);
+    }
+  }, []);
+
+  const handleDownloadClick = useCallback(async () => {
+    setIsDownloading(true);
+    try {
+      const filename = await handleDownloadPng();
+      message.success(`已下载 ${filename}`);
+    } catch (error) {
+      console.error('[grid-table-export]', error);
+      message.error('下载失败，请重试');
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [handleDownloadPng]);
+
   if (tableRows.length === 0) return null;
 
   return (
     <div className="mb-8">
-      <p className="mb-4 text-xs leading-relaxed text-[var(--muted-foreground)]">
-        同价位小/中/大网已合并为聚合组；展开查看各子腿买卖明细
-      </p>
-
-      <div
-        className="overflow-x-auto rounded-xl border border-[var(--border)] shadow-[var(--ds-shadow-sm)] [-webkit-overflow-scrolling:touch]"
-        aria-label="网格结果表，可横向滚动"
-      >
-        <Table<ResultTableRow>
-          columns={columns}
-          dataSource={tableRows}
-          rowKey="key"
-          pagination={false}
-          tableLayout="fixed"
-          className="grid-result-table min-w-[800px]"
-          expandable={{
-            expandedRowClassName: () => 'grid-result-expanded-row',
-            expandedRowRender: record =>
-              record.kind === 'group' ? (
-                <ExpandedLegRows
-                  legIds={record.childLegIds}
-                  legRowMap={legRowMap}
-                  firstPositionByType={firstPositionByType}
-                  priceDecimals={priceDecimals}
-                />
-              ) : null,
-            rowExpandable: record =>
-              record.kind === 'group' && record.childLegIds.length > 1,
-          }}
-        />
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+          同价位小/中/大网已合并为聚合组；展开查看各子腿买卖明细
+        </p>
+        <button
+          type="button"
+          onClick={handleDownloadClick}
+          disabled={isDownloading}
+          className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-xs font-medium text-[var(--foreground)] shadow-[var(--ds-shadow-sm)] transition-colors hover:bg-[var(--hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Download className="h-3.5 w-3.5" aria-hidden />
+          下载表格
+        </button>
       </div>
+
+      <GridResultTableView
+        tableRows={tableRows}
+        columns={columns}
+        expandedRowKeys={expandedRowKeys}
+        onExpandedRowsChange={setExpandedRowKeys}
+        legRowMap={legRowMap}
+        firstPositionByType={firstPositionByType}
+        priceDecimals={priceDecimals}
+      />
+
+      {isExportSnapshotActive ? (
+        <GridResultTableView
+          tableRows={tableRows}
+          columns={columns}
+          expandedRowKeys={exportGroupKeys}
+          legRowMap={legRowMap}
+          firstPositionByType={firstPositionByType}
+          priceDecimals={priceDecimals}
+          containerRef={exportCaptureRef}
+          containerClassName="pointer-events-none fixed left-[-10000px] top-0 z-[-1] w-max overflow-visible shadow-none"
+          ariaHidden
+        />
+      ) : null}
     </div>
   );
 }
