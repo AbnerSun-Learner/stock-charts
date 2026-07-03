@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { AntdProvider } from '@/components/app-shell/antd-provider';
-import { ThemeProvider } from '@/components/app-shell/theme-context';
-import { ThemeToggle } from '@/components/app-shell/theme-toggle';
 import './globals.css';
 
 const baseUrl =
@@ -33,7 +31,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * 应用根布局：挂载全局字体、主题与 Ant Design Provider。
+ * 应用根布局：挂载全局字体与 Ant Design Provider。
  */
 export default function RootLayout({
   children,
@@ -43,12 +41,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body>
-        <ThemeProvider>
-          <AntdProvider>
-            <ThemeToggle />
-            {children}
-          </AntdProvider>
-        </ThemeProvider>
+        <AntdProvider>{children}</AntdProvider>
       </body>
     </html>
   );

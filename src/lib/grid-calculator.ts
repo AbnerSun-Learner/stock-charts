@@ -51,8 +51,9 @@ export function calculateGridStrategy(
       amountPerGrid * (1 + amountMultiplier * (1 - positionRatio));
 
     const calculateSellShares = (buyShares: number, stepPercent: number) => {
+      // 动态网格下步长会逐档放大，可能使留存比例超过 1，需钳制避免负卖出股数
       const targetSellShares =
-        buyShares * (1 - stepPercent * profitReserveMultiplier);
+        buyShares * Math.max(0, 1 - stepPercent * profitReserveMultiplier);
       return Math.floor(targetSellShares / minTradeUnit) * minTradeUnit;
     };
 
@@ -73,6 +74,16 @@ export function calculateGridStrategy(
       const buyShares =
         Math.floor(buyAmount / buyPrice / minTradeUnit) * minTradeUnit;
       const actualBuyAmount = buyShares * buyPrice;
+
+      // 单格金额不足一手时跳过该档位，避免产生 0 股无效行污染下游图表与汇总
+      if (buyShares <= 0) {
+        previousBuyPrice = buyPrice;
+        currentBuyPrice = buyPrice;
+        if (i >= 1 && dynamicGridEnabled) {
+          currentStep = currentStep * (1 + scale);
+        }
+        continue;
+      }
 
       const sellPrice =
         i === 0

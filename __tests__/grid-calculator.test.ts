@@ -103,4 +103,25 @@ describe('calculateGridStrategy', () => {
     });
     expect(stressTest?.profitRate).toEqual(expect.any(Number));
   });
+
+  it('留存系数过大时卖出股数应钳制为 0 而非负数', () => {
+    const { gridData } = calculateGridStrategy(
+      { ...DEFAULT_PARAMS, profitReserveMultiplier: 10 },
+      { dynamicGridEnabled: true, dynamicGridMode: 'aggressive' }
+    );
+    expect(gridData.length).toBeGreaterThan(0);
+    for (const row of gridData) {
+      expect(row.sellShares).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('单格金额不足一手时不应产生 0 股档位', () => {
+    const { gridData } = calculateGridStrategy(
+      { ...DEFAULT_PARAMS, amountPerGrid: 50 },
+      { dynamicGridEnabled: false, dynamicGridMode: 'stable' }
+    );
+    for (const row of gridData) {
+      expect(row.buyShares).toBeGreaterThan(0);
+    }
+  });
 });

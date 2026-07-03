@@ -1,42 +1,35 @@
 'use client';
 
-import { ConfigProvider, theme } from 'antd';
+import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
-import { useTheme } from './theme-context';
 
 /**
- * 将全局主题上下文映射到 Ant Design ConfigProvider。
+ * 应用级 Ant Design Provider，统一明亮主题的设计 token。
  */
-function AntdConfig({ children }: { children: React.ReactNode }) {
-  const { theme: appTheme, mounted } = useTheme();
-
-  // SSR 与首次渲染阶段默认使用明亮主题，避免水合前主题不一致。
-  const isDark = mounted && appTheme === 'dark';
-
+export function AntdProvider({ children }: { children: React.ReactNode }) {
   return (
     <ConfigProvider
       locale={zhCN}
       theme={{
-        algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
         token: {
-          colorPrimary: isDark ? '#58a6ff' : '#2563eb',
-          colorBgContainer: isDark ? '#161b22' : '#ffffff',
-          colorBgElevated: isDark ? '#1c2128' : '#ffffff',
-          colorBorder: isDark ? 'rgba(139, 148, 158, 0.15)' : 'rgba(15, 23, 42, 0.08)',
-          colorText: isDark ? '#e6edf3' : '#0f172a',
-          colorTextSecondary: isDark ? 'rgba(139, 148, 158, 0.9)' : 'rgba(15, 23, 42, 0.72)',
-          colorTextTertiary: isDark ? 'rgba(139, 148, 158, 0.65)' : 'rgba(15, 23, 42, 0.52)',
+          colorPrimary: '#2563eb',
+          colorBgContainer: '#ffffff',
+          colorBgElevated: '#ffffff',
+          colorBorder: 'rgba(15, 23, 42, 0.08)',
+          colorText: '#0f172a',
+          colorTextSecondary: 'rgba(15, 23, 42, 0.72)',
+          colorTextTertiary: 'rgba(15, 23, 42, 0.52)',
           borderRadius: 8,
           fontFamily: "'DM Sans', system-ui, sans-serif",
         },
         components: {
           Card: {
-            colorBgContainer: isDark ? '#1c2128' : '#ffffff',
-            colorBorderSecondary: isDark ? 'rgba(139, 148, 158, 0.15)' : 'rgba(15, 23, 42, 0.08)',
+            colorBgContainer: '#ffffff',
+            colorBorderSecondary: 'rgba(15, 23, 42, 0.08)',
           },
           Button: {
-            colorBgContainer: isDark ? '#21262d' : '#ffffff',
-            colorBorder: isDark ? 'rgba(139, 148, 158, 0.15)' : 'rgba(15, 23, 42, 0.08)',
+            colorBgContainer: '#ffffff',
+            colorBorder: 'rgba(15, 23, 42, 0.08)',
           },
         },
       }}
@@ -44,11 +37,4 @@ function AntdConfig({ children }: { children: React.ReactNode }) {
       {children}
     </ConfigProvider>
   );
-}
-
-/**
- * 应用级 Ant Design Provider，包裹整个 React 树。
- */
-export function AntdProvider({ children }: { children: React.ReactNode }) {
-  return <AntdConfig>{children}</AntdConfig>;
 }

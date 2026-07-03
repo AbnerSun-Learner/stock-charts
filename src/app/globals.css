@@ -40,33 +40,6 @@
   --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-[data-theme='dark'] {
-  --bg-deep: #0a0c10;
-  --bg-main: #0d1117;
-  --bg-elevated: #161b22;
-  --bg-card: #1c2128;
-  --bg-sidebar: #161b22;
-  --bg-sidebar-hover: rgba(88, 166, 255, 0.08);
-  --bg-sidebar-active: rgba(88, 166, 255, 0.15);
-  --border-subtle: rgba(139, 148, 158, 0.15);
-  --border-muted: rgba(139, 148, 158, 0.25);
-  --border-focus: rgba(88, 166, 255, 0.4);
-  --text-primary: #e6edf3;
-  --text-secondary: rgba(139, 148, 158, 0.9);
-  --text-muted: rgba(139, 148, 158, 0.65);
-  --text-accent: #58a6ff;
-  --text-accent-soft: #79b8ff;
-  --accent: #58a6ff;
-  --accent-soft: rgba(88, 166, 255, 0.12);
-  --accent-glow: rgba(88, 166, 255, 0.25);
-  --success: #3fb950;
-  --success-soft: rgba(63, 185, 80, 0.12);
-  --gold: #d29922;
-  --gold-soft: rgba(210, 153, 34, 0.12);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
 * {
   box-sizing: border-box;
 }
@@ -122,13 +95,6 @@ body::before {
   z-index: -2;
 }
 
-[data-theme='dark'] body::before {
-  background:
-    radial-gradient(ellipse 100% 60% at 50% -10%, rgba(88, 166, 255, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse 80% 50% at 90% 90%, rgba(63, 185, 80, 0.05) 0%, transparent 40%),
-    var(--bg-deep);
-}
-
 body::after {
   content: '';
   position: fixed;
@@ -180,7 +146,7 @@ body::after {
   color: #fff;
 }
 
-/* Sunburst 金额输入：保证亮/暗主题下文字与背景对比度 */
+/* Sunburst 金额输入：保证文字与背景对比度 */
 .sunburst-page .sunburst-amount-input.ant-input-number {
   width: 100%;
   background: var(--bg-elevated);

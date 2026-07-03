@@ -7,6 +7,12 @@
  */
 
 import { TOOLTIP_Z_INDEX } from "@/components/shared/help-tooltip";
+import {
+  buildStrategyComparisonData,
+  computeTooltipMetrics,
+  type StrategyComparisonPoint,
+} from "@/lib/strategy-comparison";
+import type { GridRow } from "@/types/grid";
 import { useEffect, useMemo, useState } from "react";
 import {
   CartesianGrid,
@@ -19,51 +25,26 @@ import {
   YAxis,
 } from "recharts";
 
-interface GridRow {
-  position: number;
-  buyTriggerPrice: number;
-  buyPrice: number;
-  buyAmount: number;
-  buyShares: number;
-  sellTriggerPrice: number;
-  sellPrice: number;
-  sellShares: number;
-  sellAmount: number;
-  priceDropRate: number;
-}
-
 interface StrategyComparisonChartProps {
   gridData: GridRow[];
   basePrice: number;
   priceDecimals: number;
 }
 
-interface ChartDataPoint {
-  price: number;
-  priceLabel: string;
-  lumpSumFloatingLoss: number;
-  lumpSumFloatingLossRate: number;
-  gridFloatingLoss: number;
-  gridFloatingLossRate: number;
-  advantage: number;
-  lumpSumBuyPrice: number;
-  gridAverageCost: number;
-  isGridBuyPoint: boolean;
-  gridType: string;
-  gridBuyAmount: number;
-  gridBuyShares: number;
-  gridBuyPrice: number;
-  gridPosition: number;
-}
-
 interface CustomTooltipProps {
   active?: boolean;
-  payload?: ReadonlyArray<{ payload?: ChartDataPoint }>;
+  payload?: ReadonlyArray<{ payload?: StrategyComparisonPoint }>;
   colors: {
     tooltipBg: string;
     tooltipBorder: string;
   };
   priceDecimals: number;
+}
+
+// 回本需涨可能为 Infinity（跌幅 >= 100%），需要单独文案
+function formatBreakEvenRise(value: number): string {
+  if (!Number.isFinite(value)) return "无法回本";
+  return `+${value.toFixed(1)}%`;
 }
 
 // 自定义 Tooltip 组件（定义在外部以避免重新创建）
@@ -75,38 +56,19 @@ function CustomTooltip({
 }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) return null;
 
-  const data: ChartDataPoint | undefined = payload[0]?.payload;
+  const data: StrategyComparisonPoint | undefined = payload[0]?.payload;
   if (!data) return null;
 
-  // 一次全仓死拿的跌幅 = (基准价 - 当前买入价) / 基准价
-  const lumpSumDropRate =
-    ((data.lumpSumBuyPrice - data.price) / data.lumpSumBuyPrice) * 100;
-
-  // 一次全仓死拿的亏损金额 = 总买入金额 * 跌幅
-  // 这里需要从外部获取总买入金额
-  const lumpSumLossAmount = data.lumpSumFloatingLoss;
-
-  // 一次全仓死拿的回本需涨 = 跌幅 / (1 - 跌幅)
-  const lumpSumBreakEvenRise =
-    (lumpSumDropRate / 100 / (1 - lumpSumDropRate / 100)) * 100;
-
-  // 本策略的跌幅 = (基准价 - 平均成本) / 基准价
-  const gridDropRate =
-    ((data.lumpSumBuyPrice - data.gridAverageCost) / data.lumpSumBuyPrice) *
-    100;
-
-  // 本策略的亏损金额
-  const gridLossAmount = data.gridFloatingLoss;
-
-  // 本策略的回本需涨 = 跌幅 / (1 - 跌幅)
-  const gridBreakEvenRise =
-    (gridDropRate / 100 / (1 - gridDropRate / 100)) * 100;
-
-  // 少亏 = 一次全仓死拿亏损金额 - 本策略亏损金额
-  const lessLoss = lumpSumLossAmount - gridLossAmount;
-
-  // 回本门槛 = 一次全仓死拿跌幅 - 本策略跌幅
-  const breakEvenThreshold = lumpSumDropRate - gridDropRate;
+  const {
+    lumpSumDropRate,
+    lumpSumLossAmount,
+    lumpSumBreakEvenRise,
+    gridDropRate,
+    gridLossAmount,
+    gridBreakEvenRise,
+    lessLoss,
+    breakEvenThreshold,
+  } = computeTooltipMetrics(data);
 
   return (
     <div
@@ -152,7 +114,7 @@ function CustomTooltip({
         <div className="text-xs text-slate-600">
           回本需涨{" "}
           <span className="font-semibold text-red-600">
-            +{lumpSumBreakEvenRise.toFixed(1)}%
+            {formatBreakEvenRise(lumpSumBreakEvenRise)}
           </span>
         </div>
       </div>
@@ -174,7 +136,7 @@ function CustomTooltip({
         <div className="text-xs text-slate-600">
           回本需涨{" "}
           <span className="font-semibold text-green-600">
-            +{gridBreakEvenRise.toFixed(1)}%
+            {formatBreakEvenRise(gridBreakEvenRise)}
           </span>
         </div>
       </div>
@@ -234,63 +196,11 @@ export function StrategyComparisonChart({
     return () => mediaQuery.removeEventListener("change", update);
   }, []);
 
-  // 计算策略对比数据，以单次遍历累计买入金额和股数，避免随档位增加反复扫描。
-  const chartData = useMemo(() => {
-    if (gridData.length === 0) return [];
-
-    const totalBuyAmount = gridData.reduce(
-      (sum, row) => sum + row.buyAmount,
-      0
-    );
-    const lumpSumBuyPrice = basePrice;
-    let gridBoughtAmount = 0;
-    let gridBoughtShares = 0;
-
-    const dataPoints: ChartDataPoint[] = gridData.map((row, index) => {
-      const price = row.buyPrice;
-
-      // === 一次全仓死拿的计算 ===
-      const lumpSumDropRate =
-        ((lumpSumBuyPrice - price) / lumpSumBuyPrice) * 100;
-      const lumpSumFloatingLoss = totalBuyAmount * (lumpSumDropRate / 100);
-      const lumpSumFloatingLossRate = -Math.abs(lumpSumDropRate);
-
-      // === 本策略的计算（累计到当前档位） ===
-      gridBoughtAmount += row.buyAmount;
-      gridBoughtShares += row.buyShares;
-
-      // 平均成本 = 总买入金额 / 总买入股数
-      const gridAverageCost = gridBoughtAmount / gridBoughtShares;
-
-      // 本策略跌幅 = (基准价 - 平均成本) / 基准价
-      const gridDropRate = ((basePrice - gridAverageCost) / basePrice) * 100;
-
-      // 本策略亏损金额 = 总买入金额 * 跌幅
-      const gridFloatingLoss = gridBoughtAmount * (gridDropRate / 100);
-      // Y轴显示为负数（跌幅为负）
-      const gridFloatingLossRate = -Math.abs(gridDropRate);
-
-      return {
-        price,
-        priceLabel: `¥${price.toFixed(priceDecimals)}`,
-        lumpSumFloatingLoss,
-        lumpSumFloatingLossRate,
-        gridFloatingLoss,
-        gridFloatingLossRate,
-        advantage: lumpSumFloatingLoss - gridFloatingLoss,
-        lumpSumBuyPrice,
-        gridAverageCost,
-        isGridBuyPoint: true,
-        gridType: "",
-        gridBuyAmount: row.buyAmount,
-        gridBuyShares: row.buyShares,
-        gridBuyPrice: row.buyPrice,
-        gridPosition: row.position,
-      };
-    });
-
-    return dataPoints;
-  }, [gridData, basePrice, priceDecimals]);
+  // 数据计算下沉到 lib/strategy-comparison 纯函数，组件仅负责渲染
+  const chartData = useMemo(
+    () => buildStrategyComparisonData(gridData, basePrice, priceDecimals),
+    [gridData, basePrice, priceDecimals]
+  );
 
   if (chartData.length === 0) return null;
 
@@ -386,7 +296,6 @@ export function StrategyComparisonChart({
               content={(props) => (
                 <CustomTooltip
                   {...props}
-                  active={true}
                   colors={colors}
                   priceDecimals={priceDecimals}
                 />
@@ -423,7 +332,7 @@ export function StrategyComparisonChart({
               dot={(props: {
                 cx?: number;
                 cy?: number;
-                payload?: ChartDataPoint;
+                payload?: StrategyComparisonPoint;
               }) => {
                 const { cx = 0, cy = 0 } = props;
 

@@ -42,6 +42,27 @@ describe('validateGridParams', () => {
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain('步长不能超过100%');
   });
+
+  it('大网步长 × 留存系数超过 100% 时应报错', () => {
+    const result = validateGridParams({
+      ...DEFAULT_PARAMS,
+      largeGridStep: 30,
+      profitReserveMultiplier: 4,
+    });
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain(
+      '利润留存系数过大：大网步长 × 留存系数 不能超过 100%'
+    );
+  });
+
+  it('大网步长 × 留存系数不超过 100% 时应通过', () => {
+    const result = validateGridParams({
+      ...DEFAULT_PARAMS,
+      largeGridStep: 30,
+      profitReserveMultiplier: 3,
+    });
+    expect(result.isValid).toBe(true);
+  });
 });
 
 describe('getPriceDecimals', () => {

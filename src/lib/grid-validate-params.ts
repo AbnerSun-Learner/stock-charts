@@ -47,6 +47,10 @@ export function validateGridParams(params: GridParams): GridParamsValidation {
   if (params.amountMultiplier < 0 || params.profitReserveMultiplier < 0) {
     errors.push('系数不能小于0');
   }
+  // 卖出股数 = 买入股数 × (1 - 步长 × 留存系数)，乘积超过 1 时卖出股数为负
+  if ((params.largeGridStep / 100) * params.profitReserveMultiplier > 1) {
+    errors.push('利润留存系数过大：大网步长 × 留存系数 不能超过 100%');
+  }
 
   return { isValid: errors.length === 0, errors };
 }
