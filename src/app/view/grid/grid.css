@@ -155,6 +155,40 @@
   font-feature-settings: 'tnum';
 }
 
+/* 网格结果表：展开子行与主表明细列对齐 */
+.grid-shell .grid-result-table .ant-table-expanded-row > .ant-table-cell {
+  padding: 0;
+  background: color-mix(in srgb, var(--surface-subtle) 45%, var(--card));
+}
+
+.grid-shell .grid-result-expanded-table {
+  table-layout: fixed;
+}
+
+.grid-shell .grid-result-expand-spacer {
+  width: 48px;
+  min-width: 48px;
+  max-width: 48px;
+  padding: 0;
+  border: none;
+}
+
+.grid-shell .grid-result-detail-row td {
+  vertical-align: middle;
+}
+
+.grid-shell .grid-result-table .ant-table-thead > tr > th,
+.grid-shell .grid-result-table .ant-table-tbody > tr > td {
+  padding: 0.5rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .grid-shell .grid-result-table .ant-table-thead > tr > th,
+  .grid-shell .grid-result-table .ant-table-tbody > tr > td {
+    padding: 1rem;
+  }
+}
+
 .grid-shell .ant-input-number {
   width: 100%;
   border-radius: 0.75rem;

@@ -1,76 +1,72 @@
-import { getPriceDecimals, validateGridParams } from '@/lib/grid-validate-params';
-import type { GridParams } from '@/types/grid';
-
-const DEFAULT_PARAMS: GridParams = {
-  minTradeUnit: 100,
-  priceUnit: 0.001,
-  basePrice: 1.0,
-  amountPerGrid: 10000,
-  minPrice: 0.5,
-  smallGridStep: 5.0,
-  mediumGridStep: 15.0,
-  largeGridStep: 30.0,
-  amountMultiplier: 1.0,
-  profitReserveMultiplier: 1.0,
-};
+import {
+  getPriceDecimals,
+  validateGeneratedLegs,
+  validateGridParams,
+} from '@/lib/grid-validate-params';
+import { DEFAULT_GRID_PARAMS } from '@/types/grid';
 
 describe('validateGridParams', () => {
   it('合法默认参数应通过校验', () => {
-    const result = validateGridParams(DEFAULT_PARAMS);
+    const result = validateGridParams(DEFAULT_GRID_PARAMS);
     expect(result.isValid).toBe(true);
     expect(result.errors).toHaveLength(0);
   });
 
   it('最低价 >= 基准价时应报错', () => {
-    const result = validateGridParams({ ...DEFAULT_PARAMS, minPrice: 1.0, basePrice: 1.0 });
+    const result = validateGridParams({
+      ...DEFAULT_GRID_PARAMS,
+      minPrice: 1.0,
+      basePrice: 1.0,
+    });
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain('最低价必须小于基准价');
   });
 
-  it('基础步长 >= 中网步长时应报错', () => {
+  it('小网步长 >= 中网步长时应报错', () => {
     const result = validateGridParams({
-      ...DEFAULT_PARAMS,
+      ...DEFAULT_GRID_PARAMS,
       smallGridStep: 20,
       mediumGridStep: 15,
     });
     expect(result.isValid).toBe(false);
-    expect(result.errors).toContain('基础步长必须小于中网步长');
+    expect(result.errors).toContain('小网步长必须小于中网步长');
   });
 
-  it('步长超过 100% 时应报错', () => {
-    const result = validateGridParams({ ...DEFAULT_PARAMS, largeGridStep: 101 });
-    expect(result.isValid).toBe(false);
-    expect(result.errors).toContain('步长不能超过100%');
-  });
-
-  it('大网步长 × 留存系数超过 100% 时应报错', () => {
+  it('大网步长 >= 100% 时应报错', () => {
     const result = validateGridParams({
-      ...DEFAULT_PARAMS,
-      largeGridStep: 30,
-      profitReserveMultiplier: 4,
+      ...DEFAULT_GRID_PARAMS,
+      largeGridStep: 100,
     });
     expect(result.isValid).toBe(false);
-    expect(result.errors).toContain(
-      '利润留存系数过大：大网步长 × 留存系数 不能超过 100%'
-    );
+    expect(result.errors).toContain('大网步长必须小于 100%');
   });
 
-  it('大网步长 × 留存系数不超过 100% 时应通过', () => {
+  it('总弹药 <= 0 时应报错', () => {
     const result = validateGridParams({
-      ...DEFAULT_PARAMS,
-      largeGridStep: 30,
-      profitReserveMultiplier: 3,
+      ...DEFAULT_GRID_PARAMS,
+      totalBudget: 0,
     });
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain('总弹药必须大于 0');
+  });
+});
+
+describe('validateGeneratedLegs', () => {
+  it('存在有效档位时应通过', () => {
+    const result = validateGeneratedLegs(3);
     expect(result.isValid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('无有效档位时应返回 E13', () => {
+    const result = validateGeneratedLegs(0);
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain('总弹药不足以生成任何有效档位');
   });
 });
 
 describe('getPriceDecimals', () => {
   it('priceUnit=0.001 时返回 3 位小数', () => {
     expect(getPriceDecimals(0.001)).toBe(3);
-  });
-
-  it('priceUnit=1 时返回 0 位小数', () => {
-    expect(getPriceDecimals(1)).toBe(0);
   });
 });

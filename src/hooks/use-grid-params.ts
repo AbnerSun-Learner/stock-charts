@@ -1,10 +1,12 @@
 import type { GridParams } from '@/types/grid';
+import type { GridBudgetMode } from '@/types/grid-v2';
 import { getPriceDecimals, validateGridParams } from '@/lib/grid-validate-params';
 import { useCallback, useMemo, useState } from 'react';
 
 interface UseGridParamsReturn {
   params: GridParams;
   updateParam: (key: keyof GridParams, value: number | null) => void;
+  updateBudgetMode: (mode: GridBudgetMode) => void;
   validateParams: () => { isValid: boolean; errors: string[] };
   errors: string[];
   priceDecimals: number;
@@ -30,9 +32,14 @@ export function useGridParams(initialParams: GridParams): UseGridParamsReturn {
     []
   );
 
+  const updateBudgetMode = useCallback((mode: GridBudgetMode) => {
+    setParams(prev => ({ ...prev, budgetMode: mode }));
+  }, []);
+
   return {
     params,
     updateParam,
+    updateBudgetMode,
     validateParams,
     errors,
     priceDecimals,
