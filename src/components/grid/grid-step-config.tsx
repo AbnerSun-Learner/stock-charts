@@ -135,8 +135,8 @@ export function GridStepConfig({
             id="base-step-input"
             value={baseStep}
             onChange={handleBaseStepChange}
-            precision={0}
-            min={1}
+            precision={1}
+            min={0.1}
             max={99}
             controls={false}
             addonAfter="%"

@@ -7,6 +7,7 @@ interface UseGridCalculatorProps {
   validateParams: () => { isValid: boolean; errors: string[] };
   dynamicGridEnabled: boolean;
   dynamicGridMode: 'stable' | 'aggressive';
+  currentPrice?: number;
 }
 
 export function useGridCalculator({
@@ -14,15 +15,16 @@ export function useGridCalculator({
   validateParams,
   dynamicGridEnabled,
   dynamicGridMode,
+  currentPrice,
 }: UseGridCalculatorProps) {
   const calculateGrid = useCallback(
     () =>
       runGridCalculation(
         params,
-        { dynamicGridEnabled, dynamicGridMode },
+        { dynamicGridEnabled, dynamicGridMode, currentPrice },
         validateParams()
       ),
-    [params, validateParams, dynamicGridEnabled, dynamicGridMode]
+    [params, validateParams, dynamicGridEnabled, dynamicGridMode, currentPrice]
   );
 
   return { calculateGrid };

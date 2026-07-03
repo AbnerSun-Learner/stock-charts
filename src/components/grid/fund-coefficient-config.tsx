@@ -1,9 +1,14 @@
 "use client";
 
 import { HelpTooltip } from "@/components/shared/help-tooltip";
-import { InputNumber } from "antd";
+import type { GridBudgetMode } from "@/types/grid-v2";
+import { InputNumber, Segmented } from "antd";
 
 interface FundCoefficientConfigProps {
+  totalBudget: number;
+  onTotalBudgetChange: (value: number | null) => void;
+  budgetMode: GridBudgetMode;
+  onBudgetModeChange: (mode: GridBudgetMode) => void;
   amountPerGrid: number;
   onAmountPerGridChange: (value: number | null) => void;
   amountMultiplier: number;
@@ -13,6 +18,10 @@ interface FundCoefficientConfigProps {
 }
 
 export function FundCoefficientConfig({
+  totalBudget,
+  onTotalBudgetChange,
+  budgetMode,
+  onBudgetModeChange,
   amountPerGrid,
   onAmountPerGridChange,
   amountMultiplier,
@@ -20,38 +29,6 @@ export function FundCoefficientConfig({
   profitReserveMultiplier,
   onProfitReserveMultiplierChange,
 }: FundCoefficientConfigProps) {
-  const fields = [
-    {
-      key: "amountPerGrid",
-      label: "每份金额",
-      value: amountPerGrid,
-      onChange: onAmountPerGridChange,
-      tooltip: "每个网格档位的投资金额",
-      precision: 0,
-      min: 100,
-    },
-    {
-      key: "amountMultiplier",
-      label: "金额加码系数",
-      value: amountMultiplier,
-      onChange: onAmountMultiplierChange,
-      tooltip:
-        "逐级增加买入金额。0=按固定金额买入。公式：每份金额 + 每份金额 × 系数 × (1 - 当前档位)",
-      precision: 1,
-      min: 0,
-    },
-    {
-      key: "profitReserveMultiplier",
-      label: "保留利润系数",
-      value: profitReserveMultiplier,
-      onChange: onProfitReserveMultiplierChange,
-      tooltip:
-        "卖出时是否保留利润。0=不保留利润（当前档位全部卖出），0.5=保留一半利润，1=保留全部利润（只卖回本），2=保留两倍利润",
-      precision: 1,
-      min: 0,
-    },
-  ];
-
   return (
     <div className="space-y-4 p-4 sm:p-6 md:p-7">
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -65,33 +42,32 @@ export function FundCoefficientConfig({
               size="md"
               placement="bottomLeft"
               maxWidth="16rem"
-              title="控制每个档位的资金分配和利润保留策略"
+              title="总弹药反推单格金额，支持越跌越买与留利底仓"
             />
           </div>
         </div>
       </div>
 
       <div className="space-y-4">
-        {/* 第一行：每份金额（占满一行） */}
         <div className="space-y-2">
           <label
-            htmlFor={fields[0].key}
+            htmlFor="totalBudget"
             className="flex items-center gap-1 text-xs font-semibold text-[var(--foreground)]"
           >
             <span className="text-[var(--loss)]">*</span>
-            {fields[0].label}
+            总弹药
             <HelpTooltip
-              title={fields[0].tooltip}
+              title="愿意投入网格的最大现金，系统将反推单格基础金额"
               placement="topLeft"
               maxWidth="14rem"
             />
           </label>
           <InputNumber
-            id={fields[0].key}
-            value={fields[0].value}
-            onChange={(value) => fields[0].onChange(value)}
-            precision={fields[0].precision}
-            min={fields[0].min}
+            id="totalBudget"
+            value={totalBudget}
+            onChange={onTotalBudgetChange}
+            precision={0}
+            min={1000}
             controls={false}
             className="w-full"
             style={{
@@ -103,39 +79,98 @@ export function FundCoefficientConfig({
           />
         </div>
 
-        {/* 第二行：金额加码系数和保留利润系数（一行2列） */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {fields.slice(1).map((field) => (
-            <div key={field.key} className="space-y-2">
-              <label
-                htmlFor={field.key}
-                className="flex items-center gap-1 text-xs font-semibold text-[var(--foreground)]"
-              >
-                <span className="text-[var(--loss)]">*</span>
-                {field.label}
-                <HelpTooltip
-                  title={field.tooltip}
-                  placement="topLeft"
-                  maxWidth="14rem"
-                />
-              </label>
-              <InputNumber
-                id={field.key}
-                value={field.value}
-                onChange={(value) => field.onChange(value)}
-                precision={field.precision}
-                min={field.min}
-                controls={false}
-                className="w-full"
-                style={{
-                  width: "100%",
-                  textAlign: "center",
-                  fontWeight: 600,
-                  fontSize: "16px",
-                }}
-              />
-            </div>
-          ))}
+        <div className="space-y-2">
+          <span className="text-xs font-semibold text-[var(--foreground)]">
+            预算模式
+          </span>
+          <Segmented
+            block
+            value={budgetMode}
+            onChange={value => onBudgetModeChange(value as GridBudgetMode)}
+            options={[
+              { label: "自动反推", value: "auto" },
+              { label: "手动金额", value: "manual" },
+            ]}
+          />
+        </div>
+
+        {budgetMode === "manual" && (
+          <div className="space-y-2">
+            <label
+              htmlFor="amountPerGrid"
+              className="flex items-center gap-1 text-xs font-semibold text-[var(--foreground)]"
+            >
+              <span className="text-[var(--loss)]">*</span>
+              每份金额
+            </label>
+            <InputNumber
+              id="amountPerGrid"
+              value={amountPerGrid}
+              onChange={onAmountPerGridChange}
+              precision={0}
+              min={100}
+              controls={false}
+              className="w-full"
+              style={{
+                width: "100%",
+                textAlign: "center",
+                fontWeight: 600,
+                fontSize: "16px",
+              }}
+            />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <label
+              htmlFor="amountMultiplier"
+              className="flex items-center gap-1 text-xs font-semibold text-[var(--foreground)]"
+            >
+              <span className="text-[var(--loss)]">*</span>
+              金额加码系数
+            </label>
+            <InputNumber
+              id="amountMultiplier"
+              value={amountMultiplier}
+              onChange={onAmountMultiplierChange}
+              precision={1}
+              min={0}
+              controls={false}
+              className="w-full"
+              style={{
+                width: "100%",
+                textAlign: "center",
+                fontWeight: 600,
+                fontSize: "16px",
+              }}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label
+              htmlFor="profitReserveMultiplier"
+              className="flex items-center gap-1 text-xs font-semibold text-[var(--foreground)]"
+            >
+              <span className="text-[var(--loss)]">*</span>
+              保留利润系数
+            </label>
+            <InputNumber
+              id="profitReserveMultiplier"
+              value={profitReserveMultiplier}
+              onChange={onProfitReserveMultiplierChange}
+              precision={1}
+              min={0}
+              controls={false}
+              className="w-full"
+              style={{
+                width: "100%",
+                textAlign: "center",
+                fontWeight: 600,
+                fontSize: "16px",
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

@@ -4,9 +4,10 @@ import { AlertCircle } from "lucide-react";
 
 interface ErrorAlertProps {
   errors: string[];
+  title?: string;
 }
 
-export function ErrorAlert({ errors }: ErrorAlertProps) {
+export function ErrorAlert({ errors, title = '参数校验未通过' }: ErrorAlertProps) {
   if (errors.length === 0) return null;
 
   return (
@@ -17,7 +18,7 @@ export function ErrorAlert({ errors }: ErrorAlertProps) {
       <div className="mb-3 flex items-center gap-2">
         <AlertCircle className="h-5 w-5 shrink-0 text-[var(--loss)]" />
         <span className="font-semibold text-[var(--foreground)]">
-          参数校验未通过
+          {title}
         </span>
       </div>
       <ul className="list-inside list-disc space-y-1.5 text-sm leading-relaxed text-[color-mix(in_srgb,var(--foreground)_88%,var(--loss))] marker:text-[var(--loss)]">
