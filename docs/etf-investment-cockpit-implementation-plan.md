@@ -63,11 +63,11 @@
 
 | 项                                | 状态                                         | 位置（`scheduled-tasks`）                                          |
 | --------------------------------- | -------------------------------------------- | ------------------------------------------------------------------ |
-| 账本 12 表 + `fx_rates` DDL + RLS | **已落地（待对目标库执行）**                 | `models/migrations/20260710_cockpit_ledger_and_fx_rates.sql`       |
-| Frankfurter 汇率同步 job          | **已落地**                                   | `jobs/sync_fx_rates_frankfurter.py` + workflow `sync-fx-rates.yml` |
+| 账本 12 表 + `fx_rates` DDL + RLS | **已应用到目标库**（Actions run 成功）       | `models/migrations/20260710_cockpit_ledger_and_fx_rates.sql`       |
+| Frankfurter 汇率同步 job          | **已合并 main**；数据待手动跑 Actions        | `jobs/sync_fx_rates_frankfurter.py` + workflow `sync-fx-rates.yml` |
 | 本仓业务代码 / Magic Link UI      | **未开始**（先 scheduled-tasks，本仓暂不动） | —                                                                  |
 
-对目标库执行：
+对目标库执行（已完成；重跑可用 Actions「应用驾驶舱 Migration」）：
 
 ```bash
 psql "$DATABASE_URL" -f src/scheduled_tasks/models/migrations/20260710_cockpit_ledger_and_fx_rates.sql
