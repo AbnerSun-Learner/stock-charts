@@ -33,10 +33,10 @@ const TOOLS = [
     stats: '步长配置 · 压力测试',
   },
   {
-    id: 'coming-soon-2',
-    title: '持仓分析',
-    description: '多维度分析股票持仓结构，行业分布、市值风格一键洞察',
-    href: '#',
+    id: 'dashboard',
+    title: '组合看板',
+    description: '目标配置、持仓偏离、现金暴露与再平衡建议一屏查看',
+    href: '/view/dashboard',
     icon: (
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
         <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
@@ -45,7 +45,7 @@ const TOOLS = [
         <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" opacity="0.3" />
       </svg>
     ),
-    coming: true,
+    stats: 'Dashboard · 再平衡',
   },
   {
     id: 'coming-soon-3',

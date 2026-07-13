@@ -67,7 +67,8 @@
 | ~~Frankfurter 汇率同步 job~~          | ~~**已合并 main 且已有同步数据**~~（`fx_rates` 有行）                  | `jobs/sync_fx_rates_frankfurter.py` + workflow `sync-fx-rates.yml`          |
 | 本仓 Phase 0 纯函数 / 类型 / 单测     | **已完成**                                                             | `src/types/investment.ts`、`src/lib/investment/*`、`__tests__/investment/*` |
 | 本仓 Phase 1 SDK / Auth / Repository  | **已完成（§4.5 RPC/导入批次验收仍阻塞）**                              | `src/lib/supabase/*`、`src/components/auth/auth-gate.tsx`、`src/app/auth/*` |
-| 本仓 Phase 2+ Dashboard / 复盘 UI     | **未开始**                                                             | —                                                                           |
+| 本仓 Phase 2 组合 Dashboard           | **已完成（UI 壳 Workbench 仍按 UI spec 另批）**                        | `/view/dashboard`、`src/components/investment/*`                            |
+| 本仓 Phase 3+ 网格闭环 / 复盘         | **未开始**                                                             | —                                                                           |
 
 ~~对目标库执行 migration（已完成；重跑可用 Actions「应用驾驶舱 Migration」）：~~
 
@@ -864,7 +865,7 @@ calculateXirr({
 
 ## 5. 分阶段实施路线
 
-> **进度标记（2026-07-13）**：已完成项用删除线标出。文档地基 + Phase 0 纯函数 + Phase 1（Supabase SDK / Magic Link / Repository）已完成；§4.5 补强 migration 仍阻塞导入批次与目标配置 RPC 的库侧验收；Phase 2+ UI 未开始。
+> **进度标记（2026-07-13）**：已完成项用删除线标出。文档地基 + Phase 0/1 + Phase 2 Dashboard 业务页已完成；§4.5 仍阻塞目标配置/导入 RPC 库侧验收；UI Shell/Workbench 见 `docs/superpowers/specs/2026-07-13-stock-charts-ui-design.md` 另批；Phase 3+ 未开始。
 
 ### 5.1 Phase 0：文档与数据地基
 
@@ -955,41 +956,32 @@ calculateXirr({
 
 任务：
 
-1. 新增路由
+1. ~~新增路由 `src/app/view/dashboard/page.tsx`（AuthGate 包裹）。~~
 
-   - `src/app/view/dashboard/page.tsx`
+2. ~~新增组件~~（`src/components/investment/*`）
 
-2. 新增组件
+   - ~~`portfolio-summary.tsx`~~
+   - ~~`portfolio-settings-form.tsx`~~
+   - ~~`target-allocation-form.tsx`（写入仅 RPC）~~
+   - ~~`allocation-drift-table.tsx`~~
+   - ~~`rebalance-actions.tsx`（写 `rebalance_plans`）~~
+   - ~~`currency-exposure.tsx`~~
+   - ~~`csv-import-panel.tsx`~~
+   - ~~`cash-flow-form.tsx`~~
+   - ~~`market-data-import-panel.tsx`（只读）~~
 
-   - `portfolio-summary.tsx`：总资产、现金比例、收益指标（XIRR/TWR）。
-   - `portfolio-settings-form.tsx`：基础币种、组合基准、再平衡阈值。
-   - `target-allocation-form.tsx`：维护 `target_allocations`，与持仓导入分离。
-   - `allocation-drift-table.tsx`：当前比例、目标比例、相对偏离、绝对偏离。
-   - `rebalance-actions.tsx`：再平衡计划、建议补仓/减仓金额、触发原因。
-   - `currency-exposure.tsx`：CNY/HKD/USD 暴露。
-   - `csv-import-panel.tsx`：导入成交、持仓快照；汇率以读 `fx_rates` 为主，CSV 仅应急补洞。
-   - `cash-flow-form.tsx`：手工录入外部出入金、分红、费用、换汇（含双腿）。
-   - `market-data-import-panel.tsx`：可选——汇率 CSV 补洞；价格以读 `etf_daily` 为主（禁止作为共享表主写入路径）。
+3. ~~首页入口：替换「持仓分析」占位为「组合看板」→ `/view/dashboard`。~~（完整 Workbench 壳层见 UI spec，另批落地）
 
-3. 首页入口
-
-   - 在 `src/components/home/home-tool-grid.tsx` 中增加 **Dashboard** 入口（文案可用「组合看板」/「Dashboard」）。
-   - 可以替换当前“持仓分析”占位卡。
-
-4. 与旭日图关系
-   - 不直接改造旭日图为数据源。
-   - Dashboard 应从结构化 `positions` 派生分类数据。
-   - 后续可复用旭日图组件展示分类占比。
+4. ~~与旭日图关系：不改造旭日图数据源；Dashboard 使用结构化 `positions`。~~
 
 验收标准：
 
-- 空数据时显示明确空状态。
-- 缺价格、缺汇率、缺目标配置时显示错误或警告。
-- 用户可录入外部出入金与分红，收益指标（XIRR/TWR）可计算。
-- 目标权重在 `target_allocations` 维护，导入持仓不会覆盖目标配置。
-- 仅 A 股、A+港股、A+美股三类样例都能正确计算。
-- 生成的是 `rebalance_plans`，不是 `grid_plans`；资产配置页面不直接生成网格计划。
-- 页面不直接写复杂计算，复杂逻辑必须在 `src/lib/investment/*`。
+- ~~空数据时显示明确空状态 / 警告。~~
+- ~~缺估值、缺目标配置时显示警告。~~
+- ~~可录入外部出入金与分红；有足够现金流时可算 XIRR；TWR 依赖快照序列。~~
+- ~~目标配置与持仓导入分离；导入走批次 RPC（§4.5 未就绪则明确失败）。~~
+- ~~再平衡生成 `rebalance_plans`，页面不创建 `grid_plans`。~~
+- ~~复杂计算在 `src/lib/investment/*`（含 `dashboard-metrics.ts`）。~~
 
 ### 5.4 Phase 3：网格实盘闭环
 
