@@ -1,0 +1,33 @@
+---
+description: stock-charts 与 scheduled-tasks 的数据职责边界（强制）
+alwaysApply: true
+---
+
+# 双仓数据职责边界
+
+本仓库（`stock-charts`）与同级 **`scheduled-tasks`** 共用同一 Supabase Postgres。职责不可混淆。
+
+## scheduled-tasks 唯一负责
+
+- 建表、migration、`schema.sql`、RLS 策略 SQL（含用户账本表与 `fx_rates`）
+- 第三方数据源接入（yfinance、Frankfurter/ECB 等）及密钥（仅该仓 Secrets）
+- 共享表批量落库（`etf_daily`、`fx_rates`、`sync_runs` 等）
+
+## stock-charts 只负责
+
+- 业务纯函数、UI、驾驶舱/复盘
+- 经 `@supabase/supabase-js` + Auth/RLS 的用户账本 CRUD（数据由用户在 UI/CSV 填写）
+- 共享行情/汇率表的**只读**查询与领域映射
+- Phase 1 认证：**邮箱 Magic Link**（不做 OAuth，除非用户另行确认）
+
+## 禁止（本仓）
+
+- 新增权威 DDL：`docs/supabase-schema.sql`、`supabase/migrations/*` 或等价文件
+- 内嵌行情/汇率 API Key，或直连第三方拉数后写入共享表
+- 客户端/应用服务对共享行情表做批量 upsert/delete
+
+## 协作方式
+
+需要新表或新同步源时：在本仓文档写清表契约 → 在 `scheduled-tasks` 落地 SQL/job → 本仓再接 Repository。详情见 `docs/etf-investment-cockpit-implementation-plan.md` §1.4、§4.4。
+
+权威 migration：`scheduled-tasks` 的 `20260710_cockpit_ledger_and_fx_rates.sql`；领域 `FxRate.date` ↔ 物理列 `fx_rates.rate_date`。
