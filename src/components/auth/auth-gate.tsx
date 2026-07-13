@@ -2,14 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
-import { Alert, Button, Card, Form, Input, Space, Typography } from 'antd';
+import { Alert, Button, Card, Space, Typography } from 'antd';
+import { Github } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { tryGetSupabasePublicConfig } from '@/lib/supabase/env';
 import {
+  formatAuthUserLabel,
   getCurrentUser,
-  sendMagicLink,
+  signInWithGitHub,
   signOut,
 } from '@/lib/supabase/auth';
+import { AUTH_DISABLED } from '@/lib/supabase/auth-flags';
 
 export interface AuthGateProps {
   children: React.ReactNode;
@@ -20,16 +23,26 @@ export interface AuthGateProps {
 type GateStatus = 'loading' | 'guest' | 'authenticated' | 'misconfigured';
 
 /**
- * 未登录展示 Magic Link 入口；已登录渲染子节点。
- * 客户端惰性创建 Supabase，避免 CI/预渲染因缺环境变量崩溃。
+ * 未登录展示 GitHub OAuth 入口；已登录渲染子节点。
+ * 审阅期：`AUTH_DISABLED` 为 true 时直接放行（不跑登录态）。
  */
 export function AuthGate({ children, onAuthenticated }: AuthGateProps) {
+  if (AUTH_DISABLED) {
+    return <>{children}</>;
+  }
+  return (
+    <AuthGateEnabled onAuthenticated={onAuthenticated}>
+      {children}
+    </AuthGateEnabled>
+  );
+}
+
+function AuthGateEnabled({ children, onAuthenticated }: AuthGateProps) {
   const [status, setStatus] = useState<GateStatus>('loading');
   const [user, setUser] = useState<User | null>(null);
   const [client, setClient] = useState<SupabaseClient | null>(null);
   const [configError, setConfigError] = useState<string | null>(null);
-  const [email, setEmail] = useState('');
-  const [sending, setSending] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
   const [feedback, setFeedback] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -44,7 +57,21 @@ export function AuthGate({ children, onAuthenticated }: AuthGateProps) {
 
   const refreshUser = useCallback(
     async (activeClient: SupabaseClient) => {
-      const result = await getCurrentUser(activeClient);
+      const timeoutMs = 8_000;
+      const result = await Promise.race([
+        getCurrentUser(activeClient),
+        new Promise<Awaited<ReturnType<typeof getCurrentUser>>>(resolve => {
+          setTimeout(
+            () =>
+              resolve({
+                ok: false,
+                error: '会话检查超时，请重试登录',
+                code: 'timeout',
+              }),
+            timeoutMs
+          );
+        }),
+      ]);
       if (!result.ok) {
         setUser(null);
         setStatus('guest');
@@ -92,22 +119,19 @@ export function AuthGate({ children, onAuthenticated }: AuthGateProps) {
     };
   }, [refreshUser]);
 
-  const onSend = async () => {
+  const onGitHubSignIn = async () => {
     if (!client) {
       return;
     }
-    setSending(true);
+    setSigningIn(true);
     setFeedback(null);
-    const result = await sendMagicLink(client, email, redirectTo);
-    setSending(false);
+    const result = await signInWithGitHub(client, redirectTo);
     if (!result.ok) {
+      setSigningIn(false);
       setFeedback({ type: 'error', text: result.error });
       return;
     }
-    setFeedback({
-      type: 'success',
-      text: 'Magic Link 已发送，请查收邮箱并点击链接完成登录',
-    });
+    window.location.assign(result.value.url);
   };
 
   const onSignOut = async () => {
@@ -146,22 +170,19 @@ export function AuthGate({ children, onAuthenticated }: AuthGateProps) {
         <Card title="登录投资驾驶舱">
           <Space direction="vertical" size="middle" className="w-full">
             <Typography.Paragraph type="secondary">
-              使用邮箱 Magic Link 登录。不支持第三方 OAuth（Phase 1）。
+              使用 GitHub 账号登录。请先在 Supabase 启用 GitHub Provider，并将回调
+              URL 加入 Redirect allow list。
             </Typography.Paragraph>
-            <Form layout="vertical" onFinish={onSend}>
-              <Form.Item label="邮箱" required>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={event => setEmail(event.target.value)}
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                />
-              </Form.Item>
-              <Button type="primary" htmlType="submit" loading={sending} block>
-                发送 Magic Link
-              </Button>
-            </Form>
+            <Button
+              type="primary"
+              size="large"
+              block
+              loading={signingIn}
+              icon={<Github size={18} />}
+              onClick={onGitHubSignIn}
+            >
+              使用 GitHub 登录
+            </Button>
             {feedback ? (
               <Alert type={feedback.type} showIcon message={feedback.text} />
             ) : null}
@@ -175,7 +196,7 @@ export function AuthGate({ children, onAuthenticated }: AuthGateProps) {
     <div>
       <div className="mb-4 flex items-center justify-between gap-3 px-1">
         <Typography.Text type="secondary">
-          已登录：{user?.email}
+          已登录：{user ? formatAuthUserLabel(user) : ''}
         </Typography.Text>
         <Button size="small" onClick={onSignOut}>
           退出登录

@@ -51,7 +51,7 @@
 | 共享表落库（批量写）            | **唯一归属**：`etf_daily`、`fx_rates`、`sync_runs` 等由 job 写入   | **禁止**客户端/服务端批量 upsert 共享行情；只读                             |
 | 用户账本读写                    | 不写业务 CRUD                                                      | **本仓负责**：经 `@supabase/supabase-js` + Auth/RLS 读写账本（UI/CSV）      |
 | 业务计算与 UI                   | 不涉及                                                             | **本仓负责**：纯函数、Dashboard、复盘、导入校验                             |
-| 认证方式（已确认）              | —                                                                  | **邮箱 Magic Link**（Phase 1；暂不做 OAuth）                                |
+| 认证方式（已确认）              | —                                                                  | **GitHub OAuth**（Supabase Provider；回调 `/auth/callback`）                |
 
 协作约定：
 
@@ -934,7 +934,7 @@ calculateXirr({
 
 5. ~~表契约对齐（注释/文档链到 `scheduled-tasks` migration；本仓无权威 DDL）。~~ 行情只读已接入。§4.5 仍阻塞导入幂等/同日 upsert 验收。
 
-6. ~~认证与会话（Magic Link）~~：`auth.ts`、`/auth/callback`、`/auth/error`、`AuthGate`；中间件刷新 cookie。Dashboard 路由 Phase 2 再挂 AuthGate。
+6. ~~认证与会话（GitHub OAuth，由 Magic Link 切换）~~：`signInWithGitHub`、`/auth/callback`、`/auth/error`、`AuthGate`；中间件刷新 cookie。Dashboard 挂 AuthGate。
 
 验收标准：
 
@@ -943,7 +943,7 @@ calculateXirr({
 - §4.5 补强项在目标库存在后方可勾选：positions 同日唯一、import_batches、导入 RPC、`replace_target_allocation_config`、同用户复合外键（或触发器）。
 - ~~未新建与现表同义的 `price_bars` / `benchmarks` / `benchmark_prices`。~~
 - ~~本仓无权威 DDL 文件。~~
-- ~~Magic Link 路径与过期可恢复错误页已实现（需在 Supabase Dashboard 配置 Redirect URL：`/auth/callback`）。~~
+- ~~GitHub OAuth 与可恢复错误页已实现（需在 Supabase 启用 GitHub Provider，并配置 Redirect URL：`/auth/callback`）。~~
 - ~~未登录用户无法写入账本数据（单测覆盖）。~~
 - ~~不出现 `service_role`、真实 key、硬编码凭证。~~
 - ~~Repository 单测 mock Supabase 客户端，覆盖成功和失败路径。~~
@@ -1185,7 +1185,7 @@ npm run build
 - **§4.5 表契约补强 migration 已应用到目标库**（含 `cash_target_weight`、`replace_target_allocation_config`、现金流非负 check、positions 同日唯一、import_batches、导入 RPC、同用户外键、intent check 等）。此前只能记「已应用初版 DDL」，不能勾选「表契约完整」。
 - ~~本仓无权威 DDL/migration；无第三方行情/汇率直连拉数与共享表批量落库。~~（边界已固化；实现阶段继续遵守）
 - 用户只能读写自己的账本数据；无法通过猜测 UUID 把成交挂到他人计划上。
-- 登录/登出可用（邮箱 Magic Link：回调路由、会话恢复、过期链接错误路径），未登录无法写入。
+- 登录/登出可用（GitHub OAuth：回调路由、会话恢复、授权失败错误路径），未登录无法写入。
 - `.env.local.example` 不含真实凭证。
 - Repository 失败路径有明确错误；缺 `fx_rates` 时有明确提示。
 - CSV 批量导入具备事务语义或等价整批提交/回滚，并可按批次撤销。
@@ -1251,7 +1251,7 @@ UI 和文案必须遵守：
 | 快照差异          | 持仓快照与账本推导不一致                                             | 展示差异金额和份额，要求人工确认       |
 | XIRR/TWR 不可算   | 无异号、不收敛、缺预期估值日等                                       | 展示对应错误码，不显示伪造收益率       |
 | 网格跌破下限      | 当前价格低于网格计划下限                                             | 标记为暂停或需复评，不继续自动加码     |
-| Magic Link 失效   | 回调过期、Redirect URL 不匹配、会话丢失                              | 提示重新发送链接，引导回登录入口       |
+| GitHub OAuth 失败 | 授权取消、Redirect URL 不匹配、Provider 未启用、会话丢失             | 错误页引导重新 GitHub 登录             |
 | Supabase 连接失败 | 环境变量缺失、Auth 失效、网络失败                                    | 展示可恢复错误，不丢弃本地导入内容     |
 
 ### 10.3 数据生命周期

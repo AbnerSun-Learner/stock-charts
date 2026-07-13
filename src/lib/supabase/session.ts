@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { AUTH_DISABLED } from '@/lib/supabase/auth-flags';
 import { getSupabasePublicConfig } from '@/lib/supabase/env';
 
 /**
@@ -8,6 +9,11 @@ import { getSupabasePublicConfig } from '@/lib/supabase/env';
  */
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
   let response = NextResponse.next({ request });
+
+  // TODO(auth): 审阅结束后删除此短路
+  if (AUTH_DISABLED) {
+    return response;
+  }
 
   try {
     const { url, anonKey } = getSupabasePublicConfig();

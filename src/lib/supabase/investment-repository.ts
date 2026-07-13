@@ -39,6 +39,10 @@ import {
 } from '@/lib/supabase/mappers';
 import { assertBusinessInstrumentId } from '@/lib/investment/market-data';
 import { dedupeFeeTaxCashFlows } from '@/lib/investment/csv-import';
+import {
+  AUTH_DISABLED,
+  AUTH_REVIEW_USER_ID,
+} from '@/lib/supabase/auth-flags';
 
 export type RepositoryErrorCode =
   | 'unauthenticated'
@@ -86,6 +90,14 @@ export class InvestmentRepository {
   constructor(private readonly client: SupabaseClient) {}
 
   private async requireUser(): Promise<RepoResult<User>> {
+    // TODO(auth): 审阅结束后删除 AUTH_DISABLED 分支，恢复强制登录校验
+    if (AUTH_DISABLED) {
+      return {
+        ok: true,
+        value: { id: AUTH_REVIEW_USER_ID } as User,
+      };
+    }
+
     const { data, error } = await this.client.auth.getUser();
     if (error) {
       return fail('unauthenticated', error.message);

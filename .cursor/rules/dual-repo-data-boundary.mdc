@@ -18,7 +18,7 @@ alwaysApply: true
 - 业务纯函数、UI、驾驶舱/复盘
 - 经 `@supabase/supabase-js` + Auth/RLS 的用户账本 CRUD（数据由用户在 UI/CSV 填写）
 - 共享行情/汇率表的**只读**查询与领域映射
-- Phase 1 认证：**邮箱 Magic Link**（不做 OAuth，除非用户另行确认）
+- 认证：**GitHub OAuth**（Supabase Provider；回调 `/auth/callback`）
 
 ## 禁止（本仓）
 

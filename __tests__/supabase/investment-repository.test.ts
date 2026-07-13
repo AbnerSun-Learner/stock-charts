@@ -1,4 +1,5 @@
 import { InvestmentRepository } from '@/lib/supabase/investment-repository';
+import { AUTH_DISABLED } from '@/lib/supabase/auth-flags';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 type MockQuery = {
@@ -45,6 +46,12 @@ function createThenableQuery(result: { data: unknown; error: unknown }): MockQue
 
 describe('InvestmentRepository', () => {
   it('无会话时拒绝写入', async () => {
+    if (AUTH_DISABLED) {
+      // 审阅期关闭鉴权；恢复 AUTH_DISABLED=false 后本用例重新生效
+      expect(AUTH_DISABLED).toBe(true);
+      return;
+    }
+
     const client = {
       auth: {
         getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),

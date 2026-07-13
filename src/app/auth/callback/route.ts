@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
+import { AUTH_DISABLED } from '@/lib/supabase/auth-flags';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 /**
- * Magic Link 回调：用 code 换会话后跳转；失败则导向可恢复错误页。
+ * OAuth / PKCE 回调：用 code 换会话后跳转；失败则导向可恢复错误页。
  */
 export async function GET(request: Request): Promise<NextResponse> {
   const { searchParams, origin } = new URL(request.url);
+
+  if (AUTH_DISABLED) {
+    return NextResponse.redirect(`${origin}/view/dashboard`);
+  }
+
   const code = searchParams.get('code');
   const errorDescription = searchParams.get('error_description');
   const errorCode = searchParams.get('error_code') ?? searchParams.get('error');
@@ -49,6 +55,6 @@ export async function GET(request: Request): Promise<NextResponse> {
   }
 
   return NextResponse.redirect(
-    `${origin}/auth/error?code=missing_code&message=${encodeURIComponent('缺少登录凭证，请重新发送 Magic Link')}`
+    `${origin}/auth/error?code=missing_code&message=${encodeURIComponent('缺少登录凭证，请重新使用 GitHub 登录')}`
   );
 }
