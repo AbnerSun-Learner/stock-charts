@@ -66,7 +66,8 @@
 | ~~账本 12 表 + `fx_rates` DDL + RLS~~ | ~~**已应用到目标库**~~；**表契约未完整验收**（见 §4.5 待补 migration） | `models/migrations/20260710_cockpit_ledger_and_fx_rates.sql`                |
 | ~~Frankfurter 汇率同步 job~~          | ~~**已合并 main 且已有同步数据**~~（`fx_rates` 有行）                  | `jobs/sync_fx_rates_frankfurter.py` + workflow `sync-fx-rates.yml`          |
 | 本仓 Phase 0 纯函数 / 类型 / 单测     | **已完成**                                                             | `src/types/investment.ts`、`src/lib/investment/*`、`__tests__/investment/*` |
-| 本仓 Phase 1+ / Magic Link UI         | **未开始**                                                             | —                                                                           |
+| 本仓 Phase 1 SDK / Auth / Repository  | **已完成（§4.5 RPC/导入批次验收仍阻塞）**                              | `src/lib/supabase/*`、`src/components/auth/auth-gate.tsx`、`src/app/auth/*` |
+| 本仓 Phase 2+ Dashboard / 复盘 UI     | **未开始**                                                             | —                                                                           |
 
 ~~对目标库执行 migration（已完成；重跑可用 Actions「应用驾驶舱 Migration」）：~~
 
@@ -863,7 +864,7 @@ calculateXirr({
 
 ## 5. 分阶段实施路线
 
-> **进度标记（2026-07-13）**：已完成项用删除线标出。文档地基 + `scheduled-tasks` 初版 DDL/RLS/汇率同步已就绪；**本仓 Phase 0 纯函数与单测已完成**；Phase 1+（Supabase/UI）仍未开始。§4.5 表契约补强仍阻塞 Phase 1 部分验收。
+> **进度标记（2026-07-13）**：已完成项用删除线标出。文档地基 + Phase 0 纯函数 + Phase 1（Supabase SDK / Magic Link / Repository）已完成；§4.5 补强 migration 仍阻塞导入批次与目标配置 RPC 的库侧验收；Phase 2+ UI 未开始。
 
 ### 5.1 Phase 0：文档与数据地基
 
@@ -910,65 +911,43 @@ calculateXirr({
 
 执行前置：
 
-- 修改 `package.json` 前先征询用户确认。
-- 实现前查 Supabase 当前文档和 changelog，确认 `@supabase/supabase-js` 安装方式、RLS 建议和 key 命名。
+- ~~修改 `package.json` 前先征询用户确认。~~（已确认安装 `@supabase/supabase-js` + `@supabase/ssr`）
+- ~~实现前查 Supabase 当前文档和 changelog，确认 `@supabase/supabase-js` 安装方式、RLS 建议和 key 命名。~~
 - ~~**依赖 `scheduled-tasks`**：用户账本 12 表 + `fx_rates` 的 DDL/RLS、以及 `sync_fx_rates_*` job 必须先在该仓合并并应用到目标库；本仓只消费已存在的表。~~（已完成应用）
-- **依赖 `scheduled-tasks` 补强 migration（§4.5）**：`positions` 唯一约束、`import_batches`、复合外键/触发器、导入 RPC、规范代码契约等落地前，本仓 Repository 批量导入与同日快照 upsert **不得宣称完成验收**。
+- **依赖 `scheduled-tasks` 补强 migration（§4.5）**：`positions` 唯一约束、`import_batches`、复合外键/触发器、导入 RPC、规范代码契约等落地前，本仓 Repository 批量导入与同日快照 upsert **不得宣称完成验收**。（仍阻塞）
 
 任务：
 
-1. 安装 Supabase SDK
+1. ~~安装 Supabase SDK（`@supabase/supabase-js` + `@supabase/ssr`）并提交 lockfile。~~
 
-   - 预计命令：`npm install @supabase/supabase-js`
-   - 必须提交 lockfile。
+2. ~~新增 `.env.local.example`（只写变量名）。~~
 
-2. 新增环境示例
+3. ~~新增客户端 `src/lib/supabase/client.ts` / `server.ts` / `env.ts`：只读公开配置；缺失报错；URL 规范化去掉 `/rest/v1`。~~
 
-   - `.env.local.example`
-   - 只写变量名，不写真实值。
+4. ~~新增 `src/lib/supabase/investment-repository.ts`~~
 
-3. 新增客户端
+   - ~~封装组合设置、ETF、持仓、成交、现金流、再平衡计划、网格计划、复盘、决策日志的读写。~~
+   - ~~目标配置写入仅 RPC `replace_target_allocation_config`；未就绪返回 `rpc_unavailable`。~~
+   - ~~行情/汇率只读映射；禁止共享表写入。~~
+   - ~~写入要求当前用户；CSV 批量仅走 `import_ledger_batch` RPC（§4.5 未就绪则失败）。~~
 
-   - `src/lib/supabase/client.ts`
-   - 只读取 `NEXT_PUBLIC_SUPABASE_URL` 和公开 key。
-   - 缺失配置时返回明确错误，不静默失败。
+5. ~~表契约对齐（注释/文档链到 `scheduled-tasks` migration；本仓无权威 DDL）。~~ 行情只读已接入。§4.5 仍阻塞导入幂等/同日 upsert 验收。
 
-4. 新增 repository
-
-   - `src/lib/supabase/investment-repository.ts`
-   - 封装组合设置、ETF、持仓、成交、现金流、再平衡计划、网格计划、复盘、决策日志的读写。
-   - **目标配置**：只读可用 select；写入必须调用 `replace_target_allocation_config` RPC，禁止对 `target_allocations` / `cash_target_weight` 做逐行 CRUD。
-   - 行情/汇率：**只读** `etf_daily` / `etf_pool_snapshots` / `indices` / `index_daily_prices` / `fx_rates`。
-   - 所有账本写入都要求当前用户存在；禁止对共享行情表做 upsert/delete。
-   - CSV 批量写入调用 §4.5 RPC（或等价批次接口），禁止浏览器逐行 insert 冒充整批事务；成交费税与费用流水去重。
-
-5. 表契约对齐（**不在本仓写 migration**）
-
-   - 在本仓文档或类型注释中固定与 `scheduled-tasks` 一致的表/列契约（可链到该仓 `schema.sql` / migration）。
-   - **禁止**新增 `docs/supabase-schema.sql` 或 `supabase/migrations/*` 作为权威 DDL。
-   - ~~若表尚未在目标库出现：阻塞本 Phase 的集成验收，改为先提 `scheduled-tasks` PR（账本表 + `fx_rates` + RLS；汇率 job 可并行）。~~（表与 job 已就绪）
-   - §4.5 补强 migration 未合并前：阻塞「导入幂等 / 同日快照替代 / 跨用户外键」相关验收。
-   - Repository 行情读路径映射到现有共享表；~~`fx_rates` 就绪后~~接入只读查询。（本仓 Repository 未做）
-
-6. 认证与会话（Magic Link 完整路径）
-   - 新增 `src/lib/supabase/auth.ts`：封装邮箱 Magic Link 登录、登出、获取当前用户、会话恢复（已确认：Phase 1 不做 OAuth）。
-   - 新增回调路由：`src/app/auth/callback/route.ts`（或等价 App Router 回调），处理 magic link 换会话；配置 Supabase Redirect URL。
-   - 新增 `src/components/auth/auth-gate.tsx`：未登录展示入口；过期/无效链接展示可恢复错误（重新发送），不得白屏。
-   - Dashboard 相关路由在 Phase 2 接入 `AuthGate`；Repository 在无会话时拒绝写入并返回明确错误。
+6. ~~认证与会话（Magic Link）~~：`auth.ts`、`/auth/callback`、`/auth/error`、`AuthGate`；中间件刷新 cookie。Dashboard 路由 Phase 2 再挂 AuthGate。
 
 验收标准：
 
-- ~~目标库中用户账本表已启用 RLS 且有 `user_id` 隔离（由 `scheduled-tasks` 落地，本仓用集成/手工查询确认）。~~
-- ~~共享行情表（含 `fx_rates`）为 authenticated 只读；~~本仓代码路径无共享表写入（待本仓实现时继续保证）。
+- ~~目标库中用户账本表已启用 RLS 且有 `user_id` 隔离。~~
+- ~~本仓代码路径无共享表写入（`forbidSharedMarketWrite` + 无 upsert 路径）。~~
 - §4.5 补强项在目标库存在后方可勾选：positions 同日唯一、import_batches、导入 RPC、`replace_target_allocation_config`、同用户复合外键（或触发器）。
-- 未新建与现表同义的 `price_bars` / `benchmarks` / `benchmark_prices`。
-- ~~本仓无权威 DDL 文件；外键和 `user_id` 索引在库侧存在（核对即可）。~~
-- Magic Link：发送邮件 → 回调换会话 → 刷新后会话恢复；过期链接有明确错误。
-- 未登录用户无法写入账本数据。
-- 不出现 `service_role`、真实 key、硬编码凭证。
-- Repository 单测 mock Supabase 客户端，覆盖成功和失败路径。
-- CSV 导入：中途失败整批不残留；重试不因行号变化产生重复账；可按 `import_batch_id` 撤销。
-- 目标配置：RPC 部分失败不留下权重和 ≠ 1 的中间态；客户端无逐行改配置路径。
+- ~~未新建与现表同义的 `price_bars` / `benchmarks` / `benchmark_prices`。~~
+- ~~本仓无权威 DDL 文件。~~
+- ~~Magic Link 路径与过期可恢复错误页已实现（需在 Supabase Dashboard 配置 Redirect URL：`/auth/callback`）。~~
+- ~~未登录用户无法写入账本数据（单测覆盖）。~~
+- ~~不出现 `service_role`、真实 key、硬编码凭证。~~
+- ~~Repository 单测 mock Supabase 客户端，覆盖成功和失败路径。~~
+- CSV 导入整批事务 / 按 batch 撤销：**接口已预留，§4.5 RPC 落地前不可宣称完成。**
+- 目标配置 RPC 原子写入：**客户端无逐行改配置路径；RPC 落地前写入返回 `rpc_unavailable`。**
 
 ### 5.3 Phase 2：组合 Dashboard
 
