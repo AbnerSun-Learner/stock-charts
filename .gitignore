@@ -36,3 +36,4 @@ __pycache__/
 
 # Claude / Cursor 本地配置
 .claude/
+.superpowers/

@@ -22,7 +22,7 @@
 
 | 模块       | 当前文件                                                                 | 当前能力                             | 后续定位                                             |
 | ---------- | ------------------------------------------------------------------------ | ------------------------------------ | ---------------------------------------------------- |
-| 首页入口   | `src/app/page.tsx`、`src/components/home/home-tool-grid.tsx`             | 展示工具卡片入口                     | 新增 ETF 驾驶舱、复盘入口                            |
+| 首页入口   | `src/app/page.tsx`、`src/components/home/home-tool-grid.tsx`             | 展示工具卡片入口                     | 新增 Dashboard、复盘入口                             |
 | 资产旭日图 | `src/app/view/sunburst/page.tsx`、`src/utils/calculate-position-tree.ts` | 手工金额录入、分类汇总、图表导出     | 作为组合配置可视化的一部分                           |
 | 网格策略   | `src/app/view/grid/page.tsx`、`src/lib/grid/*`、`src/types/grid*.ts`     | 生成网格计划、压力测试、买入持有对照 | 作为独立辅策略接入账本和复盘，不参与目标配置比例计算 |
 | 测试体系   | `__tests__/**/*.test.ts`、`e2e/*.spec.ts`                                | Jest 单测、Playwright E2E            | 每阶段补单测，涉及 UI 时补 E2E                       |
@@ -50,7 +50,7 @@
 | 第三方数据源接入                | **唯一归属**：yfinance、Frankfurter/ECB 等；密钥只进该仓 Secrets   | **禁止**内嵌行情/汇率 API Key 或直连第三方拉数                              |
 | 共享表落库（批量写）            | **唯一归属**：`etf_daily`、`fx_rates`、`sync_runs` 等由 job 写入   | **禁止**客户端/服务端批量 upsert 共享行情；只读                             |
 | 用户账本读写                    | 不写业务 CRUD                                                      | **本仓负责**：经 `@supabase/supabase-js` + Auth/RLS 读写账本（UI/CSV）      |
-| 业务计算与 UI                   | 不涉及                                                             | **本仓负责**：纯函数、驾驶舱、复盘、导入校验                                |
+| 业务计算与 UI                   | 不涉及                                                             | **本仓负责**：纯函数、Dashboard、复盘、导入校验                             |
 | 认证方式（已确认）              | —                                                                  | **邮箱 Magic Link**（Phase 1；暂不做 OAuth）                                |
 
 协作约定：
@@ -59,21 +59,22 @@
 2. 共享行情/汇率以 `scheduled-tasks` 同步结果为准；本仓 CSV 导入仅作**账本侧**（成交、持仓、现金流）或汇率**应急补洞**，不得成为共享表主路径。
 3. 本仓文档可引用 `scheduled-tasks` 的 `schema.sql` / `doc/supabase-schema.md`，不复制维护第二份权威 DDL。
 
-#### 落地进度（2026-07-10 确认）
+#### 落地进度（2026-07-13 更新）
 
-| 项                                | 状态                                         | 位置（`scheduled-tasks`）                                          |
-| --------------------------------- | -------------------------------------------- | ------------------------------------------------------------------ |
-| 账本 12 表 + `fx_rates` DDL + RLS | **已应用到目标库**（Actions run 成功）       | `models/migrations/20260710_cockpit_ledger_and_fx_rates.sql`       |
-| Frankfurter 汇率同步 job          | **已合并 main**；数据待手动跑 Actions        | `jobs/sync_fx_rates_frankfurter.py` + workflow `sync-fx-rates.yml` |
-| 本仓业务代码 / Magic Link UI      | **未开始**（先 scheduled-tasks，本仓暂不动） | —                                                                  |
+| 项                                    | 状态                                                                   | 位置（`scheduled-tasks`）                                                   |
+| ------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| ~~账本 12 表 + `fx_rates` DDL + RLS~~ | ~~**已应用到目标库**~~；**表契约未完整验收**（见 §4.5 待补 migration） | `models/migrations/20260710_cockpit_ledger_and_fx_rates.sql`                |
+| ~~Frankfurter 汇率同步 job~~          | ~~**已合并 main 且已有同步数据**~~（`fx_rates` 有行）                  | `jobs/sync_fx_rates_frankfurter.py` + workflow `sync-fx-rates.yml`          |
+| 本仓 Phase 0 纯函数 / 类型 / 单测     | **已完成**                                                             | `src/types/investment.ts`、`src/lib/investment/*`、`__tests__/investment/*` |
+| 本仓 Phase 1+ / Magic Link UI         | **未开始**                                                             | —                                                                           |
 
-对目标库执行（已完成；重跑可用 Actions「应用驾驶舱 Migration」）：
+~~对目标库执行 migration（已完成；重跑可用 Actions「应用驾驶舱 Migration」）：~~
 
 ```bash
 psql "$DATABASE_URL" -f src/scheduled_tasks/models/migrations/20260710_cockpit_ledger_and_fx_rates.sql
 ```
 
-然后在 Actions 手动跑 `同步汇率到 Supabase`（建议先 `full`）。
+~~然后在 Actions 手动跑 `同步汇率到 Supabase`（已有 schedule/成功跑次）。~~
 
 ## 2. 核心痛点
 
@@ -148,12 +149,25 @@ ETF 驾驶舱的根基不是图表，而是账本。所有图表、建议和复�
 派生规则：
 
 - 组合总资产、现金比例、币种暴露、配置偏离都应由 `target_allocations`、`positions`、`cash_accounts`（或账本重算现金）、`fx_rates` 派生。
-- 分币种现金余额由 `cash_flows` 与 `trade_records` 共同推导：`初始余额 + 外部现金流 ± 买卖结算 ± 分红/费用/利息/换汇`。`cash_accounts` 仅作快照校验，不是唯一事实源。
-- XIRR 仅使用**外部现金流**：`deposit`、`withdrawal`。`dividend`、`fee`、`tax`、`interest` 为组合内部事件，计入 TWR 与现金余额，但不作为 XIRR 的外部流入/流出。
-- TWR 由 `portfolio_snapshots`（或按日重算的期末总资产）分段计算，分段边界可叠加外部出入金事件。
-- 资产配置偏离只由 `target_allocations`、当前持仓市值和现金派生，不能因为某标的启用网格而改变目标权重。
-- 目标配置粒度：P0/P2 默认按**标的**（`instrumentId`）维护 `targetWeight`；`assetClass` 层权重由标的权重聚合展示，不在 P0 单独维护双层目标。
-- 资产配置角色（core/satellite/cash/watch）的唯一事实源是 `target_allocations.allocationRole`；`ETFInstrument.defaultAllocationRole` 仅作为新建目标配置时的默认值，持仓快照不携带角色，导入持仓不得改写角色。
+- **分币种现金重建（基准日快照 + 重放）**：采用「基准日现金快照」而非无限回溯开户历史。
+  - 用户选定 `cashBaselineDate`（默认取最早有完整 `cash_accounts` 快照的日期；首次导入可手填当日各币种余额）。
+  - 起点：该日各币种 `cash_accounts.balance`（缺失币种视为 0，并记结构化警告）。
+  - 重放范围：仅 `flowDate > cashBaselineDate` 的 `cash_flows`，以及 `settlementDate`（缺省则 `tradeDate`）`> cashBaselineDate` 的 `trade_records`。
+  - **基准日及之前的成交/现金流不得参与该次现金重建**（它们已隐含在基准快照中）。
+  - 公式：`基准余额` + 按 type 符号规则应用的现金流 ± 买卖结算。`cash_accounts` 在非基准日仍作校验快照，不是唯一事实源。
+  - 不引入 `opening_balance` 现金流类型；不引入虚拟 `CASH` 标的。
+- **XIRR 契约**（接口见 §4.3；仅外部出入金 + 截止日终值）：
+  - 外部现金流仅 `deposit` / `withdrawal`；`dividend` / `fee` / `tax` / `interest` / `fx_exchange` 不进 XIRR。
+  - 必须把估值日组合终值 `terminalValueBase` 作为最后一笔**正向**现金流加入，否则无出金时数学上无解。
+  - 跨币种外部现金流先按**发生日** `fx_rates` 折算为基础币种；缺汇率返回错误，不回退到当前汇率。
+- **TWR 契约**（见 §4.3）：使用**连续估值日序列**（不是「连续交易日」——多市场日历不一致）；外部现金流按期末调整；缺少预期估值日快照时返回 `non_contiguous_snapshots`。
+- 资产配置偏离只由 `target_allocations`、`portfolio_settings.cashTargetWeight`、当前持仓市值和现金派生，不能因为某标的启用网格而改变目标权重。
+- 目标配置粒度：P0/P2 默认按**标的**（`instrumentId` = 规范代码，见 §4.5）维护 `targetWeight`；`assetClass` 层权重由标的权重聚合展示，不在 P0 单独维护双层目标。
+- **目标权重约束**：
+  - `target_allocations` **只存真实 ETF 标的**，禁止虚拟 `CASH` 代码，禁止 `allocationRole=cash`。
+  - 现金目标权重存于 `portfolio_settings.cashTargetWeight`（0–1）；市值来自分币种现金折算合计。
+  - 约束：`sum(target_allocations.target_weight) + cashTargetWeight = 1`（容差见金额精度）；`allocationRole=watch` 的权重必须为 `0`。
+- 资产配置角色（core/satellite/watch）的唯一事实源是 `target_allocations.allocationRole`；现金桶由 `cashTargetWeight` 表达，不占标的行。`ETFInstrument.defaultAllocationRole` 仅作为新建目标配置时的默认值，持仓快照不携带角色，导入持仓不得改写角色。
 - 再平衡计划和网格计划必须是两个独立实体：前者服务长期配置纪律，后者服务震荡市策略收益。
 - 网格执行状态必须由 `grid_plans` 和 `trade_records` 匹配得出，不能把计划档位当作已成交，也不能把网格计划当成再平衡计划。
 - 复盘报告中的每条结论必须能追溯到成交、现金流、再平衡计划、网格计划、基准价格或决策日志。
@@ -175,7 +189,7 @@ ETF 驾驶舱的根基不是图表，而是账本。所有图表、建议和复�
 src/
   app/
     view/
-      cockpit/
+      dashboard/
         page.tsx
       review/
         page.tsx
@@ -245,10 +259,11 @@ import type {
 
 export type Market = "CN" | "HK" | "US";
 export type Currency = "CNY" | "HKD" | "USD";
-export type AllocationRole = "core" | "satellite" | "cash" | "watch";
+/** 标的级角色；现金不在此枚举——现金目标见 PortfolioSettings.cashTargetWeight */
+export type AllocationRole = "core" | "satellite" | "watch";
 export type ExecutionIntent = "rebalance" | "grid" | "manual";
 export type TradeSide = "buy" | "sell";
-/** 外部现金流：仅 deposit/withdrawal 参与 XIRR */
+/** 外部现金流：仅 deposit/withdrawal 参与 XIRR（符号由 type 转换，持久化金额恒非负） */
 export type ExternalCashFlowType = "deposit" | "withdrawal";
 /** 内部现金流：影响现金余额与 TWR，不参与 XIRR 外部口径 */
 export type InternalCashFlowType =
@@ -272,20 +287,36 @@ export interface PortfolioSettings {
   relativeDriftThreshold: number;
   absoluteDriftThreshold: number;
   reviewCadenceDays: number;
+  /**
+   * 现金目标权重（0–1）；与 sum(target_allocations.targetWeight) 之和必须为 1。
+   * 不是虚拟 ETF，不写入 target_allocations。
+   */
+  cashTargetWeight: number;
+  /**
+   * 现金重建基准日；缺省则取最早完整 cash_accounts 快照日。
+   * 仅重放该日之后的现金流与成交结算。
+   */
+  cashBaselineDate?: string;
 }
 
 export interface TargetAllocation {
   id: string;
-  /** 标的级目标权重；key 为 instrumentId */
+  /** 真实 ETF 规范代码；禁止 CASH 虚拟码 */
   instrumentId: string;
+  /** 0–1；与 cashTargetWeight 合计为 1；watch 必须为 0 */
   targetWeight: number;
-  /** 资产配置角色的唯一事实源 */
+  /** 仅 core / satellite / watch；禁止 cash */
   allocationRole: AllocationRole;
   updatedAt: string;
 }
 
+/**
+ * 标的主数据。共享池与用户扩展的稳定业务键均为 `symbol`（规范代码，如 510300.SH）。
+ * `id` 仅在用户扩展表 `etf_instruments` 行内等于 UUID；业务表（持仓/成交/目标配置）一律存 `symbol`，禁止存 UUID。
+ */
 export interface ETFInstrument {
   id: string;
+  /** 规范代码，如 510300.SH / 2800.HK / VOO.US；业务行 instrumentId 与此对齐 */
   symbol: string;
   name: string;
   market: Market;
@@ -300,30 +331,40 @@ export interface ETFInstrument {
   /** 新建目标配置时的默认角色；生效角色以 TargetAllocation.allocationRole 为准 */
   defaultAllocationRole?: AllocationRole;
   gridEligible: boolean;
+  /** 来源：shared=池内只读；custom=用户 etf_instruments 扩展 */
+  source: "shared" | "custom";
 }
 
 export interface Position {
   id: string;
+  /** 规范代码，与 ETFInstrument.symbol 一致 */
   instrumentId: string;
   asOfDate: string;
   shares: number;
   averageCost: number;
-  currentPrice: number;
-  marketValue: number;
+  /**
+   * 以下估值字段在缺价格/缺汇率时可缺失；领域层用 optional 表达，
+   * 计算前必须校验，缺失则返回结构化错误（禁止用 0 或 1 静默填充）。
+   */
+  currentPrice?: number;
+  marketValue?: number;
   currency: Currency;
-  fxRateToBase: number;
-  marketValueBase: number;
+  fxRateToBase?: number;
+  marketValueBase?: number;
 }
 
 export interface TradeRecord {
   id: string;
+  /** 规范代码 */
   instrumentId: string;
   tradeDate: string;
   settlementDate?: string;
   side: TradeSide;
   price: number;
   quantity: number;
+  /** 与本笔成交直接相关的佣金；现金重建只从成交结算扣一次，不得再生成 CashFlow.fee */
   fee: number;
+  /** 与本笔成交直接相关的印花税等；同上，禁止落入 CashFlow.tax */
   tax: number;
   currency: Currency;
   fxRateToBase: number;
@@ -333,9 +374,20 @@ export interface TradeRecord {
   decisionLogId?: string;
   /** 券商成交流水号；有则优先用于去重 */
   brokerRef?: string;
-  /** CSV 导入行号；无 brokerRef 时参与 importHash */
-  importRowIndex?: number;
+  /**
+   * 内容指纹：不含 CSV 行号；覆盖日期、规范代码、方向、价格、数量、费用、币种。
+   * 同批次内稳定；跨文件仅在 fingerprint 全局唯一时可用于自动去重。
+   */
+  contentFingerprint?: string;
+  /**
+   * **仅对当前导入批次内**相同 contentFingerprint 的第几次出现（从 0 起）。
+   * 保留同日同价多笔；跨批次不可假设编号对齐。
+   */
+  occurrenceIndex?: number;
+  /** 单批次内幂等键：contentFingerprint + occurrenceIndex（无 brokerRef 时） */
   importHash?: string;
+  /** 所属导入批次；用于整批撤销与失败摘要 */
+  importBatchId?: string;
   note?: string;
 }
 
@@ -343,15 +395,28 @@ export interface CashFlow {
   id: string;
   flowDate: string;
   type: CashFlowType;
+  /**
+   * 金额一律非负。对现金余额的增减由 type（及换汇双腿角色）决定，不在持久化层用正负号表达方向。
+   * XIRR 投资者视角符号由 type 转换得到，禁止把 deposit.amountBase 存成负数。
+   */
   amount: number;
   currency: Currency;
   fxRateToBase: number;
+  /** 非负；基础币种折算额 */
   amountBase: number;
-  /** 分红、费用等需归因到标的时使用 */
+  /** 分红、费用等需归因到标的时使用（规范代码） */
   instrumentId?: string;
-  /** fx_exchange 的第二条腿：出账币种与金额 */
+  /**
+   * 仅当本条现金流依附某笔成交做审计关联时可选；
+   * 有 linkedTradeId 时，本条不得再以 fee/tax 影响现金（现金已由成交结算计入）。
+   * 推荐：成交相关费税根本不写 CashFlow，本字段通常为空。
+   */
+  linkedTradeId?: string;
+  /** fx_exchange 的出账币种；必须与 currency 不同 */
   counterCurrency?: Currency;
+  /** fx_exchange 出账金额，非负 */
   counterAmount?: number;
+  importBatchId?: string;
   note?: string;
 }
 
@@ -364,7 +429,16 @@ export interface CashAccount {
   balanceBase: number;
 }
 
+/** 现金重建输入：基准日快照 + 仅重放基准日之后的事件 */
+export interface CashRebuildInput {
+  cashBaselineDate: string;
+  baselineBalances: Array<{ currency: Currency; balance: number }>;
+  cashFlows: CashFlow[];
+  trades: TradeRecord[];
+}
+
 export interface PriceBar {
+  /** 规范代码 */
   instrumentId: string;
   date: string;
   open: number;
@@ -408,6 +482,70 @@ export interface PortfolioSnapshot {
   totalAssetsBase: number;
 }
 
+export type XirrError =
+  | "empty_cash_flows"
+  | "no_sign_change"
+  | "does_not_converge"
+  | "multiple_roots"
+  | "missing_fx_rate"
+  | "invalid_terminal_value";
+
+/**
+ * XIRR：外部出入金（deposit 为负、withdrawal 为正）
+ * + 估值日终值作为最后一笔正向现金流。
+ */
+export interface CalculateXirrInput {
+  externalCashFlows: Array<{
+    date: string;
+    /** 已折算为基础币种；deposit 记为负，withdrawal 记为正 */
+    amountBase: number;
+  }>;
+  /** 估值日组合总资产（基础币种），作为终端正向现金流 */
+  terminalValueBase: number;
+  valuationDate: string;
+}
+
+export type CalculateXirrResult =
+  | { ok: true; value: number }
+  | { ok: false; error: XirrError };
+
+export type TwrError =
+  | "insufficient_snapshots"
+  | "non_contiguous_snapshots"
+  | "missing_fx_rate"
+  | "zero_prior_value";
+
+/**
+ * TWR：在明确的估值日序列上分段。
+ * r_t = (V_t - CF_t) / V_(t-1) - 1；TWR = Π(1 + r_t) - 1。
+ * CF_t = 该估值日结束前发生的外部净现金流（投资者视角：入金为正流入组合、出金为负，与现金账本符号转换规则一致，见 §4.3）。
+ */
+export interface CalculateTwrInput {
+  /** 按 asOfDate 升序；必须覆盖预期估值日序列，否则 non_contiguous_snapshots */
+  snapshots: PortfolioSnapshot[];
+  externalCashFlows: Array<{ date: string; amountBase: number }>;
+  /** 现金流时点：end_of_day（默认）——计入当日 CF_t */
+  cashFlowTiming: "end_of_day";
+  /**
+   * 预期估值日序列（自然日或产品生成的估值日历）。
+   * 多市场组合不以单一交易所交易日为准。
+   */
+  expectedValuationDates: string[];
+}
+
+export interface ImportBatch {
+  id: string;
+  sourceFileName: string;
+  sourceFileHash: string;
+  importedAt: string;
+  status: "pending" | "committed" | "partial" | "rolled_back";
+  summary?: {
+    inserted: number;
+    skippedDuplicate: number;
+    failed: number;
+  };
+}
+
 export interface GridPlanSnapshot {
   id: string;
   instrumentId: string;
@@ -426,8 +564,10 @@ export interface RebalancePlan {
   status: "draft" | "active" | "completed" | "cancelled";
   reason: string;
   triggerReason: RebalanceTriggerReason;
-  /** 生成计划时从 target_allocations 复制的快照 */
+  /** 生成计划时从 target_allocations 复制的标的权重快照（不含现金；现金见当时 cashTargetWeight） */
   targetWeights: Record<string, number>;
+  /** 生成计划时的现金目标权重快照 */
+  cashTargetWeight: number;
   plannedTrades: RebalancePlannedTrade[];
 }
 
@@ -467,31 +607,32 @@ export interface ReviewEntry {
 
 Supabase 中已有 A 股 ETF/指数研究库。**不新建**与现表同义的 `price_bars`、`benchmarks`、`benchmark_prices`，避免双写。领域类型（`PriceBar`、`Benchmark` 等）保持不变；持久化层映射到现有物理表。
 
-| 领域实体                  | 物理表（已有 / DDL 状态）      | 映射要点                                                                                                                       |
-| ------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| `PriceBar`                | **已有** `etf_daily`           | `etf_code`→`instrumentId`，`trade_date`→`date`；回测优先 `open_qfq/high_qfq/low_qfq/close_qfq`，缺则用原始 OHLC；`volume` 可选 |
-| `ETFInstrument`（共享池） | **已有** `etf_pool_snapshots`  | 只读主数据；默认 `market=CN`、`currency=CNY`；`tracking_index_code`→`benchmarkId`                                              |
-| `Benchmark`               | **已有** `indices`             | `code`/`name`；币种默认 CNY                                                                                                    |
-| `BenchmarkPrice`          | **已有** `index_daily_prices`  | 仅有 `close`；无 open/high/low                                                                                                 |
-| `FxRate`                  | **已建 DDL** `fx_rates`        | 物理列 `rate_date` ↔ 领域 `date`；`sync_fx_rates_frankfurter` 落库，本仓只读                                                   |
-| 用户侧标的扩展            | **已建 DDL** `etf_instruments` | 用户自选/池外标的；池内标的优先引用 `etf_pool_snapshots`，不复制日 K；业务行由本仓 UI 写入                                     |
+| 领域实体                    | 物理表（已有 / DDL 状态）                   | 映射要点                                                                                                                   |
+| --------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `PriceBar`                  | **已有** `etf_daily`                        | 库内 `etf_code`（多为短码）经 `market-data.ts` 规范为 `instrumentId`（如 `510300.SH`）；回测优先 qfq OHLC，缺则原始 OHLC   |
+| `ETFInstrument`（共享池）   | **已有** `etf_pool_snapshots`               | 只读；`symbol`=规范代码；默认 `market=CN`、`currency=CNY`；`tracking_index_code`→`benchmarkId`；`source=shared`            |
+| `ETFInstrument`（用户扩展） | ~~DDL 已建~~ `etf_instruments`              | `id`=UUID 仅行主键；`symbol`=规范代码（已有 per-user unique）；业务表 **禁止** 引用 UUID，只引用 `symbol`；`source=custom` |
+| `Benchmark`                 | **已有** `indices`                          | `code`/`name`；币种默认 CNY                                                                                                |
+| `BenchmarkPrice`            | **已有** `index_daily_prices`               | 仅有 `close`；无 open/high/low                                                                                             |
+| `FxRate`                    | ~~**已建 DDL**~~ `fx_rates`（已有同步数据） | 物理列 `rate_date` ↔ 领域 `date`；`sync_fx_rates_frankfurter` 落库，本仓只读                                               |
 
 已知数据缺口（不阻塞「适配现表」决策，但影响后续阶段）：
 
 - 跟踪指数：约半数池内 ETF 缺 `tracking_index_code`；`399976.SZ`、`931071.CSI` 不在 `indices`。
 - 指数行情截止日可能滞后于 `etf_daily`（评估时指数约到 2026-05-22，ETF 到 2026-07-09）。
-- 代码形态：库内多为 `510300`，领域规范为 `510300.SH`；由 `market-data.ts` 做双向标准化，不强制改库内主键。
+- 代码形态：库内多为 `510300`，领域与业务表统一为 `510300.SH`；短码仅出现在共享行情物理列，由 `market-data.ts` 双向转换。
 - 当前池仅为 A 股上市 ETF（含 QDII）；港美原生代码（`VOO.US` 等）不在池内。
 
-核心表（用户账本，必须 `user_id` + RLS，**DDL 已在 `scheduled-tasks` migration `20260710_…`；业务数据仍由本仓 UI 写入**）：
+核心表（用户账本，必须 `user_id` + RLS；~~DDL 已在 `scheduled-tasks` migration `20260710_…` 并已应用到目标库~~；**表契约仍待 §4.5 补强**；业务数据仍由本仓 UI 写入）：
 
 - `portfolio_settings`
 - `target_allocations`
-- `etf_instruments`（用户扩展/自选；共享主数据见上表）
+- `etf_instruments`（用户扩展/自选；共享主数据见上表；业务键为 `symbol` 规范代码）
 - `positions`
 - `trade_records`
 - `cash_flows`
 - `cash_accounts`
+- `import_batches`（**待建**，见 §4.5）
 - `rebalance_plans`
 - `grid_plans`
 - `review_entries`
@@ -501,7 +642,7 @@ Supabase 中已有 A 股 ETF/指数研究库。**不新建**与现表同义的 `
 共享行情与汇率（**不按用户复制**）：
 
 - **复用已有**：`etf_daily`、`etf_pool_snapshots`、`indices`、`index_daily_prices`（及可选的估值/行业权重表，不进入 P0 账本路径）
-- **已建 DDL + 同步 job**：`fx_rates`（`rate_date` / `from_currency` / `to_currency` / `rate` / `source`）
+- ~~**已建 DDL + 同步 job**：`fx_rates`（`rate_date` / `from_currency` / `to_currency` / `rate` / `source`）~~（已有同步数据）
 - **明确不建**：`price_bars`、`benchmarks`、`benchmark_prices`
 
 建表原则（**SQL 落地在 `scheduled-tasks`，本仓只约定契约**）：
@@ -553,26 +694,94 @@ create index positions_instrument_id_idx on public.positions (instrument_id);
 
 下面几类数据不是 P0 第一条 PR 必须全部实现，但必须在模型层预留，否则风险仪表盘、回测、基准归因会缺少输入。
 
-| 实体                                    | 解决的问题                           | 最小字段                                                                        | 首次落地阶段                                        |
-| --------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------- | --------------------------------------------------- |
-| `portfolio_settings`                    | 基础币种、组合基准、再平衡阈值       | `base_currency`、`benchmark_id`、偏离阈值                                       | Phase 0 / Phase 2                                   |
-| `target_allocations`                    | 独立于持仓快照的目标配置             | `instrument_id`、`target_weight`、`allocation_role`                             | Phase 0 / Phase 2                                   |
-| `cash_accounts`                         | 分币种现金余额、现金不足、换汇需求   | `currency`、`balance`、`fx_rate_to_base`、`as_of_date`                          | Phase 0 / Phase 2                                   |
-| `rebalance_plans`                       | 资产配置再平衡计划，独立于网格计划   | `target_weights`、`planned_trades`、`trigger_reason`、`status`                  | Phase 2                                             |
-| `PriceBar` → `etf_daily`                | 回测、波动率、最大回撤、买入持有对照 | `etf_code`、`trade_date`、OHLC（含 qfq）、`volume`                              | 已有数据；Phase 2 填现价 / Phase 5 回测             |
-| `fx_rates`（DDL 已建）                  | 港美 ETF 折算、汇兑损益、币种暴露    | `rate_date`、`from_currency`、`to_currency`、`rate`                             | 对库执行 migration 后由 job 同步；本仓 Phase 2 只读 |
-| `Benchmark` → `indices`                 | 组合基准、单标的跟踪指数、Beta 归因  | `code`、`name`、`category`                                                      | 已有；Phase 4 归因前补链路                          |
-| `BenchmarkPrice` → `index_daily_prices` | 基准收益曲线、组合对照               | `index_code`、`trade_date`、`close`                                             | 已有；Phase 4 前对齐至与 ETF 同日                   |
-| `portfolio_snapshots`                   | TWR 分段、净值曲线、回撤             | `as_of_date`、`total_market_value_base`、`cash_value_base`、`total_assets_base` | Phase 2 / Phase 4                                   |
+| 实体                                     | 解决的问题                                   | 最小字段                                                                              | 首次落地阶段                                            |
+| ---------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `portfolio_settings`                     | 基础币种、组合基准、再平衡阈值、现金目标权重 | `base_currency`、`benchmark_id`、偏离阈值、`cash_target_weight`、`cash_baseline_date` | Phase 0 / Phase 2                                       |
+| `target_allocations`                     | 真实标的目标配置（不含现金行）               | `instrument_id`、`target_weight`、`allocation_role`（core/satellite/watch）           | Phase 0 / Phase 2                                       |
+| `cash_accounts`                          | 分币种现金余额、现金不足、换汇需求           | `currency`、`balance`、`fx_rate_to_base`、`as_of_date`                                | Phase 0 / Phase 2                                       |
+| `rebalance_plans`                        | 资产配置再平衡计划，独立于网格计划           | `target_weights`、`planned_trades`、`trigger_reason`、`status`                        | Phase 2                                                 |
+| `PriceBar` → `etf_daily`                 | 回测、波动率、最大回撤、买入持有对照         | `etf_code`、`trade_date`、OHLC（含 qfq）、`volume`                                    | 已有数据；Phase 2 填现价 / Phase 5 回测                 |
+| `fx_rates`（~~DDL 已建且已有同步数据~~） | 港美 ETF 折算、汇兑损益、币种暴露            | `rate_date`、`from_currency`、`to_currency`、`rate`                                   | ~~对库执行 migration 后由 job 同步~~；本仓 Phase 2 只读 |
+| `Benchmark` → `indices`                  | 组合基准、单标的跟踪指数、Beta 归因          | `code`、`name`、`category`                                                            | 已有；Phase 4 归因前补链路                              |
+| `BenchmarkPrice` → `index_daily_prices`  | 基准收益曲线、组合对照                       | `index_code`、`trade_date`、`close`                                                   | 已有；Phase 4 前对齐至与 ETF 同日                       |
+| `portfolio_snapshots`                    | TWR 分段、净值曲线、回撤                     | `as_of_date`、`total_market_value_base`、`cash_value_base`、`total_assets_base`       | Phase 2 / Phase 4                                       |
 
 现金账户规则：
 
-- `cash_flows` 记录资金流事件；`trade_records` 的买卖结算同步影响分币种现金；`cash_accounts` 记录某个日期的现金余额快照，用于校验而非唯一事实源。
-- `deposit`、`withdrawal` 为外部现金流，仅这两类参与 XIRR。
-- `dividend`、`fee`、`tax`、`interest` 为内部现金流，影响现金余额与 TWR，需尽量关联 `instrumentId`（分红归因）。
+- `cash_flows` 记录资金流事件；`trade_records` 的买卖结算同步影响分币种现金；`cash_accounts` 记录某个日期的现金余额快照。
+- **现金重建**：以 `cashBaselineDate` 的 `cash_accounts` 为起点，仅重放该日之后的现金流与成交结算（见 §3.2）；基准日及之前的交易不参与重建。
+- **现金流正负号（账本层，与 XIRR 投资者视角分离）**：
+  - `CashFlow.amount` / `amountBase` / `counterAmount` **一律非负**（`> 0`；零金额事件不入库）。
+  - 对余额的影响由 `type` 决定：
+
+| type                                | 对 `currency`         | 对 `counterCurrency`                         |
+| ----------------------------------- | --------------------- | -------------------------------------------- |
+| `deposit` / `dividend` / `interest` | **+amount**           | —                                            |
+| `withdrawal` / `fee` / `tax`        | **−amount**           | —                                            |
+| `fx_exchange`                       | **+amount**（入账腿） | **−counterAmount**（出账腿）；两币种必须不同 |
+
+- 买卖成交结算：`buy` 减少结算币种现金（价款+`fee`+`tax`），`sell` 增加结算币种现金（价款 −`fee`−`tax`）；方向由 `TradeRecord.side` 决定，成交金额字段本身非负。
+- **费税唯一归属（防重复扣款）**：
+  - 与成交直接相关的佣金、印花税等 **只存** `TradeRecord.fee` / `tax`，并由成交结算计入现金。
+  - `CashFlow` 的 `fee` / `tax` **只**记录不属于具体成交的独立费用（如账户管理费、利息税、平台年费）。
+  - CSV 若同时含成交费税与费用流水：导入时必须关联到成交并 **丢弃/禁止** 生成第二条 `CashFlow`；不得静默双写。
+  - 若保留 `linkedTradeId` 作审计：有关联时该条 `fee`/`tax` **不得**再参与现金重建（或直接禁止入库）。
+  - 现金重建伪代码口径：`Δcash = settle(trades including fee/tax) + apply(cashFlows where not trade-embedded fee/tax)`。
+- `deposit`、`withdrawal` 为外部现金流；XIRR 的正负号由 **type 转换**得到（deposit→ 负，withdrawal→ 正），**禁止**在库内把 `amountBase` 存成负数。
+- `dividend`、`interest` 及**独立** `fee`/`tax` 为内部现金流，影响现金余额与 TWR；独立费用可关联 `instrumentId`，但不得重复成交已含费税。
 - `fx_exchange` 必须记录双腿：`currency`/`amount`（入账）与 `counterCurrency`/`counterAmount`（出账），不能只记单边。
 - A 股、港股、美股同时存在时，现金余额必须按 CNY/HKD/USD 分开记录。
 - 再平衡和网格执行必须先检查对应币种现金，不允许只看折算后的总现金。
+
+目标配置写入契约：
+
+- 权重不变量为**强约束**：`sum(target_weight)+cash_target_weight=1`，`watch⇒0`。
+- **禁止** UI/Repository 对 `target_allocations` 做逐行 insert/update/delete 冒充配置变更（会产生中间非法状态）。
+- Phase 1 起必须通过受 RLS 保护的 RPC `replace_target_allocation_config`：在单事务内替换 `cash_target_weight` + 全量 `target_allocations`，提交前校验不变量；失败整单回滚。
+
+收益率契约（P0 必须按此实现与单测）：
+
+```ts
+calculateXirr({
+  externalCashFlows, // 由 type 转换：deposit → amountBase < 0；withdrawal → amountBase > 0
+  terminalValueBase,  // 估值日总资产，作为最后一笔正向现金流
+  valuationDate,
+}): CalculateXirrResult
+```
+
+- **截止日**：`valuationDate`；终值取该日 `totalAssetsBase`（持仓市值 + 现金，已折基础币种）。
+- **正负号**：仅出现在 XIRR/TWR 计算输入中；持久化账本金额恒非负。
+  - XIRR（投资者视角）：入金为负、出金与终值为正。
+  - TWR 的 `CF_t`（组合口径）：入金为正流入、出金为负流出，以便 `V_t - CF_t` 剔除外部资金对区间收益的扭曲；**与 XIRR 符号相反，实现时分两套转换函数，禁止混用**。
+  - 无正负异号（含终值后仍无）→ `no_sign_change`；牛顿法不收敛 → `does_not_converge`；检测到多解 → `multiple_roots`（P0 返回错误，不静默取一根）。
+- **跨币种**：外部现金流按**发生日**汇率折算；缺汇率 → `missing_fx_rate`，禁止用估值日/当前汇率替代。
+- **TWR（连续估值日，非连续交易日）**：
+  - 公式：`r_t = (V_t - CF_t) / V_(t-1) - 1`，`TWR = Π(1 + r_t) - 1`。
+  - `V_t`：估值日 `t` 的组合总资产（基础币种）；休市标的采用**最近一个有效收盘价**；缺汇率仍报错。
+  - `CF_t`：该估值日结束前发生的外部净现金流（`end_of_day`）。**组合口径**：入金 → `CF_t > 0`，出金 → `CF_t < 0`（与 XIRR 投资者符号相反，见上）。由非负账本金额 + type 转换得到。
+  - **估值日序列**：由产品显式提供 `expectedValuationDates`（默认：区间内自然日中「任一侧持仓有报价或有外部现金流」的日期）；**不以单一市场交易日为准**。某市场休市、其他市场有持仓时仍可估值。
+  - 缺少某个**预期估值日**的快照 → `non_contiguous_snapshots`；`V_(t-1)=0` → `zero_prior_value`。
+
+目标配置与现金权重：
+
+- `portfolio_settings.cashTargetWeight` 存现金目标；`target_allocations` 只含真实标的。
+- 禁止引入 `CASH` / `CASH.CNY` 等虚拟规范代码。
+- 校验：`|sum(targetWeight) + cashTargetWeight - 1| ≤ 1e-8`；`watch ⇒ targetWeight = 0`；`allocation_role ∈ {core,satellite,watch}`。
+- P0 纯函数强制校验；P1 起由 `replace_target_allocation_config` RPC 在事务提交前再强制一次（见上方「目标配置写入契约」）。
+
+标的 ID 契约（Phase 0 必须定死，禁止 Repository 临时猜测）：
+
+- 业务表 `instrument_id` **统一存规范代码**（`510300.SH`），不得存用户扩展表 UUID，不得存虚拟现金码。
+- 共享行情物理短码（`510300`）仅在读 `etf_daily` / `etf_pool_snapshots` 时由 `market-data.ts` 转换。
+- 用户 `etf_instruments`：`id`=UUID（行主键），`symbol`=规范代码（已有 `unique (user_id, symbol)`）；池内标的优先只读共享池，不复制日 K。
+
+金额与精度：
+
+- DB 使用 `numeric(20,8)` / `numeric(18,8)`；领域层 TypeScript 用 `number`，但 `money.ts` 必须规定：
+  - 内部计算保留至少 8 位小数后再暴露；
+  - 展示与比较前统一四舍五入到约定位数（金额 2 位、份额/权重 8 位、汇率 8 位）；
+  - 权重和比较容差 `|sum - 1| ≤ 1e-8`；金额相等比较容差 `1e-6`（基础币种）。
+- 禁止在业务判断里直接用原始浮点相等。
 
 基准规则：
 
@@ -584,11 +793,38 @@ create index positions_instrument_id_idx on public.positions (instrument_id);
 
 数据质量规则：
 
-- ETF 代码必须标准化，例如 `510300.SH`、`2800.HK`、`VOO.US`，导入时保留原始代码和标准化代码；与库内短码（`510300`）互转由 `market-data.ts` 完成。
+- ETF 代码必须标准化为规范代码（`510300.SH` 等）；导入时保留原始代码字段（若有）并写入标准化 `instrumentId`。
 - 成交导入必须区分 `tradeDate` 与可选 `settlementDate`；份额与成本默认按 `tradeDate`，现金结算默认按 `settlementDate`（缺省则等于 `tradeDate`）。
-- 去重优先级：`brokerRef` 唯一 > `importHash`。`importHash` 在 `brokerRef` 缺失时覆盖：日期、代码、方向、价格、数量、费用、币种、**`importRowIndex`**，避免同日同价多笔真实成交（尤其网格）被误杀。
+- **去重与幂等**（禁止把 CSV 行号写入幂等键；**不宣称无 brokerRef 时完全跨文件幂等**）：
+  1. 有 `brokerRef`：唯一键 `(user_id, broker_ref)` → **可跨文件自动去重**。
+  2. 无 `brokerRef` 且该 `contentFingerprint` 在库内尚不存在 → 可自动插入（fingerprint 全局唯一时等价自动去重）。
+  3. 无 `brokerRef` 且相同 `contentFingerprint` 出现多笔（同批或跨批再次出现）：
+     - **单批次内**：用 `occurrenceIndex` 稳定编号，保留同日同价多笔；`importHash = hash(contentFingerprint, occurrenceIndex)`。
+     - **跨批次**：不得用「新文件 occurrenceIndex=0」自动对齐旧批次 index=0；必须生成**冲突清单**，禁止静默跳过；用户逐条选择「视为重复」或「新增真实成交」。
+  4. 每次导入必须先写 `import_batches`（含 `sourceFileHash`），行记录挂 `import_batch_id`；支持按批次撤销；摘要与落库结果一一对应。
+  5. 能力边界：**单批次稳定编号 + 跨批次冲突检测**；完全跨文件幂等仅在有 `brokerRef`（或 fingerprint 全局唯一）时成立。
 - 分红、拆分、合并、份额调整不能塞进普通买卖成交，应作为现金流或公司行动单独建模；P0 可先记录为待处理异常。
-- 缺价格、缺汇率、缺币种、重复成交、现金不足都必须返回结构化错误，UI 只负责展示错误。
+- 缺价格、缺汇率、缺币种、重复成交、导入冲突、现金不足都必须返回结构化错误，UI 只负责展示错误；`Position` 估值字段为 optional，类型层即可表达缺失。
+
+### 4.5 表契约补强（`scheduled-tasks` 待办 migration）
+
+> **状态说明**：`20260710_cockpit_ledger_and_fx_rates.sql` 仅表示 **已应用到目标库**，**不能**视为「表契约完整通过验收」。下列项须在 `scheduled-tasks` 新开 migration（建议名 `20260713_cockpit_ledger_contract_hardening.sql`），本仓只更新文档/类型/Repository 映射。
+
+| 优先级 | 缺口                             | 建议落地                                                                                                                                                                                                                    |
+| ------ | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P0     | `positions` 无同日唯一约束       | `unique (user_id, instrument_id, as_of_date)`；写入用 upsert                                                                                                                                                                |
+| P0     | `instrument_id` 语义歧义         | 业务列一律规范代码；禁止 UUID / 虚拟 `CASH` 码                                                                                                                                                                              |
+| P0     | 现金目标无法落表                 | `portfolio_settings` 增加 `cash_target_weight numeric(12,8) not null default 0`（0–1）；`target_allocations.allocation_role` check 改为仅 `core/satellite/watch`；`etf_instruments.default_allocation_role` 同步去掉 `cash` |
+| P0     | 现金流符号未约束                 | `cash_flows`：`amount > 0`、`amount_base > 0`；`fx_exchange` 时 `counter_amount > 0` 且 `counter_currency <> currency`                                                                                                      |
+| P0     | 成交费税与 CashFlow 费税双扣     | 契约层禁止成交费税落入 `CashFlow`；可选 `linked_trade_id` + check：有关联则 type 不得为会影响现金的嵌入费税，或重建时跳过；导入去重                                                                                         |
+| P0     | 导入幂等/冲突                    | 增加 `content_fingerprint`、`occurrence_index`、`import_batch_id`；跨批次相同 fingerprint 走冲突清单                                                                                                                        |
+| P0     | 无导入批次                       | 新建 `import_batches` + RLS                                                                                                                                                                                                 |
+| P0     | 现金基准日未持久化               | `portfolio_settings.cash_baseline_date date` 可空                                                                                                                                                                           |
+| P1     | 目标权重强不变量                 | RPC `replace_target_allocation_config`：单事务写 `cash_target_weight` + 全量 `target_allocations`，提交前校验和为 1 且 `watch=0`；禁止客户端逐行改配置                                                                      |
+| P1     | 跨用户外键归属                   | `unique (user_id, id)` + 复合外键，或触发器校验同 `user_id`                                                                                                                                                                 |
+| P1     | `execution_intent` 与计划 ID     | check：`grid`/`rebalance`/`manual` 与计划 ID 互斥完备                                                                                                                                                                       |
+| P1     | CSV 整批事务                     | 受 RLS 保护的导入 RPC；失败整批回滚                                                                                                                                                                                         |
+| P1     | `positions` 估值非空与缺价格冲突 | 估值列改为可空                                                                                                                                                                                                              |
 
 ### 4.4 行情与汇率数据来源
 
@@ -611,12 +847,12 @@ create index positions_instrument_id_idx on public.positions (instrument_id);
 | Open Exchange Rates / ExchangeRate-API | 备选       | 商业 SLA、币种更全                                          | 需 Key 与额度                                                |
 | 抓取 Yahoo/Google 汇率页               | 不采用     | 无 SLA、易变、难复现                                        | —                                                            |
 
-同步约定（`scheduled-tasks` 已实现）：
+同步约定（~~`scheduled-tasks` 已实现~~）：
 
-- 日频拉取 Frankfurter，写入 `fx_rates(rate_date, from_currency, to_currency, rate)`，按三元组 upsert。
-- 保证 `USD→CNY`、`USD→HKD`、`HKD→CNY`（由 USD 锚点推导）；`rate` 语义为「1 from = rate to」。
-- `sync_runs.job_name=sync_fx_rates_frankfurter`；失败走 Bark。
-- 本仓缺汇率时返回结构化错误/警告，不静默用 1.0。
+- ~~日频拉取 Frankfurter，写入 `fx_rates(rate_date, from_currency, to_currency, rate)`，按三元组 upsert。~~
+- ~~保证 `USD→CNY`、`USD→HKD`、`HKD→CNY`（由 USD 锚点推导）；`rate` 语义为「1 from = rate to」。~~
+- ~~`sync_runs.job_name=sync_fx_rates_frankfurter`；失败走 Bark。~~
+- 本仓缺汇率时返回结构化错误/警告，不静默用 1.0。（待本仓实现）
 
 `src/lib/investment/market-data.ts` 负责（本仓）：
 
@@ -626,6 +862,8 @@ create index positions_instrument_id_idx on public.positions (instrument_id);
 - 不内嵌第三方行情/汇率 API Key；不在客户端批量写入共享行情表。
 
 ## 5. 分阶段实施路线
+
+> **进度标记（2026-07-13）**：已完成项用删除线标出。文档地基 + `scheduled-tasks` 初版 DDL/RLS/汇率同步已就绪；**本仓 Phase 0 纯函数与单测已完成**；Phase 1+（Supabase/UI）仍未开始。§4.5 表契约补强仍阻塞 Phase 1 部分验收。
 
 ### 5.1 Phase 0：文档与数据地基
 
@@ -637,32 +875,34 @@ create index positions_instrument_id_idx on public.positions (instrument_id);
 
 2. ~~修订产品需求文档（改 `docs/investment-product-plan.md`）~~（已完成）
 
-3. 新增 `src/types/investment.ts`
+3. ~~新增 `src/types/investment.ts`~~（已完成）
 
-   - 定义组合设置、目标配置、ETF、持仓、成交、现金流、再平衡计划、网格计划、复盘、决策日志类型。
-   - `GridPlanSnapshot` 复用 `src/types/grid-v2.ts` 的 `GridStrategyParamsV2`、`GridLeg`、`AggregatedGridRow`。
-   - 用 `TargetAllocation.allocationRole` 表达资产配置角色，用 `executionIntent` 表达成交归因，禁止用 `grid` 作为资产配置角色。
-   - 禁止使用 `any`。
+   - ~~定义组合设置、目标配置、ETF、持仓、成交、现金流、再平衡计划、网格计划、复盘、决策日志类型。~~
+   - ~~`GridPlanSnapshot` 复用 `src/types/grid-v2.ts` 的 `GridStrategyParamsV2`、`GridLeg`、`AggregatedGridRow`。~~
+   - ~~用 `TargetAllocation.allocationRole`（core/satellite/watch）表达标的角色；现金目标用 `cashTargetWeight`；用 `executionIntent` 表达成交归因，禁止用 `grid` 作为资产配置角色。~~
+   - ~~禁止使用 `any`。~~
 
-4. 新增纯函数模块
+4. ~~新增纯函数模块~~（已完成）
 
-- `money.ts`：金额、份额、汇率、百分比格式化和四舍五入。
-- `portfolio.ts`：总资产、分币种现金比例、币种暴露、分类权重、单标的集中度。
-- `cash.ts`：由 `cash_flows` + `trade_records` 推导分币种现金余额，支持与 `cash_accounts` 快照对账。
-- `returns.ts`：XIRR（仅外部现金流）、TWR。
-- `rebalancing.ts`：基于 `target_allocations` 计算偏离、再平衡计划和建议动作。
-- `csv-import.ts`：CSV 成交/现金流导入、字段映射、去重（`brokerRef` / `importHash`）。
+- ~~`money.ts`：金额、份额、汇率、百分比格式化；内部 8 位精度、展示舍入与比较容差（见 §4.3）。~~
+- ~~`portfolio.ts`：总资产、分币种现金比例、币种暴露、分类权重、单标的集中度；目标权重校验（`sum(标的)+cashTargetWeight=1`，watch=0）。~~
+- ~~`cash.ts`：按 `CashRebuildInput` 重建现金；账本金额非负 + type 决定增减；与非基准日 `cash_accounts` 对账。~~
+- ~~`returns.ts`：`calculateXirr`（type→ 投资者符号 + `terminalValueBase`）、`calculateTwr`（连续估值日序列 + 公式 `r_t=(V_t-CF_t)/V_(t-1)-1`）。~~
+- ~~`rebalancing.ts`：基于 `target_allocations` + `cashTargetWeight` 计算偏离与计划。~~
+- ~~`csv-import.ts`：字段映射；单批次 `contentFingerprint`+`occurrenceIndex`；跨批次冲突清单（非静默幂等）。~~
+- ~~`market-data.ts`：短码 ↔ 规范代码；业务层只使用规范代码。~~
 
 验收标准：
 
-- `npm test -- --runInBand` 通过。
-- XIRR 至少覆盖：无外部现金流、单次出入金、多次出入金；并验证 `dividend` 不计入 XIRR 外部口径。
-- TWR 至少覆盖：无现金流、负收益、含内部分红。
-- 现金余额至少覆盖：仅外部出入金、含买卖结算、含分红与费用、多币种分账。
-- 再平衡至少覆盖：低配、高配、现金不足、新增资金优先补低配；目标权重来自 `target_allocations` 而非 `positions`。
-- 同一 ETF 同时存在目标权重和网格计划时，目标配置偏离不受网格计划影响。
-- CSV 至少覆盖：空文件、缺列、重复成交（含同日同价不同行）、币种缺失。
-- 事实源规则至少覆盖：持仓快照不能静默覆盖成交和现金流推导出的历史事实；导入持仓不得覆盖 `target_allocations`。
+- ~~`npm test -- --runInBand` 通过。~~
+- ~~XIRR 至少覆盖：无外部现金流、仅入金+终值、多次出入金+终值、无正负异号；`dividend` 不计入；账本金额非负、符号由 type 转换。~~（不收敛/多解路径已实现，样例可后续加强；跨币种发生日汇率折算属 Phase 1 读 `fx_rates` 前的调用方职责）
+- ~~TWR 至少覆盖：无现金流、负收益、含外部入金剔除、缺预期估值日拒绝、多市场休市沿用昨收。~~
+- ~~现金余额至少覆盖：基准日重放、type 增减方向、换汇双腿、买卖结算含费税、**成交含费税 + 同批费用流水不双扣**、多币种。~~
+- ~~再平衡至少覆盖：低配、高配、现金不足、`cashTargetWeight` 参与权重和；无虚拟 CASH 行。~~
+- ~~同一 ETF 同时存在目标权重和网格计划时，目标配置偏离不受网格计划影响。~~
+- ~~CSV 至少覆盖：空文件、缺列、同批同日同价多笔、文件重排 fingerprint 稳定、跨批相同 fingerprint 冲突清单、有 brokerRef 跨文件去重、币种缺失、成交费税与费用行去重。~~
+- ~~事实源规则至少覆盖：持仓快照不能静默覆盖账本事实；导入持仓不得覆盖 `target_allocations`。~~
+- ~~标的 ID：业务样例一律规范代码；禁止 UUID / 虚拟现金码进入 `instrumentId`。~~
 
 ### 5.2 Phase 1：Supabase 持久化与认证
 
@@ -672,7 +912,8 @@ create index positions_instrument_id_idx on public.positions (instrument_id);
 
 - 修改 `package.json` 前先征询用户确认。
 - 实现前查 Supabase 当前文档和 changelog，确认 `@supabase/supabase-js` 安装方式、RLS 建议和 key 命名。
-- **依赖 `scheduled-tasks`**：用户账本 12 表 + `fx_rates` 的 DDL/RLS、以及（如需）`sync_fx_rates_*` job 必须先在该仓合并并应用到目标库；本仓只消费已存在的表。
+- ~~**依赖 `scheduled-tasks`**：用户账本 12 表 + `fx_rates` 的 DDL/RLS、以及 `sync_fx_rates_*` job 必须先在该仓合并并应用到目标库；本仓只消费已存在的表。~~（已完成应用）
+- **依赖 `scheduled-tasks` 补强 migration（§4.5）**：`positions` 唯一约束、`import_batches`、复合外键/触发器、导入 RPC、规范代码契约等落地前，本仓 Repository 批量导入与同日快照 upsert **不得宣称完成验收**。
 
 任务：
 
@@ -695,41 +936,49 @@ create index positions_instrument_id_idx on public.positions (instrument_id);
 4. 新增 repository
 
    - `src/lib/supabase/investment-repository.ts`
-   - 封装组合设置、目标配置、ETF、持仓、成交、现金流、再平衡计划、网格计划、复盘、决策日志 CRUD。
+   - 封装组合设置、ETF、持仓、成交、现金流、再平衡计划、网格计划、复盘、决策日志的读写。
+   - **目标配置**：只读可用 select；写入必须调用 `replace_target_allocation_config` RPC，禁止对 `target_allocations` / `cash_target_weight` 做逐行 CRUD。
    - 行情/汇率：**只读** `etf_daily` / `etf_pool_snapshots` / `indices` / `index_daily_prices` / `fx_rates`。
    - 所有账本写入都要求当前用户存在；禁止对共享行情表做 upsert/delete。
+   - CSV 批量写入调用 §4.5 RPC（或等价批次接口），禁止浏览器逐行 insert 冒充整批事务；成交费税与费用流水去重。
 
 5. 表契约对齐（**不在本仓写 migration**）
 
    - 在本仓文档或类型注释中固定与 `scheduled-tasks` 一致的表/列契约（可链到该仓 `schema.sql` / migration）。
    - **禁止**新增 `docs/supabase-schema.sql` 或 `supabase/migrations/*` 作为权威 DDL。
-   - 若表尚未在目标库出现：阻塞本 Phase 的集成验收，改为先提 `scheduled-tasks` PR（账本表 + `fx_rates` + RLS；汇率 job 可并行）。
-   - Repository 行情读路径映射到现有共享表；`fx_rates` 就绪后接入只读查询。
+   - ~~若表尚未在目标库出现：阻塞本 Phase 的集成验收，改为先提 `scheduled-tasks` PR（账本表 + `fx_rates` + RLS；汇率 job 可并行）。~~（表与 job 已就绪）
+   - §4.5 补强 migration 未合并前：阻塞「导入幂等 / 同日快照替代 / 跨用户外键」相关验收。
+   - Repository 行情读路径映射到现有共享表；~~`fx_rates` 就绪后~~接入只读查询。（本仓 Repository 未做）
 
-6. 认证与会话
-   - 新增 `src/lib/supabase/auth.ts`：封装**邮箱 Magic Link**登录、登出、获取当前用户（已确认：Phase 1 不做 OAuth）。
-   - 新增 `src/components/auth/auth-gate.tsx`：未登录时展示邮箱 Magic Link 入口。
-   - 驾驶舱相关路由在 Phase 2 接入 `AuthGate`；Repository 在无会话时拒绝写入并返回明确错误。
+6. 认证与会话（Magic Link 完整路径）
+   - 新增 `src/lib/supabase/auth.ts`：封装邮箱 Magic Link 登录、登出、获取当前用户、会话恢复（已确认：Phase 1 不做 OAuth）。
+   - 新增回调路由：`src/app/auth/callback/route.ts`（或等价 App Router 回调），处理 magic link 换会话；配置 Supabase Redirect URL。
+   - 新增 `src/components/auth/auth-gate.tsx`：未登录展示入口；过期/无效链接展示可恢复错误（重新发送），不得白屏。
+   - Dashboard 相关路由在 Phase 2 接入 `AuthGate`；Repository 在无会话时拒绝写入并返回明确错误。
 
 验收标准：
 
-- 目标库中用户账本表已启用 RLS 且有 `user_id` 隔离（由 `scheduled-tasks` 落地，本仓用集成/手工查询确认）。
-- 共享行情表（含 `fx_rates` 若已建）为 authenticated 只读；本仓代码路径无共享表写入。
+- ~~目标库中用户账本表已启用 RLS 且有 `user_id` 隔离（由 `scheduled-tasks` 落地，本仓用集成/手工查询确认）。~~
+- ~~共享行情表（含 `fx_rates`）为 authenticated 只读；~~本仓代码路径无共享表写入（待本仓实现时继续保证）。
+- §4.5 补强项在目标库存在后方可勾选：positions 同日唯一、import_batches、导入 RPC、`replace_target_allocation_config`、同用户复合外键（或触发器）。
 - 未新建与现表同义的 `price_bars` / `benchmarks` / `benchmark_prices`。
-- 本仓无权威 DDL 文件；外键和 `user_id` 索引在库侧存在（核对即可）。
+- ~~本仓无权威 DDL 文件；外键和 `user_id` 索引在库侧存在（核对即可）。~~
+- Magic Link：发送邮件 → 回调换会话 → 刷新后会话恢复；过期链接有明确错误。
 - 未登录用户无法写入账本数据。
 - 不出现 `service_role`、真实 key、硬编码凭证。
 - Repository 单测 mock Supabase 客户端，覆盖成功和失败路径。
+- CSV 导入：中途失败整批不残留；重试不因行号变化产生重复账；可按 `import_batch_id` 撤销。
+- 目标配置：RPC 部分失败不留下权重和 ≠ 1 的中间态；客户端无逐行改配置路径。
 
-### 5.3 Phase 2：组合驾驶舱
+### 5.3 Phase 2：组合 Dashboard
 
-目标：把持仓、目标配置、现金、币种暴露和再平衡建议展示成可操作页面。
+目标：把持仓、目标配置、现金、币种暴露和再平衡建议展示成可操作的 **Dashboard** 看板页（路由名 `dashboard`，不是 Kanban）。
 
 任务：
 
 1. 新增路由
 
-   - `src/app/view/cockpit/page.tsx`
+   - `src/app/view/dashboard/page.tsx`
 
 2. 新增组件
 
@@ -745,12 +994,12 @@ create index positions_instrument_id_idx on public.positions (instrument_id);
 
 3. 首页入口
 
-   - 在 `src/components/home/home-tool-grid.tsx` 中增加 ETF 驾驶舱入口。
+   - 在 `src/components/home/home-tool-grid.tsx` 中增加 **Dashboard** 入口（文案可用「组合看板」/「Dashboard」）。
    - 可以替换当前“持仓分析”占位卡。
 
 4. 与旭日图关系
    - 不直接改造旭日图为数据源。
-   - 驾驶舱应从结构化 `positions` 派生分类数据。
+   - Dashboard 应从结构化 `positions` 派生分类数据。
    - 后续可复用旭日图组件展示分类占比。
 
 验收标准：
@@ -864,15 +1113,16 @@ create index positions_instrument_id_idx on public.positions (instrument_id);
 范围：
 
 - ~~修订产品需求文档（改 `docs/investment-product-plan.md`）~~（已完成）。
-- 新增 `src/types/investment.ts`。
-- 新增：
-  - `src/lib/investment/money.ts`
-  - `src/lib/investment/portfolio.ts`
-  - `src/lib/investment/cash.ts`
-  - `src/lib/investment/returns.ts`
-  - `src/lib/investment/rebalancing.ts`
-  - `src/lib/investment/csv-import.ts`
-- 新增对应单测。
+- ~~新增 `src/types/investment.ts`。~~
+- ~~新增：~~
+  - ~~`src/lib/investment/money.ts`~~
+  - ~~`src/lib/investment/portfolio.ts`~~
+  - ~~`src/lib/investment/cash.ts`~~
+  - ~~`src/lib/investment/returns.ts`~~
+  - ~~`src/lib/investment/rebalancing.ts`~~
+  - ~~`src/lib/investment/csv-import.ts`~~
+  - ~~`src/lib/investment/market-data.ts`~~
+- ~~新增对应单测。~~
 
 不做：
 
@@ -933,41 +1183,48 @@ npm run build
 | 仓职责   | 无本仓 DDL/migration；无第三方行情/汇率直连；共享落库不在本仓                     |
 | 多币种   | 港股、美股 ETF 都有 `currency` 与 `fxRateToBase`                                  |
 | 事实源   | `target_allocations`、`trade_records`、`cash_flows` 与 `positions` 的职责边界清晰 |
-| 目标配置 | 目标权重存于 `target_allocations`，持仓导入不覆盖                                 |
-| 现金推导 | 分币种现金由 `cash_flows` + `trade_records` 推导，非仅现金流表                    |
+| 目标配置 | 标的权重 + `cashTargetWeight`；写入仅 RPC 整单替换；持仓导入不覆盖                |
+| 现金推导 | 基准日快照 + 之后事件；金额非负；成交费税只扣一次                                 |
 | 策略边界 | `rebalance_plans` 与 `grid_plans` 独立，网格策略不参与目标配置比例计算            |
-| 现金流   | XIRR 仅用外部出入金；分红/费用为内部事件                                          |
+| 现金流   | XIRR = type 转换后的外部出入金 + 终值；库内金额恒非负                             |
+| 标的键   | 业务行 `instrument_id` 一律规范代码；禁止 UUID、短码、虚拟 CASH                   |
+| 导入幂等 | 单批次 fingerprint+occurrence；跨批次冲突清单；有 brokerRef 才可跨文件自动去重    |
 | 配置归因 | 组合和标的能绑定基准，复盘能解释资产配置 Beta 与再平衡执行偏差                    |
 | 网格归因 | 网格收益单独对比同标的买入持有，不能混入配置收益                                  |
 | 复盘闭环 | 复盘结论能追溯到现金流、成交、再平衡计划、网格计划或决策日志                      |
-| 异常处理 | 空数据、缺价格、缺汇率、重复成交、现金不足都有明确错误                            |
+| 异常处理 | 空数据、缺价格、缺汇率、重复成交、导入冲突、现金不足都有明确错误                  |
 
 ## 9. Definition of Done
 
 ### P0 DOD
 
-- 能用纯函数从持仓、`target_allocations`、现金流、成交记录计算组合总资产、现金比例、XIRR/TWR。
-- XIRR 仅使用 `deposit`/`withdrawal`；`dividend` 等内部事件不影响 XIRR 外部口径。
-- 能用 `cash.ts` 从现金流与成交推导分币种现金余额。
-- 能计算目标配置偏离（基于 `target_allocations`），并按相对 `±20%`、绝对 `±5%` 给出触发原因。
-- 能导入一份成交 CSV，并识别缺列、重复成交、币种缺失；同日同价多笔靠 `importRowIndex` 或 `brokerRef` 区分。
-- 能区分账本事实和持仓快照，快照差异不会静默覆盖历史成交和现金流；导入持仓不覆盖目标配置。
+- 能用纯函数从持仓、`target_allocations`、`cashTargetWeight`、现金流、成交记录计算组合总资产、现金比例、XIRR/TWR。
+- XIRR：账本金额非负，投资者符号由 type 转换；加上估值日 `terminalValueBase`；缺汇率/无异号/不收敛/多解有明确 Result；`dividend` 不进外部口径。
+- TWR：在 `expectedValuationDates` 上按 `r_t=(V_t-CF_t)/V_(t-1)-1` 计算；缺预期估值日拒绝；休市标的用昨收。
+- 能用 `cash.ts` 从基准日现金快照 + 之后事件推导分币种余额；type 增减方向单测锁定；**成交 fee/tax 与 CashFlow.fee/tax 不双扣**。
+- 能计算目标配置偏离；`sum(标的)+cashTargetWeight=1`，`watch=0`，无虚拟 CASH 行；相对 `±20%`、绝对 `±5%` 触发原因。
+- 能导入成交 CSV：识别缺列、币种缺失；同批同日同价多笔靠 occurrence；文件重排 fingerprint 稳定；跨批相同 fingerprint 出冲突清单（非静默跳过）；有 brokerRef 可跨文件去重；成交相关费税不生成第二条 CashFlow。
+- 业务 `instrumentId` 一律为规范代码。
+- 能区分账本事实和持仓快照；估值字段可表达缺失。
 - 能用同一 ETF 同时存在目标权重和网格计划的样例证明：网格计划不影响资产配置偏离。
 
 ### P1 DOD
 
-- 目标库用户账本表结构、RLS、索引完整（由 `scheduled-tasks` 维护）；共享行情复用已有表 + `fx_rates`（若已同步），均为 authenticated 只读；不建同义 `price_bars`/`benchmarks`/`benchmark_prices`。
-- 本仓无权威 DDL/migration；无第三方行情/汇率直连拉数与共享表批量落库。
-- 用户只能读写自己的账本数据。
-- 登录/登出可用（邮箱 Magic Link），未登录无法写入。
+- ~~目标库用户账本表结构、RLS、索引已应用（由 `scheduled-tasks` 维护）；共享行情复用已有表 + `fx_rates`（已同步有数据），均为 authenticated 只读；不建同义 `price_bars`/`benchmarks`/`benchmark_prices`。~~
+- **§4.5 表契约补强 migration 已应用到目标库**（含 `cash_target_weight`、`replace_target_allocation_config`、现金流非负 check、positions 同日唯一、import_batches、导入 RPC、同用户外键、intent check 等）。此前只能记「已应用初版 DDL」，不能勾选「表契约完整」。
+- ~~本仓无权威 DDL/migration；无第三方行情/汇率直连拉数与共享表批量落库。~~（边界已固化；实现阶段继续遵守）
+- 用户只能读写自己的账本数据；无法通过猜测 UUID 把成交挂到他人计划上。
+- 登录/登出可用（邮箱 Magic Link：回调路由、会话恢复、过期链接错误路径），未登录无法写入。
 - `.env.local.example` 不含真实凭证。
 - Repository 失败路径有明确错误；缺 `fx_rates` 时有明确提示。
+- CSV 批量导入具备事务语义或等价整批提交/回滚，并可按批次撤销。
+- 目标配置仅能通过 `replace_target_allocation_config` 整单替换；部分失败不留下权重和 ≠ 1 的非法状态；无逐行改配置的生产路径。
 
 ### P2 DOD
 
-- 驾驶舱能展示总资产、现金比例、分类权重、目标偏离、币种暴露。
-- 用户可维护 `target_allocations` 与外部出入金/分红录入。
-- 驾驶舱能生成再平衡计划，并明确它不是网格计划。
+- Dashboard 能展示总资产、现金比例、分类权重、目标偏离、币种暴露。
+- 用户可维护目标配置（经 `replace_target_allocation_config`）与外部出入金/分红录入；可维护独立账户级费用（非成交嵌入费税）。
+- Dashboard 能生成再平衡计划，并明确它不是网格计划。
 - 三类组合样例均通过：仅 A 股、A+港股、A+美股。
 - 页面计算结果与手工表格一致。
 
@@ -1009,20 +1266,26 @@ UI 和文案必须遵守：
 
 | 异常状态          | 触发场景                                                             | 产品处理                               |
 | ----------------- | -------------------------------------------------------------------- | -------------------------------------- |
-| 无数据            | 用户首次进入驾驶舱                                                   | 展示导入入口和最小样例，不显示虚假指标 |
+| 无数据            | 用户首次进入 Dashboard                                               | 展示导入入口和最小样例，不显示虚假指标 |
 | 数据过期          | 持仓、价格或汇率超过用户设定时效                                     | 标记数据日期，暂停依赖该数据的建议     |
 | 缺价格            | `positions.currentPrice` 或 `etf_daily.close`（领域 `PriceBar`）缺失 | 不计算市值和收益，提示补价格           |
 | 缺汇率            | 非基础币种缺少 `fx_rates` / `fxRateToBase`（同步未覆盖或补洞未录）   | 不折算总资产，提示等待同步或应急补洞   |
 | 现金不足          | 网格执行或再平衡需要的币种现金不足                                   | 标记为“资金不足”，不生成可执行动作     |
-| 重复成交          | `brokerRef` 或 `importHash` 已存在                                   | 跳过重复记录并展示导入摘要             |
+| 重复成交          | 有 `brokerRef` 冲突，或用户在冲突清单中选择「视为重复」              | 跳过并计入导入摘要                     |
+| 导入冲突          | 无 `brokerRef` 且 fingerprint 跨批次歧义（多笔同指纹）               | 展示冲突清单，禁止自动跳过，待用户确认 |
+| 费税双计风险      | CSV 同时含成交费税与同笔费用流水                                     | 关联成交后丢弃 CashFlow；重建不双扣    |
+| 导入部分失败      | 批次 RPC 校验失败或事务回滚                                          | 整批不残留；展示失败行与可重试说明     |
 | 目标配置缺失      | 有持仓但未设置 `target_allocations`                                  | 偏离表显示“未设目标”，不生成再平衡计划 |
+| 目标权重非法      | `sum(标的)+cashTargetWeight ≠ 1`，或 watch 非 0，或出现虚拟 CASH 行  | 拒绝保存并提示校正                     |
 | 快照差异          | 持仓快照与账本推导不一致                                             | 展示差异金额和份额，要求人工确认       |
+| XIRR/TWR 不可算   | 无异号、不收敛、缺预期估值日等                                       | 展示对应错误码，不显示伪造收益率       |
 | 网格跌破下限      | 当前价格低于网格计划下限                                             | 标记为暂停或需复评，不继续自动加码     |
+| Magic Link 失效   | 回调过期、Redirect URL 不匹配、会话丢失                              | 提示重新发送链接，引导回登录入口       |
 | Supabase 连接失败 | 环境变量缺失、Auth 失效、网络失败                                    | 展示可恢复错误，不丢弃本地导入内容     |
 
 ### 10.3 数据生命周期
 
 - 必须保留 CSV/JSON 导入导出，保证用户可以迁移和备份数据。
-- 删除用户数据时，应覆盖组合设置、目标配置、ETF 标的自定义数据、持仓、成交、现金流、现金账户、组合估值快照、再平衡计划、网格计划、复盘和决策日志。
-- 云端数据和本地导入冲突时，以 `brokerRef` 或 `importHash` 和更新时间生成冲突清单，交给用户确认。
+- 删除用户数据时，应覆盖组合设置、目标配置、ETF 标的自定义数据、持仓、成交、现金流、现金账户、导入批次、组合估值快照、再平衡计划、网格计划、复盘和决策日志。
+- 云端数据和本地导入冲突时，有 `brokerRef` 可自动去重；无 `brokerRef` 的同 fingerprint 歧义必须进冲突清单由用户确认；支持按 `import_batch_id` 整批撤销。
 - 项目不保存券商账号、密码、交易 Token 或任何可用于自动交易的凭证。
