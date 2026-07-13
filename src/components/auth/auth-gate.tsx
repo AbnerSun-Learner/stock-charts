@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { User } from '@supabase/supabase-js';
+import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { Alert, Button, Card, Form, Input, Space, Typography } from 'antd';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { tryGetSupabasePublicConfig } from '@/lib/supabase/env';
 import {
   getCurrentUser,
   sendMagicLink,
@@ -16,15 +17,17 @@ export interface AuthGateProps {
   onAuthenticated?: (user: User) => void;
 }
 
-type GateStatus = 'loading' | 'guest' | 'authenticated';
+type GateStatus = 'loading' | 'guest' | 'authenticated' | 'misconfigured';
 
 /**
  * 未登录展示 Magic Link 入口；已登录渲染子节点。
- * Dashboard 等路由在 Phase 2 接入；本组件本身可独立使用。
+ * 客户端惰性创建 Supabase，避免 CI/预渲染因缺环境变量崩溃。
  */
 export function AuthGate({ children, onAuthenticated }: AuthGateProps) {
   const [status, setStatus] = useState<GateStatus>('loading');
   const [user, setUser] = useState<User | null>(null);
+  const [client, setClient] = useState<SupabaseClient | null>(null);
+  const [configError, setConfigError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [sending, setSending] = useState(false);
   const [feedback, setFeedback] = useState<{
@@ -32,7 +35,6 @@ export function AuthGate({ children, onAuthenticated }: AuthGateProps) {
     text: string;
   } | null>(null);
 
-  const client = useMemo(() => createSupabaseBrowserClient(), []);
   const redirectTo = useMemo(() => {
     if (typeof window === 'undefined') {
       return '';
@@ -40,34 +42,60 @@ export function AuthGate({ children, onAuthenticated }: AuthGateProps) {
     return `${window.location.origin}/auth/callback?next=${encodeURIComponent(window.location.pathname)}`;
   }, []);
 
-  const refreshUser = useCallback(async () => {
-    const result = await getCurrentUser(client);
-    if (!result.ok) {
+  const refreshUser = useCallback(
+    async (activeClient: SupabaseClient) => {
+      const result = await getCurrentUser(activeClient);
+      if (!result.ok) {
+        setUser(null);
+        setStatus('guest');
+        return;
+      }
+      if (result.value) {
+        setUser(result.value);
+        setStatus('authenticated');
+        onAuthenticated?.(result.value);
+        return;
+      }
       setUser(null);
       setStatus('guest');
-      return;
-    }
-    if (result.value) {
-      setUser(result.value);
-      setStatus('authenticated');
-      onAuthenticated?.(result.value);
-      return;
-    }
-    setUser(null);
-    setStatus('guest');
-  }, [client, onAuthenticated]);
+    },
+    [onAuthenticated]
+  );
 
   useEffect(() => {
-    void refreshUser();
-    const { data } = client.auth.onAuthStateChange(() => {
-      void refreshUser();
-    });
+    if (!tryGetSupabasePublicConfig()) {
+      setConfigError(
+        '缺少 NEXT_PUBLIC_SUPABASE_URL 或 NEXT_PUBLIC_SUPABASE_ANON_KEY，请参考 .env.local.example'
+      );
+      setStatus('misconfigured');
+      return;
+    }
+
+    let unsubscribe: (() => void) | undefined;
+    try {
+      const activeClient = createSupabaseBrowserClient();
+      setClient(activeClient);
+      void refreshUser(activeClient);
+      const { data } = activeClient.auth.onAuthStateChange(() => {
+        void refreshUser(activeClient);
+      });
+      unsubscribe = () => data.subscription.unsubscribe();
+    } catch (error) {
+      setConfigError(
+        error instanceof Error ? error.message : 'Supabase 客户端初始化失败'
+      );
+      setStatus('misconfigured');
+    }
+
     return () => {
-      data.subscription.unsubscribe();
+      unsubscribe?.();
     };
-  }, [client, refreshUser]);
+  }, [refreshUser]);
 
   const onSend = async () => {
+    if (!client) {
+      return;
+    }
     setSending(true);
     setFeedback(null);
     const result = await sendMagicLink(client, email, redirectTo);
@@ -83,15 +111,31 @@ export function AuthGate({ children, onAuthenticated }: AuthGateProps) {
   };
 
   const onSignOut = async () => {
+    if (!client) {
+      return;
+    }
     await signOut(client);
     setFeedback(null);
-    await refreshUser();
+    await refreshUser(client);
   };
 
   if (status === 'loading') {
     return (
       <div className="flex min-h-[40vh] items-center justify-center p-6">
         <Typography.Text type="secondary">正在恢复登录会话…</Typography.Text>
+      </div>
+    );
+  }
+
+  if (status === 'misconfigured') {
+    return (
+      <div className="mx-auto flex min-h-[50vh] max-w-lg flex-col justify-center px-4 py-8">
+        <Alert
+          type="error"
+          showIcon
+          message="Supabase 未配置"
+          description={configError}
+        />
       </div>
     );
   }

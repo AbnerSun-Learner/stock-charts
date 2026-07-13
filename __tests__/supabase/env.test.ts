@@ -2,6 +2,7 @@ import {
   getSupabasePublicConfig,
   normalizeSupabaseUrl,
   SupabaseConfigError,
+  tryGetSupabasePublicConfig,
 } from '@/lib/supabase/env';
 
 describe('supabase env', () => {
@@ -25,6 +26,7 @@ describe('supabase env', () => {
     delete process.env.NEXT_PUBLIC_SUPABASE_URL;
     delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     delete process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    expect(tryGetSupabasePublicConfig()).toBeNull();
     expect(() => getSupabasePublicConfig()).toThrow(SupabaseConfigError);
   });
 

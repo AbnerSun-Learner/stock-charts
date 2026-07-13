@@ -4,6 +4,11 @@ on:
   push:
   pull_request:
 
+env:
+  # 公开占位配置：仅用于 build/E2E 预渲染，非真实凭证
+  NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+
 jobs:
   test-and-build:
     runs-on: ubuntu-latest

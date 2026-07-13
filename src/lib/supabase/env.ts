@@ -28,20 +28,26 @@ export interface SupabasePublicConfig {
  * 读取浏览器/服务端可用的公开配置；缺失时抛明确错误。
  */
 export function getSupabasePublicConfig(): SupabasePublicConfig {
+  const config = tryGetSupabasePublicConfig();
+  if (!config) {
+    throw new SupabaseConfigError(
+      '缺少 NEXT_PUBLIC_SUPABASE_URL 或 NEXT_PUBLIC_SUPABASE_ANON_KEY，请参考 .env.local.example 配置'
+    );
+  }
+  return config;
+}
+
+/**
+ * 尝试读取公开配置；缺失时返回 null（供 UI/CI 预渲染优雅降级）。
+ */
+export function tryGetSupabasePublicConfig(): SupabasePublicConfig | null {
   const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  if (!rawUrl?.trim()) {
-    throw new SupabaseConfigError(
-      '缺少 NEXT_PUBLIC_SUPABASE_URL，请参考 .env.local.example 配置'
-    );
-  }
-  if (!anonKey?.trim()) {
-    throw new SupabaseConfigError(
-      '缺少 NEXT_PUBLIC_SUPABASE_ANON_KEY（或 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY）'
-    );
+  if (!rawUrl?.trim() || !anonKey?.trim()) {
+    return null;
   }
 
   return {
