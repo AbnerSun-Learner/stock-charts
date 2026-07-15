@@ -17,6 +17,7 @@ import type { AllocationRole, TargetAllocation } from '@/types/investment';
 import type { InvestmentRepository } from '@/lib/supabase/investment-repository';
 import { validateTargetAllocationWeights } from '@/lib/investment/portfolio';
 import { formatPercent } from '@/lib/investment/money';
+import { HelpTooltip } from '@/components/shared/help-tooltip';
 
 interface DraftRow {
   key: string;
@@ -129,16 +130,31 @@ export function TargetAllocationForm({
         />
       ) : null}
       <Form layout="inline" className="mb-4">
-        <Form.Item label="现金目标权重">
+        <Form.Item
+          label={
+            <ConfigLabel
+              text="现金目标权重（%）"
+              tooltip="现金目标比例会与所有 ETF 目标权重相加，合计必须为 100%。"
+            />
+          }
+        >
           <InputNumber
             min={0}
-            max={1}
-            step={0.01}
-            value={cashWeight}
-            onChange={value => setCashWeight(Number(value ?? 0))}
+            max={100}
+            step={1}
+            suffix="%"
+            value={cashWeight * 100}
+            onChange={value => setCashWeight(Number(value ?? 0) / 100)}
           />
         </Form.Item>
-        <Form.Item label="权重合计">
+        <Form.Item
+          label={
+            <ConfigLabel
+              text="权重合计"
+              tooltip="所有 ETF 目标权重与现金目标权重的合计，必须等于 100%。"
+            />
+          }
+        >
           <span className="tabular-nums">
             {formatPercent(validation.totalWithCash)}
             {validation.ok ? ' ✓' : '（须 = 100%）'}
@@ -152,7 +168,12 @@ export function TargetAllocationForm({
         dataSource={rows}
         columns={[
           {
-            title: '规范代码',
+            title: (
+              <ConfigLabel
+                text="规范代码"
+                tooltip="ETF 的规范业务代码，例如 510300.SH；保存时不会使用数据库 UUID。"
+              />
+            ),
             dataIndex: 'instrumentId',
             render: (_value, record, index) => (
               <Input
@@ -170,7 +191,12 @@ export function TargetAllocationForm({
             ),
           },
           {
-            title: '目标权重',
+            title: (
+              <ConfigLabel
+                text="目标权重"
+                tooltip="该 ETF 在组合中的目标比例，使用 0–1 小数保存。"
+              />
+            ),
             dataIndex: 'targetWeight',
             width: 120,
             render: (_value, record, index) => (
@@ -192,7 +218,12 @@ export function TargetAllocationForm({
             ),
           },
           {
-            title: '角色',
+            title: (
+              <ConfigLabel
+                text="角色"
+                tooltip="core 为核心仓，satellite 为卫星仓，watch 为观察仓；观察仓目标权重必须为 0。"
+              />
+            ),
             dataIndex: 'allocationRole',
             width: 140,
             render: (_value, record, index) => (
@@ -230,5 +261,14 @@ export function TargetAllocationForm({
         ]}
       />
     </Card>
+  );
+}
+
+function ConfigLabel({ text, tooltip }: { text: string; tooltip: string }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      {text}
+      <HelpTooltip title={tooltip} placement="topLeft" />
+    </span>
   );
 }

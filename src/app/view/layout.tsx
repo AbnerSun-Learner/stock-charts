@@ -1,13 +1,12 @@
 import type { Metadata } from 'next';
-import { Suspense } from 'react';
-import { ViewBreadcrumb } from '@/components/navigation/view-breadcrumb';
+import { AppShell } from '@/components/app-shell/app-shell';
 
 export const metadata: Metadata = {
   robots: 'noindex, nofollow',
 };
 
 /**
- * 分析视图通用布局：提供面包屑与主内容区域。
+ * 分析视图通用布局：保留旧 /view/* URL，并纳入产品级 App Shell。
  */
 export default function ViewLayout({
   children,
@@ -15,13 +14,8 @@ export default function ViewLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-[var(--bg-main)]" id="view-layout-root">
-      <main className="flex-1 w-full overflow-auto py-6 px-4 sm:py-8 sm:px-6 lg:px-10">
-        <Suspense fallback={null}>
-          <ViewBreadcrumb />
-        </Suspense>
-        {children}
-      </main>
-    </div>
+    <AppShell>
+      <div className="shell-page">{children}</div>
+    </AppShell>
   );
 }

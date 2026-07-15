@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { AntdProvider } from '@/components/app-shell/antd-provider';
+import { AuthProvider } from '@/components/auth/auth-provider';
 import './globals.css';
 
 const baseUrl =
@@ -15,18 +16,18 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
-  title: '仓位视图 | 投资图表',
-  description: '私有投资图表与仓位分布',
+  title: 'Stock Charts | ETF 投资驾驶舱',
+  description: 'ETF 配置、网格策略与组合复盘工作台',
   openGraph: {
-    title: '仓位视图 | 投资图表',
-    description: '私有投资图表与仓位分布',
+    title: 'Stock Charts | ETF 投资驾驶舱',
+    description: 'ETF 配置、网格策略与组合复盘工作台',
     type: 'website',
     locale: 'zh_CN',
   },
   twitter: {
     card: 'summary_large_image',
-    title: '仓位视图 | 投资图表',
-    description: '私有投资图表与仓位分布',
+    title: 'Stock Charts | ETF 投资驾驶舱',
+    description: 'ETF 配置、网格策略与组合复盘工作台',
   },
 };
 
@@ -41,7 +42,9 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body>
-        <AntdProvider>{children}</AntdProvider>
+        <AntdProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </AntdProvider>
       </body>
     </html>
   );

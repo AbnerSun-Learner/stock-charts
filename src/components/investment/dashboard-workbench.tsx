@@ -32,9 +32,6 @@ export function DashboardWorkbench() {
         <Typography.Title level={3} className="!mb-1">
           组合看板
         </Typography.Title>
-        <Typography.Paragraph type="secondary" className="!mb-0">
-          目标配置 → 持仓偏离 → 再平衡计划。网格策略不在此页生成。
-        </Typography.Paragraph>
       </header>
 
       {ledger.error ? (
