@@ -48,17 +48,17 @@ const TOOLS = [
     coming: true,
   },
   {
-    id: 'coming-soon-3',
-    title: '风险仪表盘',
-    description: '一屏展示波动率、最大回撤、夏普比率等核心风险指标',
-    href: '#',
+    id: 'index-dashboard',
+    title: '指数分析',
+    description: '查看指数走势、PE/PB 历史分位、申万行业权重与极限跌幅',
+    href: '/view/index-dashboard',
     icon: (
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
         <path d="M12 2V6M12 18V22M4.93 4.93L7.76 7.76M16.24 16.24L19.07 19.07M2 12H6M18 12H22M4.93 19.07L7.76 16.24M16.24 7.76L19.07 4.93" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5" />
       </svg>
     ),
-    coming: true,
+    stats: '走势 · 估值 · 回撤',
   },
 ] as const;
 

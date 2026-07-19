@@ -7,6 +7,7 @@ import { Breadcrumb } from 'antd';
 const ROUTES: Record<string, string> = {
   '/view/sunburst': '资产旭日图',
   '/view/grid': '网格交易策略',
+  '/view/index-dashboard': '指数分析',
 };
 
 /**

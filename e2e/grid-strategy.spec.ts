@@ -1,6 +1,14 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('网格策略', () => {
+  test('指数页跳转参数只预填基准价并展示 ETF 上下文', async ({ page }) => {
+    await page.goto('/view/grid?etfCode=510300&etfName=%E6%B2%AA%E6%B7%B1300ETF&price=4.123');
+    await expect(page.getByText('当前标的')).toBeVisible();
+    await expect(page.getByText('沪深300ETF')).toBeVisible();
+    await expect(page.locator('#basePrice')).toHaveValue('4.123');
+    await expect(page.locator('#minPrice')).toHaveValue('0.500');
+  });
+
   test('默认参数可生成策略结果', async ({ page }) => {
     await page.goto('/view/grid');
 

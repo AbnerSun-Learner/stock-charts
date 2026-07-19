@@ -11,14 +11,22 @@ import { StatsCards } from '@/components/grid/stats-cards';
 import { useGridCalculator } from '@/hooks/use-grid-calculator';
 import { useGridParams } from '@/hooks/use-grid-params';
 import { DEFAULT_GRID_PARAMS, type GridRow, type StressTest } from '@/types/grid';
+import { parseGridPrefill } from '@/lib/grid/grid-prefill';
 import type { AggregatedGridRow, GridLeg, GridStrategyState, StrategyWarning } from '@/types/grid-v2';
 import { message } from 'antd';
-import { useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 /**
  * 网格交易策略页（Phase 1：V2 计算器）。
  */
 export default function GridStrategyPage() {
+  return <Suspense fallback={null}><GridStrategyContent /></Suspense>;
+}
+
+function GridStrategyContent() {
+  const searchParams = useSearchParams();
+  const prefill = useMemo(() => parseGridPrefill(searchParams), [searchParams]);
   const [gridData, setGridData] = useState<GridRow[]>([]);
   const [stressTest, setStressTest] = useState<StressTest | null>(null);
   const [aggregatedRows, setAggregatedRows] = useState<AggregatedGridRow[]>([]);
@@ -34,8 +42,12 @@ export default function GridStrategyPage() {
     'stable' | 'aggressive'
   >('stable');
 
+  const initialParams = useMemo(() => ({
+    ...DEFAULT_GRID_PARAMS,
+    basePrice: prefill.latestPrice ?? DEFAULT_GRID_PARAMS.basePrice,
+  }), [prefill.latestPrice]);
   const { params, updateParam, updateBudgetMode, validateParams, errors, priceDecimals } =
-    useGridParams(DEFAULT_GRID_PARAMS);
+    useGridParams(initialParams);
 
   const { calculateGrid } = useGridCalculator({
     params,
@@ -82,6 +94,14 @@ export default function GridStrategyPage() {
       <GridAntdProvider>
         <div className="relative">
           <div className="site-container site-container--grid">
+            {prefill.etfCode || prefill.etfName ? (
+              <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-sm shadow-[var(--ds-shadow-sm)]">
+                <span className="font-semibold text-[var(--foreground)]">当前标的</span>
+                {prefill.etfName ? <span>{prefill.etfName}</span> : null}
+                {prefill.etfCode ? <span className="font-mono text-[var(--muted-foreground)]">{prefill.etfCode}</span> : null}
+                {prefill.latestPrice ? <span className="ml-auto text-xs text-[var(--muted-foreground)]">已用最新价 {prefill.latestPrice.toFixed(3)} 预填基准价</span> : null}
+              </div>
+            ) : null}
             <ErrorAlert errors={errors} />
             <ErrorAlert
               errors={calculationErrors}
