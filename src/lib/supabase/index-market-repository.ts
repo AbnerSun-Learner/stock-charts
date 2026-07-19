@@ -70,13 +70,21 @@ export class IndexMarketRepository {
 
   /** 读取指数历史收盘、PE_TTM 与 PB（升序）。 */
   async getIndexMetrics(indexCode: string): Promise<IndexMetricPoint[]> {
-    const { data, error } = await this.client
-      .from('index_daily_metrics')
-      .select('index_code, trade_date, close, pe_ttm, pb')
-      .eq('index_code', indexCode)
-      .order('trade_date', { ascending: true });
-    if (error) throw new Error(`读取 index_daily_metrics 失败: ${error.message}`);
-    return mapIndexMetricRows((data ?? []) as IndexMetricRow[]);
+    const pageSize = 1000;
+    const rows: IndexMetricRow[] = [];
+    for (let offset = 0; ; offset += pageSize) {
+      const { data, error } = await this.client
+        .from('index_daily_metrics')
+        .select('index_code, trade_date, close, pe_ttm, pb')
+        .eq('index_code', indexCode)
+        .order('trade_date', { ascending: true })
+        .range(offset, offset + pageSize - 1);
+      if (error) throw new Error(`读取 index_daily_metrics 失败: ${error.message}`);
+      const page = (data ?? []) as IndexMetricRow[];
+      rows.push(...page);
+      if (page.length < pageSize) break;
+    }
+    return mapIndexMetricRows(rows);
   }
 
   /** 读取跟踪 ETF 最新收盘价，优先前复权。 */
