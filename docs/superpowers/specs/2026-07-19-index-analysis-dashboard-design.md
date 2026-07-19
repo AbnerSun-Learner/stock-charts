@@ -64,7 +64,7 @@
 
 主键为 `(index_code, trade_date)`。字段允许为空，使不同来源、不同市场的数据可以按可用程度合并到同一时间序列，不使用零值代替缺失值。
 
-现有 `etf_valuation` 暂时保留，以兼容当前消费者和快照用途；新页面的历史分析以 `index_daily_metrics` 为事实源。现有 `index_industry_weights` 和 `etf_daily` 继续复用，不新增同义表。
+现有估值快照表由 `etf_valuation` 更名为 `index_valuation`。实现只使用新表名 `index_valuation`，不新增或保留对旧表名的代码依赖；新页面的历史分析以 `index_daily_metrics` 为事实源。现有 `index_industry_weights` 和 `etf_daily` 继续复用，不新增同义表。
 
 ## 同步与来源优先级
 
