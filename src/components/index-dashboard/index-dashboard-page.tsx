@@ -75,7 +75,7 @@ export function IndexDashboardPage() {
   };
   const gridHref = selected ? buildGridStrategyHref({ etfCode: selected.etfCode, etfName: selected.etfName, latestPrice: latestPrice.data }) : '/view/grid';
 
-  return <div className="mx-auto max-w-[1200px] animate-[pageFadeIn_0.5s_var(--ease-out-expo)_both]">
+  return <div className="mx-auto max-w-[1480px] animate-[pageFadeIn_0.5s_var(--ease-out-expo)_both]">
     <header className="mb-5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)] sm:p-6">
       <p className="m-0 mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">Index analytics</p>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -85,12 +85,25 @@ export function IndexDashboardPage() {
       {selected ? <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 border-t border-[var(--border-subtle)] pt-4 text-xs text-[var(--text-muted)]"><span>{selected.indexName} · {selected.indexCode}</span><span>跟踪 ETF：{selected.etfName}（{selected.etfCode}）</span><span>{latestPrice.loading ? '读取最新价…' : latestPrice.data ? `ETF 最新价 ${latestPrice.data.toFixed(3)}` : 'ETF 最新价暂无'}</span></div> : null}
       {listError ? <div role="alert" className="mt-4 text-sm text-[var(--loss)]">{listError}</div> : null}
     </header>
-    <div className="flex flex-col gap-5">
-      <IndexOverviewPanel points={visibleMetrics} window={window} onWindowChange={setWindow} loading={metrics.loading} error={metrics.error} />
-      <ValuationPanel title="市盈率 PE_TTM" metric="peTtm" points={visibleMetrics} loading={metrics.loading} error={metrics.error} />
-      <ValuationPanel title="市净率 PB" metric="pb" points={visibleMetrics} loading={metrics.loading} error={metrics.error} />
-      <IndustryWeightsPanel weights={weights.data} loading={weights.loading} error={weights.error} />
-      <DrawdownPanel points={visibleMetrics} loading={metrics.loading} error={metrics.error} />
+    <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(380px,0.9fr)]">
+      <div data-testid="index-dashboard-left-column" className="min-w-0 space-y-5">
+        <ColumnHeading title="走势与结构" description="指数价格轨迹与申万行业暴露" />
+        <IndexOverviewPanel points={visibleMetrics} window={window} onWindowChange={setWindow} loading={metrics.loading} error={metrics.error} />
+        <IndustryWeightsPanel weights={weights.data} loading={weights.loading} error={weights.error} />
+      </div>
+      <div data-testid="index-dashboard-right-column" className="min-w-0 space-y-5">
+        <ColumnHeading title="估值与风险" description="历史估值位置与回撤压力" />
+        <ValuationPanel title="市盈率 PE_TTM" metric="peTtm" points={visibleMetrics} loading={metrics.loading} error={metrics.error} />
+        <ValuationPanel title="市净率 PB" metric="pb" points={visibleMetrics} loading={metrics.loading} error={metrics.error} />
+        <DrawdownPanel points={visibleMetrics} loading={metrics.loading} error={metrics.error} />
+      </div>
     </div>
+  </div>;
+}
+
+function ColumnHeading({ title, description }: { title: string; description: string }) {
+  return <div className="flex items-end justify-between gap-4 px-1 pb-1">
+    <h2 className="m-0 font-[var(--font-display)] text-sm font-semibold text-[var(--text-primary)]">{title}</h2>
+    <span className="text-xs text-[var(--text-muted)]">{description}</span>
   </div>;
 }

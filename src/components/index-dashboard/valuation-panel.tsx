@@ -8,7 +8,7 @@ export function ValuationPanel({ title, metric, points, loading, error }: { titl
   const maxCount = stats ? Math.max(...stats.bins.map(bin => bin.count), 1) : 1;
   return <PanelShell title={title} eyebrow="Valuation distribution">
     {loading ? <PanelState message={`正在加载${title}历史…`} tone="loading" /> : error ? <PanelState message={error} tone="error" /> : !stats ? <PanelState message={`该指数暂无${title}历史数据`} /> : <>
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3">
         <Metric label="当前" value={stats.current.toFixed(2)} accent />
         <Metric label="历史分位" value={`${stats.percentile.toFixed(1)}%`} />
         <Metric label="历史均值" value={stats.average.toFixed(2)} />
