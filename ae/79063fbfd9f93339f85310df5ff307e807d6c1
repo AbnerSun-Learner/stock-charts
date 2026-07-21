@@ -1,0 +1,31 @@
+.cursor/rules/dual-repo-data-boundary.mdc
+  s_52fcd213956209::t_34c5353c996ba2 12-14,20,26,33
+__tests__/index-dashboard/metric-analysis.test.ts
+  s_52fcd213956209::t_fef68bdd46c753 1,25,32-35,47-72
+e2e/index-dashboard.spec.ts
+  s_52fcd213956209::t_1301d27f65ed7e 36-38
+src/components/index-dashboard/index-dashboard-page.tsx
+  s_52fcd213956209::t_2e4e5360528a15 13,44-47
+src/components/index-dashboard/valuation-panel.tsx
+  s_52fcd213956209::t_7098e2537f9286 3,6-23,25-50,52-80,82-87,90-107
+src/lib/index-dashboard/metric-analysis.ts
+  s_52fcd213956209::t_cd3b65c38b87a8 3-32,42-57,66-68,86-88
+src/types/index-dashboard.ts
+  s_52fcd213956209::t_4ba2f3df8dfaed 79,81-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "ae79063fbfd9f93339f85310df5ff307e807d6c1",
+  "prompts": {},
+  "sessions": {
+    "s_52fcd213956209": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "b6fab1fb-5c95-4d0c-ad3d-6635dd69a307",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
