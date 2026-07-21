@@ -65,6 +65,14 @@ test.describe('指数分析', () => {
     await expect(rightColumn.getByRole('heading', { name: '市盈率 PE_TTM' })).toBeVisible();
     await expect(rightColumn.getByRole('heading', { name: '市净率 PB' })).toBeVisible();
     await expect(rightColumn.getByRole('heading', { name: '极限跌幅' })).toBeVisible();
+
+    const peToggle = page.getByTestId('pe-line-toggle');
+    await expect(peToggle).toBeVisible();
+    await expect(peToggle).toHaveAttribute('aria-checked', 'false');
+    await peToggle.click();
+    await expect(peToggle).toHaveAttribute('aria-checked', 'true');
+    await peToggle.click();
+    await expect(peToggle).toHaveAttribute('aria-checked', 'false');
   });
 
   test('无历史指标时各模块保留并展示空态', async ({ page }) => {
@@ -88,5 +96,6 @@ test.describe('指数分析', () => {
     await expect(page.getByText('该指数暂无市盈率 PE_TTM历史数据')).toBeVisible();
     await expect(page.getByText('该指数暂无市净率 PB历史数据')).toBeVisible();
     await expect(page.getByText('该指数暂无可计算的收盘数据')).toBeVisible();
+    await expect(page.getByTestId('pe-line-toggle')).toBeDisabled();
   });
 });

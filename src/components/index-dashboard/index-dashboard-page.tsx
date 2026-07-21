@@ -11,6 +11,7 @@ import { IndexSelector } from './index-selector';
 import { PanelShell, PanelState } from './panel-shell';
 import { ValuationPanel } from './valuation-panel';
 import { filterMetricWindow, maskUnfinalizedCloses } from '@/lib/index-dashboard/metric-analysis';
+import { hasPeSeries } from '@/lib/index-dashboard/overview-chart';
 import { LatestRequestGuard } from '@/lib/index-dashboard/latest-request-guard';
 import { buildGridStrategyHref } from '@/lib/grid/grid-prefill';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -33,6 +34,7 @@ export function IndexDashboardPage() {
   const [indices, setIndices] = useState<IndexWithEtf[]>([]);
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [window, setWindow] = useState<AnalysisWindow>('all');
+  const [showPeLine, setShowPeLine] = useState(false);
   const [metrics, setMetrics] = useState<Resource<IndexMetricPoint[]>>(resource([]));
   const [weights, setWeights] = useState<Resource<IndustryWeight[]>>(resource([]));
   const [latestPrice, setLatestPrice] = useState<Resource<number | null>>(resource(null));
@@ -45,6 +47,11 @@ export function IndexDashboardPage() {
     () => maskUnfinalizedCloses(filterMetricWindow(metrics.data, window)),
     [metrics.data, window]
   );
+  const peToggleEnabled = useMemo(() => hasPeSeries(visibleMetrics), [visibleMetrics]);
+
+  useEffect(() => {
+    if (!peToggleEnabled && showPeLine) setShowPeLine(false);
+  }, [peToggleEnabled, showPeLine]);
 
   useEffect(() => () => guard.invalidate(), [guard]);
   useEffect(() => {
@@ -91,12 +98,30 @@ export function IndexDashboardPage() {
     <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(380px,0.9fr)]">
       <div data-testid="index-dashboard-left-column" className="min-w-0 space-y-5">
         <ColumnHeading title="走势与结构" description="指数价格轨迹与申万行业暴露" />
-        <IndexOverviewPanel points={visibleMetrics} window={window} onWindowChange={setWindow} loading={metrics.loading} error={metrics.error} />
+        <IndexOverviewPanel
+          points={visibleMetrics}
+          window={window}
+          onWindowChange={setWindow}
+          showPeLine={showPeLine && peToggleEnabled}
+          indexName={selected?.indexName ?? '指数'}
+          indexCode={selected?.indexCode ?? ''}
+          loading={metrics.loading}
+          error={metrics.error}
+        />
         <IndustryWeightsPanel weights={weights.data} loading={weights.loading} error={weights.error} />
       </div>
       <div data-testid="index-dashboard-right-column" className="min-w-0 space-y-5">
         <ColumnHeading title="估值与风险" description="历史估值位置与回撤压力" />
-        <ValuationPanel title="市盈率 PE_TTM" metric="peTtm" points={visibleMetrics} loading={metrics.loading} error={metrics.error} />
+        <ValuationPanel
+          title="市盈率 PE_TTM"
+          metric="peTtm"
+          points={visibleMetrics}
+          loading={metrics.loading}
+          error={metrics.error}
+          showPeLine={showPeLine}
+          onShowPeLineChange={setShowPeLine}
+          peToggleEnabled={peToggleEnabled}
+        />
         <ValuationPanel title="市净率 PB" metric="pb" points={visibleMetrics} loading={metrics.loading} error={metrics.error} />
         <DrawdownPanel points={visibleMetrics} loading={metrics.loading} error={metrics.error} />
       </div>

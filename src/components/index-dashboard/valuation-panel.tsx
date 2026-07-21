@@ -1,4 +1,5 @@
 'use client';
+import { Switch } from 'antd';
 import { analyzeValuation } from '@/lib/index-dashboard/metric-analysis';
 import type { IndexMetricPoint, ValuationMetricKey, ValuationStatistics } from '@/types/index-dashboard';
 import { PanelShell, PanelState } from './panel-shell';
@@ -14,20 +15,56 @@ export function ValuationPanel({
   points,
   loading,
   error,
+  showPeLine,
+  onShowPeLineChange,
+  peToggleEnabled = false,
 }: {
   title: string;
   metric: ValuationMetricKey;
   points: IndexMetricPoint[];
   loading: boolean;
   error: string | null;
+  /** 仅市盈率面板：控制走势图 PE 线显隐。 */
+  showPeLine?: boolean;
+  onShowPeLineChange?: (checked: boolean) => void;
+  peToggleEnabled?: boolean;
 }) {
   const stats = analyzeValuation(points, metric);
-  if (loading) return <PanelShell title={title} eyebrow="Valuation distribution"><PanelState message={`正在加载${title}历史…`} tone="loading" /></PanelShell>;
-  if (error) return <PanelShell title={title} eyebrow="Valuation distribution"><PanelState message={error} tone="error" /></PanelShell>;
-  if (!stats) return <PanelShell title={title} eyebrow="Valuation distribution"><PanelState message={`该指数暂无${title}历史数据`} /></PanelShell>;
+  const peToggle =
+    metric === 'peTtm' && onShowPeLineChange ? (
+      <Switch
+        checked={Boolean(showPeLine)}
+        disabled={!peToggleEnabled}
+        onChange={onShowPeLineChange}
+        aria-label="显示市盈率折线"
+        data-testid="pe-line-toggle"
+      />
+    ) : undefined;
+
+  if (loading) {
+    return (
+      <PanelShell title={title} eyebrow="Valuation distribution" action={peToggle}>
+        <PanelState message={`正在加载${title}历史…`} tone="loading" />
+      </PanelShell>
+    );
+  }
+  if (error) {
+    return (
+      <PanelShell title={title} eyebrow="Valuation distribution" action={peToggle}>
+        <PanelState message={error} tone="error" />
+      </PanelShell>
+    );
+  }
+  if (!stats) {
+    return (
+      <PanelShell title={title} eyebrow="Valuation distribution" action={peToggle}>
+        <PanelState message={`该指数暂无${title}历史数据`} />
+      </PanelShell>
+    );
+  }
 
   return (
-    <PanelShell title={title} eyebrow="Valuation distribution">
+    <PanelShell title={title} eyebrow="Valuation distribution" action={peToggle}>
       <ValuationCards stats={stats} unit={METRIC_LABEL[metric]} />
       {!stats.insufficientSamples ? <ValuationHistogram title={title} stats={stats} /> : null}
       <p className="mt-3 mb-0 text-xs leading-5 text-[var(--text-muted)]">
