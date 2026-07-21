@@ -1,4 +1,4 @@
-import { analyzeValuation, filterMetricWindow } from '@/lib/index-dashboard/metric-analysis';
+import { analyzeValuation, filterMetricWindow, maskUnfinalizedCloses, quantileCont } from '@/lib/index-dashboard/metric-analysis';
 import { calculateDrawdown } from '@/lib/index-dashboard/drawdown';
 import type { IndexMetricPoint } from '@/types/index-dashboard';
 
@@ -22,13 +22,17 @@ describe('filterMetricWindow', () => {
 });
 
 describe('analyzeValuation', () => {
-  it('计算当前值、均值、区间和历史分位', () => {
+  it('计算当前值、均值、区间、历史分位与 20/50/80 阈值', () => {
     const rows = Array.from({ length: 25 }, (_, index) => point(`2026-01-${String(index + 1).padStart(2, '0')}`, 100, index + 1));
     const result = analyzeValuation(rows, 'peTtm');
     expect(result?.current).toBe(25);
     expect(result?.average).toBe(13);
     expect(result?.percentile).toBe(100);
     expect(result?.minimum).toBe(1);
+    expect(result?.maximum).toBe(25);
+    expect(result?.valueAt20).toBeCloseTo(5.8);
+    expect(result?.valueAt50).toBe(13);
+    expect(result?.valueAt80).toBeCloseTo(20.2);
     expect(result?.bins.reduce((sum, bin) => sum + bin.count, 0)).toBe(25);
     expect(result?.insufficientSamples).toBe(false);
   });
@@ -37,6 +41,32 @@ describe('analyzeValuation', () => {
     const rows = [point('2026-01-01', 100, -1), point('2026-01-02', 101, null), point('2026-01-03', 102, 10)];
     expect(analyzeValuation(rows, 'peTtm')?.sampleSize).toBe(1);
     expect(analyzeValuation(rows, 'peTtm')?.insufficientSamples).toBe(true);
+  });
+});
+
+describe('maskUnfinalizedCloses', () => {
+  it('盘中抹掉今日收盘，保留更早交易日', () => {
+    const rows = [
+      point('2026-07-20', 4598),
+      point('2026-07-21', 4679),
+    ];
+    const masked = maskUnfinalizedCloses(rows, new Date('2026-07-21T03:30:00Z')); // 上海 11:30
+    expect(masked[0].close).toBe(4598);
+    expect(masked[1].close).toBeNull();
+  });
+
+  it('收盘后保留今日收盘', () => {
+    const rows = [point('2026-07-21', 4679)];
+    const masked = maskUnfinalizedCloses(rows, new Date('2026-07-21T07:10:00Z')); // 上海 15:10
+    expect(masked[0].close).toBe(4679);
+  });
+});
+
+describe('quantileCont', () => {
+  it('对单点与线性插值给出稳定结果', () => {
+    expect(quantileCont([10], 0.5)).toBe(10);
+    expect(quantileCont([1, 2, 3, 4, 5], 0.5)).toBe(3);
+    expect(quantileCont([1, 2, 3, 4, 5], 0.25)).toBe(2);
   });
 });
 

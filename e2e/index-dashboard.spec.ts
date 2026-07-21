@@ -33,7 +33,9 @@ test.describe('指数分析', () => {
     await expect(page.getByRole('heading', { name: '市盈率 PE_TTM' })).toBeVisible();
     await expect(page.getByRole('heading', { name: '市净率 PB' })).toBeVisible();
     await expect(page.getByText('最新收盘')).toBeVisible();
-    await expect(page.getByText('历史分位').first()).toBeVisible();
+    await expect(page.getByText('当前分位').first()).toBeVisible();
+    await expect(page.getByText('20% 分位').first()).toBeVisible();
+    await expect(page.getByText('最新市盈率').first()).toBeVisible();
 
     await expect(page.getByRole('heading', { name: '行业权重' })).toBeVisible();
     const industryObservation = page.locator('aside').filter({ hasText: '结构观察' });

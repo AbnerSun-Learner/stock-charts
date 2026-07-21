@@ -76,7 +76,14 @@ export interface ValuationStatistics {
   average: number;
   minimum: number;
   maximum: number;
+  /** 当前值在历史样本中的经验分位（0–100，越高越贵）。 */
   percentile: number;
+  /** 历史分布 20% 分位对应的指标值。 */
+  valueAt20: number;
+  /** 历史分布 50% 分位（中位数）对应的指标值。 */
+  valueAt50: number;
+  /** 历史分布 80% 分位对应的指标值。 */
+  valueAt80: number;
   sampleSize: number;
   tradeDate: string;
   insufficientSamples: boolean;

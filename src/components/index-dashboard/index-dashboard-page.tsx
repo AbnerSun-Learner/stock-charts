@@ -10,7 +10,7 @@ import { IndexOverviewPanel } from './index-overview-panel';
 import { IndexSelector } from './index-selector';
 import { PanelShell, PanelState } from './panel-shell';
 import { ValuationPanel } from './valuation-panel';
-import { filterMetricWindow } from '@/lib/index-dashboard/metric-analysis';
+import { filterMetricWindow, maskUnfinalizedCloses } from '@/lib/index-dashboard/metric-analysis';
 import { LatestRequestGuard } from '@/lib/index-dashboard/latest-request-guard';
 import { buildGridStrategyHref } from '@/lib/grid/grid-prefill';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -41,7 +41,10 @@ export function IndexDashboardPage() {
   const repo = useMemo(() => new IndexMarketRepository(createBrowserSupabaseClient()), []);
   const guard = useMemo(() => new LatestRequestGuard(), []);
   const selected = useMemo(() => indices.find(item => item.indexCode === selectedCode) ?? null, [indices, selectedCode]);
-  const visibleMetrics = useMemo(() => filterMetricWindow(metrics.data, window), [metrics.data, window]);
+  const visibleMetrics = useMemo(
+    () => maskUnfinalizedCloses(filterMetricWindow(metrics.data, window)),
+    [metrics.data, window]
+  );
 
   useEffect(() => () => guard.invalidate(), [guard]);
   useEffect(() => {
