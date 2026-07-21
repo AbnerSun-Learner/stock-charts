@@ -1,0 +1,39 @@
+.cursor/rules/assess-data-support-before-features.mdc
+  s_81fd086b7ede16::t_0251c4f01ae921 1-36
+__tests__/index-dashboard/overview-chart.test.ts
+  s_81fd086b7ede16::t_30ef4c573be9ea 1-56
+__tests__/index-dashboard/overview-tooltip.test.ts
+  s_81fd086b7ede16::t_6cd5e9e2f7047b 1-84
+docs/superpowers/plans/2026-07-21-index-overview-dual-axis-pe-toggle.md
+  s_81fd086b7ede16::t_a0a90ccb3acc7a 1-47
+docs/superpowers/specs/2026-07-21-index-overview-dual-axis-pe-toggle-design.md
+  s_81fd086b7ede16::t_36360bc4c4eca1 1-83
+e2e/index-dashboard.spec.ts
+  s_81fd086b7ede16::t_1700a93f49dfc8 68-75,99
+src/components/index-dashboard/index-dashboard-page.tsx
+  s_81fd086b7ede16::t_2db734102ac32d 14,37,50-54,101-110,115-124
+src/components/index-dashboard/index-overview-panel.tsx
+  s_81fd086b7ede16::t_e4dd1ac05d05ad 2,4-14,18-134,136-161
+src/components/index-dashboard/valuation-panel.tsx
+  s_81fd086b7ede16::t_4b32cf8135e041 2,18-20,27-30,33-64,67
+src/lib/index-dashboard/overview-chart.ts
+  s_81fd086b7ede16::t_88e6ac689a249a 1-59
+src/lib/index-dashboard/overview-tooltip.ts
+  s_81fd086b7ede16::t_bd7c0c3f23a740 1-230
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "f95fd0b3c2181e4436b33faf501060a128847cae",
+  "prompts": {},
+  "sessions": {
+    "s_81fd086b7ede16": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3b013fc1-7a29-4928-b9be-51c4f6868395",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
