@@ -3,10 +3,14 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Breadcrumb } from 'antd';
+import type { ReactNode } from 'react';
 
 const ROUTES: Record<string, string> = {
   '/view/sunburst': '资产旭日图',
   '/view/grid': '网格交易策略',
+  '/view/family': '家庭财务总览',
+  '/view/family/ledger': '资产记账',
+  '/view/family/policies': '保单管理',
 };
 
 /**
@@ -15,10 +19,18 @@ const ROUTES: Record<string, string> = {
 export function ViewBreadcrumb() {
   const pathname = usePathname();
 
-  const items = [
-    { title: <Link href="/">工具集</Link> },
-    ...(pathname && pathname !== '/' ? [{ title: ROUTES[pathname] ?? '详情' }] : []),
-  ];
+  const items: Array<{ title: ReactNode }> = [{ title: <Link href="/">工具集</Link> }];
+
+  if (pathname?.startsWith('/view/family')) {
+    items.push({ title: <Link href="/view/family">家庭财务总览</Link> });
+    if (pathname === '/view/family/ledger') {
+      items.push({ title: '资产记账' });
+    } else if (pathname === '/view/family/policies') {
+      items.push({ title: '保单管理' });
+    }
+  } else if (pathname && pathname !== '/') {
+    items.push({ title: ROUTES[pathname] ?? '详情' });
+  }
 
   return (
     <nav

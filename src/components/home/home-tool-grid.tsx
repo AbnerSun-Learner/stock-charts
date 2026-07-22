@@ -2,7 +2,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Card, Row, Col, Button } from 'antd';
+import { Row, Col } from 'antd';
+import { HomeToolCard } from './home-tool-card';
 
 const TOOLS = [
   {
@@ -17,7 +18,6 @@ const TOOLS = [
         <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.35" />
       </svg>
     ),
-    stats: '资产分布 · 多层级',
   },
   {
     id: 'grid',
@@ -30,7 +30,6 @@ const TOOLS = [
         <path d="M7.5 7.5h.01M16.5 7.5h.01M7.5 16.5h.01M16.5 16.5h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       </svg>
     ),
-    stats: '步长配置 · 压力测试',
   },
   {
     id: 'coming-soon-2',
@@ -62,40 +61,33 @@ const TOOLS = [
   },
 ] as const;
 
+/**
+ * 投研工具分区网格。
+ */
 export function HomeToolGrid() {
   const router = useRouter();
 
   return (
-    <Row gutter={[20, 20]} className="mt-0">
-      {TOOLS.map((tool, index) => (
-        <Col xs={24} sm={12} lg={6} key={tool.id}>
-          <Card
-            variant="borderless"
-            className="home-tool-card group relative opacity-0 animate-[cardFadeIn_0.4s_var(--ease-out-expo)_both]"
-            style={{ animationDelay: `${0.08 + index * 0.04}s` }}
-          >
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[var(--accent)] to-[var(--success)] opacity-0 transition-opacity duration-[0.25s] group-hover:opacity-100" />
-            <div className="w-14 h-14 flex items-center justify-center mx-auto mb-5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--accent)] transition-all duration-[0.25s] group-hover:bg-[var(--accent-soft)] group-hover:border-[var(--accent-glow)]">
-              {tool.icon}
-            </div>
-            <h2 className="font-[var(--font-display)] text-[1.0625rem] font-semibold text-[var(--text-primary)] m-0 mb-2.5 text-center">
-              {tool.title}
-            </h2>
-            <p className="text-[0.8125rem] text-[var(--text-muted)] leading-relaxed m-0 mb-6 flex-1 text-center">
-              {tool.description}
-            </p>
-            {'coming' in tool && tool.coming ? (
-              <Button size="middle" disabled className="home-tool-card-btn">
-                即将上线
-              </Button>
-            ) : (
-              <Button size="middle" onClick={() => router.push(tool.href)} className="home-tool-card-btn">
-                立即使用
-              </Button>
-            )}
-          </Card>
-        </Col>
-      ))}
-    </Row>
+    <section>
+      <h2 className="font-[var(--font-display)] text-sm font-semibold tracking-wide text-[var(--text-muted)] uppercase m-0 mb-4">
+        投研工具
+      </h2>
+      <Row gutter={[20, 20]} className="mt-0">
+        {TOOLS.map((tool, index) => (
+          <Col xs={24} sm={12} lg={6} key={tool.id}>
+            <HomeToolCard
+              title={tool.title}
+              description={tool.description}
+              icon={tool.icon}
+              animationDelay={`${0.12 + index * 0.04}s`}
+              coming={'coming' in tool && tool.coming}
+              onAction={() => {
+                if (!('coming' in tool && tool.coming)) router.push(tool.href);
+              }}
+            />
+          </Col>
+        ))}
+      </Row>
+    </section>
   );
 }

@@ -9,16 +9,16 @@ alwaysApply: true
 
 ## scheduled-tasks 唯一负责
 
-- 建表、migration、`schema.sql`、RLS 策略 SQL（含用户账本表与 `fx_rates`）
+- 建表、migration、`schema.sql`、RLS 策略 SQL（含用户数据表与 `fx_rates`）
 - 第三方数据源接入（yfinance、Frankfurter/ECB 等）及密钥（仅该仓 Secrets）
 - 共享表批量落库（`etf_daily`、`fx_rates`、`sync_runs` 等）
 
 ## stock-charts 只负责
 
-- 业务纯函数、UI、驾驶舱/复盘
-- 经 `@supabase/supabase-js` + Auth/RLS 的用户账本 CRUD（数据由用户在 UI/CSV 填写）
+- 业务纯函数、UI
+- 经 `@supabase/supabase-js` + Auth/RLS 的用户数据 CRUD（数据由用户在 UI 填写）
 - 共享行情/汇率表的**只读**查询与领域映射
-- Phase 1 认证：**邮箱 Magic Link**（不做 OAuth，除非用户另行确认）
+- 认证：**GitHub OAuth**（登录 Modal；家庭财务等私有功能可加允许名单）
 
 ## 禁止（本仓）
 
@@ -28,6 +28,6 @@ alwaysApply: true
 
 ## 协作方式
 
-需要新表或新同步源时：在本仓文档写清表契约 → 在 `scheduled-tasks` 落地 SQL/job → 本仓再接 Repository。详情见 `docs/etf-investment-cockpit-implementation-plan.md` §1.4、§4.4。
+需要新表或新同步源时：在本仓 `docs/superpowers/specs/` 写清表契约 → 在 `scheduled-tasks` 落地 SQL/job → 本仓再接 Repository。
 
-权威 migration：`scheduled-tasks` 的 `20260710_cockpit_ledger_and_fx_rates.sql`；领域 `FxRate.date` ↔ 物理列 `fx_rates.rate_date`。
+共享汇率表领域映射：`FxRate.date` ↔ 物理列 `fx_rates.rate_date`。

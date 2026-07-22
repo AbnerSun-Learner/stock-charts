@@ -1,7 +1,8 @@
 import { HomeToolGrid } from '@/components/home/home-tool-grid';
+import { HomeFamilyFinanceSection } from '@/components/home/home-family-finance-section';
 
 /**
- * 应用首页：展示投研工具集的入口网格。
+ * 应用首页：家庭财务分区 + 投研工具网格。
  */
 export default function HomePage() {
   return (
@@ -13,6 +14,7 @@ export default function HomePage() {
           </h1>
           <p className="text-sm text-[var(--text-muted)] m-0">专业数据可视化工具，助力投资决策</p>
         </header>
+        <HomeFamilyFinanceSection />
         <HomeToolGrid />
       </div>
     </main>
