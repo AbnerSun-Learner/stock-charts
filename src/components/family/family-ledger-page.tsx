@@ -22,6 +22,7 @@ import {
   CATEGORY_LABELS,
   FOUR_POT_LABELS,
   type FamilyLedgerItem,
+  type FamilyAssetHistory,
   type FamilyMember,
   type FourPot,
   type LedgerCategory,
@@ -33,6 +34,8 @@ import {
 } from '@/lib/family-finance/aggregates';
 import { formatCny } from '@/lib/family-finance/format';
 import { FamilyAssetStructurePie } from '@/components/family/family-asset-structure-pie';
+import { FamilyAssetHistoryLine } from '@/components/family/family-asset-history-line';
+import { buildFamilyAssetHistory } from '@/lib/family-finance/history';
 
 /**
  * 家庭资产记账主界面。
@@ -44,6 +47,8 @@ export function FamilyLedgerPage() {
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [items, setItems] = useState<FamilyLedgerItem[]>([]);
+  const [assetHistory, setAssetHistory] =
+    useState<FamilyAssetHistory>([]);
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [itemSaving, setItemSaving] = useState(false);
   const itemSavingRef = useRef(false);
@@ -55,9 +60,14 @@ export function FamilyLedgerPage() {
     setLoading(true);
     try {
       await repo.ensureSelfMember();
-      const [m, i] = await Promise.all([repo.listMembers(), repo.listLedgerItems()]);
+      const [m, i, historyRows] = await Promise.all([
+        repo.listMembers(),
+        repo.listLedgerItems(),
+        repo.listAssetHistory(),
+      ]);
       setMembers(m);
       setItems(i);
+      setAssetHistory(buildFamilyAssetHistory(historyRows));
     } catch (e) {
       message.error(e instanceof Error ? e.message : '加载失败');
     } finally {
@@ -157,11 +167,19 @@ export function FamilyLedgerPage() {
       },
     ];
     if (side === 'asset') {
-      cols.push({
-        title: '成员',
-        dataIndex: 'memberId',
-        render: (id: string | null) => memberNameById.get(id ?? '') ?? '—',
-      });
+      cols.push(
+        {
+          title: '成员',
+          dataIndex: 'memberId',
+          render: (id: string | null) => memberNameById.get(id ?? '') ?? '—',
+        },
+        {
+          title: '四笔钱',
+          dataIndex: 'fourPot',
+          render: (fourPot: FourPot | null) =>
+            fourPot ? FOUR_POT_LABELS[fourPot] : '—',
+        }
+      );
     }
     cols.push(
       {
@@ -216,13 +234,21 @@ export function FamilyLedgerPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4 min-h-[280px]">
+        <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4 min-h-[280px] flex flex-col">
           <h3 className="text-sm font-medium m-0 mb-3">资产结构</h3>
-          {fourPotShares.length === 0 ? (
-            <Empty description="暂无活钱/稳钱/长钱标注资产" />
-          ) : (
-            <FamilyAssetStructurePie shares={fourPotShares} height={280} />
-          )}
+          <div className="flex flex-1 items-center justify-center w-full">
+            {fourPotShares.length === 0 ? (
+              <Empty description="暂无活钱/稳钱/长钱标注资产" />
+            ) : (
+              <div className="w-full max-w-[600px]">
+                <FamilyAssetStructurePie
+                  shares={fourPotShares}
+                  totalAssets={totals.totalAssets}
+                  height={320}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4">
@@ -260,6 +286,25 @@ export function FamilyLedgerPage() {
           </div>
         </div>
       </div>
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="m-0 mb-1 text-base font-semibold">成员资产变动</h2>
+          <p className="m-0 text-sm text-[var(--text-muted)]">
+            每次保存条目都会刷新当天快照，分别跟踪活钱、稳钱和长钱
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {assetHistory.map(series => (
+            <FamilyAssetHistoryLine
+              key={series.memberId}
+              title={`${series.memberName}的资产`}
+              points={series.points}
+            />
+          ))}
+        </div>
+      </section>
 
       <Modal
         title={editing ? '编辑条目' : '添加条目'}
@@ -312,7 +357,11 @@ export function FamilyLedgerPage() {
               >
                 <Select options={members.map(m => ({ value: m.id, label: m.name }))} />
               </Form.Item>
-              <Form.Item name="fourPot" label="四笔钱（可选）">
+              <Form.Item
+                name="fourPot"
+                label="四笔钱"
+                rules={[{ required: true, message: '请选择四笔钱分类' }]}
+              >
                 <Select
                   allowClear
                   options={(Object.keys(FOUR_POT_LABELS) as FourPot[]).map(k => ({

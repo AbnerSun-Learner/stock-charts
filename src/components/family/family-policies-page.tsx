@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   App,
   Button,
@@ -27,9 +27,9 @@ import { computePolicyCoverage } from '@/lib/family-finance/aggregates';
 import { formatCny } from '@/lib/family-finance/format';
 
 /**
- * 保单管理页面。
+ * 保单管理页面；可作为家庭财务总览内嵌面板复用。
  */
-export function FamilyPoliciesPage() {
+export function FamilyPoliciesPage({ embedded = false }: { embedded?: boolean }) {
   const { message, modal } = App.useApp();
   const repo = useMemo(() => new FamilyFinanceRepository(createBrowserSupabaseClient()), []);
 
@@ -38,6 +38,8 @@ export function FamilyPoliciesPage() {
   const [policies, setPolicies] = useState<InsurancePolicy[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<InsurancePolicy | null>(null);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [form] = Form.useForm();
 
   const reload = useCallback(async () => {
@@ -95,8 +97,11 @@ export function FamilyPoliciesPage() {
   };
 
   const save = async () => {
-    const values = await form.validateFields();
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
     try {
+      const values = await form.validateFields();
       await repo.upsertPolicy({
         id: editing?.id,
         memberId: values.memberId,
@@ -107,12 +112,18 @@ export function FamilyPoliciesPage() {
         annualPremium: values.annualPremium,
         status: values.status,
         note: values.note,
+        startDate: editing?.startDate,
+        endDate: editing?.endDate,
       });
       message.success(editing ? '已更新' : '已添加');
       setOpen(false);
       await reload();
     } catch (e) {
+      if (e && typeof e === 'object' && 'errorFields' in e) return;
       message.error(e instanceof Error ? e.message : '保存失败');
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
     }
   };
 
@@ -120,7 +131,15 @@ export function FamilyPoliciesPage() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="font-[var(--font-display)] text-xl font-semibold m-0 mb-2">保单管理</h1>
+          {embedded ? (
+            <h2 className="font-[var(--font-display)] text-base font-semibold m-0 mb-2">
+              家庭保单
+            </h2>
+          ) : (
+            <h1 className="font-[var(--font-display)] text-xl font-semibold m-0 mb-2">
+              保单管理
+            </h1>
+          )}
           <Space wrap size="small">
             <span className="text-sm text-[var(--text-muted)]">覆盖摘要：</span>
             {coverage.map(c => (
@@ -222,8 +241,12 @@ export function FamilyPoliciesPage() {
       <Modal
         title={editing ? '编辑保单' : '添加保单'}
         open={open}
-        onCancel={() => setOpen(false)}
-        onOk={() => void save()}
+        onCancel={() => {
+          if (!savingRef.current) setOpen(false);
+        }}
+        onOk={() => save()}
+        confirmLoading={saving}
+        okButtonProps={{ disabled: saving }}
         destroyOnClose
       >
         <Form form={form} layout="vertical" className="mt-2">

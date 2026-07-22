@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   FamilyLedgerItem,
+  FamilyAssetHistoryRow,
   FamilyMember,
   FamilyMemberRole,
   FourPot,
@@ -64,7 +65,7 @@ function mapPolicy(row: Record<string, unknown>): InsurancePolicy {
 const ensureSelfInflight = new Map<string, Promise<FamilyMember>>();
 
 /**
- * 家庭财务 Supabase Repository（活账 + 成员 + 保单；无快照）。
+ * 家庭财务 Supabase Repository（活账 + 每日历史 + 成员 + 保单）。
  */
 export class FamilyFinanceRepository {
   constructor(private readonly client: SupabaseClient) {}
@@ -191,6 +192,29 @@ export class FamilyFinanceRepository {
     return (data ?? []).map(mapLedgerItem);
   }
 
+  /** 读取每位成员按活钱 / 稳钱 / 长钱聚合的每日历史。 */
+  async listAssetHistory(): Promise<FamilyAssetHistoryRow[]> {
+    const { data, error } = await this.client
+      .from('family_asset_history')
+      .select(
+        'as_of_date,member_id,member_name,sort_order,four_pot,pot_order,total_assets'
+      )
+      .order('as_of_date', { ascending: true })
+      .order('sort_order', { ascending: true })
+      .order('pot_order', { ascending: true });
+    if (error) throw new Error(error.message);
+
+    return (data ?? []).map(row => ({
+      date: String(row.as_of_date),
+      memberId: String(row.member_id),
+      memberName: String(row.member_name),
+      sortOrder: Number(row.sort_order ?? 0),
+      fourPot: row.four_pot as FamilyAssetHistoryRow['fourPot'],
+      potOrder: Number(row.pot_order ?? 0),
+      totalAssets: parseMoney(row.total_assets as string | number),
+    }));
+  }
+
   async upsertLedgerItem(input: {
     id?: string;
     side: LedgerSide;
@@ -271,7 +295,7 @@ export class FamilyFinanceRepository {
     note?: string | null;
   }): Promise<InsurancePolicy> {
     const userId = await this.requireUserId();
-    const payload = {
+    const payload: Record<string, unknown> = {
       user_id: userId,
       member_id: input.memberId,
       policy_type: input.policyType,
@@ -280,11 +304,18 @@ export class FamilyFinanceRepository {
       coverage_amount: parseMoney(input.coverageAmount),
       annual_premium: parseMoney(input.annualPremium),
       status: input.status,
-      start_date: input.startDate || null,
-      end_date: input.endDate || null,
       note: input.note ?? null,
       updated_at: new Date().toISOString(),
     };
+
+    // 新建时补齐 nullable 列；更新时只覆盖调用方明确提供的日期，
+    // 避免不展示日期的编辑界面悄然清空历史数据。
+    if (!input.id || input.startDate !== undefined) {
+      payload.start_date = input.startDate || null;
+    }
+    if (!input.id || input.endDate !== undefined) {
+      payload.end_date = input.endDate || null;
+    }
 
     if (input.id) {
       const { data, error } = await this.client

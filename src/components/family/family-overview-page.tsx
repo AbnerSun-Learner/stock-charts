@@ -17,24 +17,21 @@ import {
   Space,
   Statistic,
   Table,
-  Tag,
 } from 'antd';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { FamilyFinanceRepository } from '@/lib/supabase/family-finance-repository';
 import {
   MEMBER_ROLE_LABELS,
-  POLICY_TYPE_LABELS,
   type FamilyLedgerItem,
   type FamilyMember,
   type FamilyMemberRole,
-  type PolicyCoverageSummary,
 } from '@/types/family-finance';
 import {
   computeLedgerTotals,
   computeMemberAssetShares,
-  computePolicyCoverage,
 } from '@/lib/family-finance/aggregates';
 import { formatCny } from '@/lib/family-finance/format';
+import { FamilyPoliciesPage } from '@/components/family/family-policies-page';
 
 /**
  * 家庭财务总览（直接读活账合计）。
@@ -45,7 +42,6 @@ export function FamilyOverviewPage() {
 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<FamilyLedgerItem[]>([]);
-  const [coverage, setCoverage] = useState<PolicyCoverageSummary[] | null>(null);
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [memberDrawer, setMemberDrawer] = useState(false);
   const [memberForm] = Form.useForm();
@@ -57,12 +53,6 @@ export function FamilyOverviewPage() {
       const [ledgerItems, m] = await Promise.all([repo.listLedgerItems(), repo.listMembers()]);
       setItems(ledgerItems);
       setMembers(m);
-      try {
-        const policies = await repo.listPolicies();
-        setCoverage(computePolicyCoverage(policies));
-      } catch {
-        setCoverage(null);
-      }
     } catch (e) {
       message.error(e instanceof Error ? e.message : '加载失败');
     } finally {
@@ -90,9 +80,6 @@ export function FamilyOverviewPage() {
       <Button onClick={() => setMemberDrawer(true)}>成员管理</Button>
       <Link href="/view/family/ledger">
         <Button type="primary">{hasLedger ? '更新资产' : '前往资产记账'}</Button>
-      </Link>
-      <Link href="/view/family/policies">
-        <Button>管理保单</Button>
       </Link>
     </Space>
   );
@@ -233,6 +220,9 @@ export function FamilyOverviewPage() {
           {headerActions}
         </div>
         <Empty description="尚无资产条目。请前往资产记账添加后，总览会即时展示。" />
+        <div className="mt-8">
+          <FamilyPoliciesPage embedded />
+        </div>
         {memberDrawerNode}
       </div>
     );
@@ -306,19 +296,7 @@ export function FamilyOverviewPage() {
         </Col>
       </Row>
 
-      <Card title="保单覆盖">
-        {!coverage ? (
-          <Empty description="保单数据加载失败或尚未配置" />
-        ) : (
-          <Space wrap size="middle">
-            {coverage.map(c => (
-              <Tag key={c.policyType} color={c.covered ? 'success' : 'default'}>
-                {POLICY_TYPE_LABELS[c.policyType]} {c.covered ? '✓' : '○'}
-              </Tag>
-            ))}
-          </Space>
-        )}
-      </Card>
+      <FamilyPoliciesPage embedded />
 
       {memberDrawerNode}
     </div>

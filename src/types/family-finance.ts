@@ -114,6 +114,37 @@ export interface PolicyCoverageSummary {
   covered: boolean;
 }
 
+/** 数据库历史视图的单行（家庭或成员当日资产合计）。 */
+export interface FamilyAssetHistoryRow {
+  date: string;
+  memberId: string;
+  memberName: string;
+  sortOrder: number;
+  fourPot: StructureFourPot;
+  potOrder: number;
+  totalAssets: number;
+}
+
+export interface AssetHistoryPoint {
+  date: string;
+  amount: number;
+  fourPot: StructureFourPot;
+  potOrder: number;
+  /** 仅最新日期存在：家庭在同一类别中的资产总额。 */
+  latestHouseholdAmount?: number;
+  /** 仅最新日期存在；家庭同类资产为 0 时占比不可计算。 */
+  latestShareRatio?: number | null;
+}
+
+export interface MemberAssetHistorySeries {
+  memberId: string;
+  memberName: string;
+  sortOrder: number;
+  points: AssetHistoryPoint[];
+}
+
+export type FamilyAssetHistory = MemberAssetHistorySeries[];
+
 export const ASSET_CATEGORIES: AssetCategory[] = [
   'cash',
   'deposit',

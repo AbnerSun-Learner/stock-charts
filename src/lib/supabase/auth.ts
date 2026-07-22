@@ -7,13 +7,41 @@ export interface FamilyAccessResult {
   user: User | null;
 }
 
+interface OAuthLocation {
+  pathname: string;
+  search: string;
+  hash: string;
+}
+
+/** 只允许站内相对路径，避免 OAuth 回跳到外部站点。 */
+export function normalizeOAuthRedirectPath(
+  redirectTo?: string,
+  currentLocation?: OAuthLocation
+): string {
+  const candidate =
+    redirectTo ??
+    (currentLocation
+      ? `${currentLocation.pathname}${currentLocation.search}${currentLocation.hash}`
+      : '/view/family');
+
+  return candidate.startsWith('/') &&
+    !candidate.startsWith('//') &&
+    !candidate.includes('\\') &&
+    !candidate.includes('://')
+    ? candidate
+    : '/view/family';
+}
+
 /**
  * 发起 GitHub OAuth；完成后回跳 redirectTo（默认当前页）。
  */
 export async function signInWithGitHub(redirectTo?: string): Promise<{ error: Error | null }> {
   const supabase = createBrowserSupabaseClient();
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const next = redirectTo ?? (typeof window !== 'undefined' ? window.location.href : '/view/family');
+  const next = normalizeOAuthRedirectPath(
+    redirectTo,
+    typeof window !== 'undefined' ? window.location : undefined
+  );
   const callback = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
   const { error } = await supabase.auth.signInWithOAuth({

@@ -1,15 +1,15 @@
 # 家庭财务总览 — 设计规格
 
 > 日期：2026-07-22  
-> 状态：已批准并实施（已去掉快照，总览直读活账）  
+> 状态：已批准并实施（总览直读活账，历史图使用每日快照）
 > 参考：有知有行「家庭财务总览 / 家庭资产记账 / 保单管理」
 
 ## 1. 目标与边界
 
 独立「家庭财务」产品线：盘点家庭资产负债、保单覆盖；首页独立类别入口。
 
-**做**：资产记账（活账）→ 总览（直读活账合计）→ 保单；GitHub OAuth + 库表白名单；单户自用。  
-**不做**：快照/历史趋势、投资记账、现金流、多户/协作、Magic Link、与 ETF 持仓自动同步、跨币种（P1 默认 CNY）。
+**做**：资产记账（活账）→ 总览（直读活账合计）→ 保单；成员每日三笔钱资产历史；GitHub OAuth + 库表白名单；单户自用。
+**不做**：日内多版本历史、投资记账、现金流、多户/协作、Magic Link、与 ETF 持仓自动同步、跨币种（P1 默认 CNY）。
 
 **访问边界**：投研工具仍可匿名；仅家庭财务要求 session + 白名单。
 
@@ -35,6 +35,7 @@
 - **首进 Ledger**：幂等确保 `role=self` 成员（默认名「我」）。
 - **删成员 FK**：`ON DELETE RESTRICT`（禁止 CASCADE / SET NULL）。
 - **总览直读活账**：条目保存后 KPI 即时反映；无快照中间层。
+- **资产历史**：条目新增、编辑或删除后，从全部当前活账重建当天快照；当天多次修改覆盖当天数据。
 - **金额**：全部 `numeric(18,2)`；禁止 float/real/double。
 - **白名单**：表 `family_access_allowlist` + RPC `is_family_access_allowed()`；禁止环境变量名单。
 
@@ -42,7 +43,7 @@
 
 DDL 权威：`scheduled-tasks` → `20260722_family_finance_ledger.sql`。
 
-应用层**不再读写**快照表；历史表可保留于库中，清理 DDL 另开 `scheduled-tasks` migration。
+总览 KPI 不读快照；资产变动折线图读取由数据库触发器维护的每日快照。
 
 | 表                        | 要点                                                   |
 | ------------------------- | ------------------------------------------------------ |
@@ -50,6 +51,8 @@ DDL 权威：`scheduled-tasks` → `20260722_family_finance_ledger.sql`。
 | `family_members`          | `user_id`, name, role                                  |
 | `family_ledger_items`     | CHECK asset/liability 与 member_id；金额 numeric(18,2) |
 | `insurance_policies`      | coverage/premium numeric(18,2)；member_id NOT NULL     |
+| `family_snapshots`        | 每用户每日一行；当天保存时覆盖合计                 |
+| `family_snapshot_items`   | 当天全量活账拷贝；未修改条目也保留最新金额           |
 
 RPC：`is_family_access_allowed() → boolean`（SECURITY DEFINER）。
 
@@ -84,6 +87,8 @@ KPI：总资产 / 总负债 / 净资产（活账合计）
 
 组成图 | 资产表 + 负债表  
 页头展示总资产 / 总负债 / 净资产；弹窗确定即写入活账。
+
+资产变动：每位成员各一张独立折线图，图内展示活钱 / 稳钱 / 长钱三条折线；不展示家庭总资产折线图。
 
 ### 5.4 保单 `/view/family/policies`
 

@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - DDL 仅在 `scheduled-tasks`；金额 `numeric(18,2)`；保额不进 KPI；资产必填 member、负债 member 为空；FK ON DELETE RESTRICT。
-- 应用层不读写 `family_snapshots` / `family_snapshot_items`；drop 表另开 scheduled-tasks migration。
+- 总览 KPI 直读活账；折线图读数据库触发器维护的每日快照。
 
 ---
 
@@ -53,3 +53,9 @@
 ### Task 8: 验证
 
 - [x] `npm test`、`npm run build`、code-reviewer
+
+### Task 9: 资产历史折线图
+
+- [x] 每次活账写入后重建当天完整快照（Asia/Shanghai）
+- [x] 当天多次修改覆盖当天数据
+- [x] 每位成员独立图表；图内展示活钱 / 稳钱 / 长钱三条折线

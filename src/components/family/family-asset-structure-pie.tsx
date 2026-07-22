@@ -20,27 +20,25 @@ const STRUCTURE_COLOR_DOMAIN = STRUCTURE_FOUR_POTS.map(pot => FOUR_POT_LABELS[po
 
 interface FamilyAssetStructurePieProps {
   shares: FourPotShare[];
+  totalAssets: number;
   height?: number;
 }
 
-interface PieLabelDatum {
-  type?: string;
-  value?: number;
-}
-
-/** 外置标签：类别名 + 金额（两行）。 */
-function formatStructureLabel(d: PieLabelDatum): string {
-  const name = d.type ?? '';
-  const amount = formatCny(Number(d.value ?? 0));
-  return `${name}\n${amount}`;
+function formatPercent(value: number | null): string {
+  if (value === null) return '—';
+  return new Intl.NumberFormat('zh-CN', {
+    style: 'percent',
+    maximumFractionDigits: 1,
+  }).format(value);
 }
 
 /**
- * 资产结构饼图：按活钱/稳钱/长钱，外置标签同时展示类别与金额。
- * @see https://ant-design-charts.antgroup.com/examples/case/interactions/#memo
+ * 资产结构环图：按活钱/稳钱/长钱，右侧标签同时展示类别与金额。
+ * @see https://ant-design-charts.antgroup.com/examples/statistics/pie/#basic-donut
  */
 export function FamilyAssetStructurePie({
   shares,
+  totalAssets,
   height = 280,
 }: FamilyAssetStructurePieProps) {
   if (shares.length === 0) return null;
@@ -48,44 +46,72 @@ export function FamilyAssetStructurePie({
   const data = shares.map(s => ({
     type: FOUR_POT_LABELS[s.fourPot],
     value: s.amount,
+    totalAssetRatio: totalAssets > 0 ? s.amount / totalAssets : null,
   }));
 
   return (
-    <Pie
-      data={data}
-      angleField="value"
-      colorField="type"
-      height={height}
-      paddingLeft={40}
-      paddingRight={40}
-      scale={{
-        color: {
-          // 固定 domain，避免缺桶时颜色错位（如仅有稳钱时误用蓝色）
-          domain: STRUCTURE_COLOR_DOMAIN,
-          range: [...STRUCTURE_COLORS],
-        },
-      }}
-      label={{
-        text: formatStructureLabel,
-        position: 'outside',
-      }}
-      legend={{
-        color: {
-          position: 'bottom',
-          layout: { justifyContent: 'center' },
-        },
-      }}
-      tooltip={{
-        title: (d: { type?: string }) => d.type ?? '',
-        items: [
-          {
-            field: 'value',
-            name: '金额',
-            valueFormatter: (v: number) => formatCny(Number(v)),
-          },
-        ],
-      }}
-      interaction={{ elementHighlight: true }}
-    />
+    <div className="flex w-full items-center justify-center gap-5">
+      <div className="min-w-0 flex-1">
+        <Pie
+          data={data}
+          angleField="value"
+          colorField="type"
+          radius={0.96}
+          innerRadius={0.6}
+          height={height}
+          paddingLeft={8}
+          paddingRight={8}
+          scale={{
+            color: {
+              // 固定 domain，避免缺桶时颜色错位（如仅有稳钱时误用蓝色）
+              domain: STRUCTURE_COLOR_DOMAIN,
+              range: [...STRUCTURE_COLORS],
+            },
+          }}
+          label={false}
+          legend={false}
+          tooltip={{
+            title: (d: { type?: string; totalAssetRatio?: number | null }) =>
+              `${d.type ?? ''} ${formatPercent(d.totalAssetRatio ?? null)}`.trim(),
+            items: [
+              {
+                field: 'value',
+                name: '金额',
+                valueFormatter: (v: number) => formatCny(Number(v)),
+              },
+            ],
+          }}
+          interaction={{ elementHighlight: true }}
+        />
+      </div>
+
+      <div className="shrink-0 space-y-3" aria-label="资产结构标签">
+        {shares.map(share => {
+          const color = STRUCTURE_COLORS[STRUCTURE_FOUR_POTS.indexOf(share.fourPot)];
+          const totalAssetRatio =
+            totalAssets > 0 ? share.amount / totalAssets : null;
+          return (
+            <div key={share.fourPot} className="flex items-start gap-2">
+              <span
+                className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: color }}
+                aria-hidden
+              />
+              <div>
+                <div className="flex items-baseline gap-1.5 text-sm text-[var(--text-secondary)]">
+                  <span>{FOUR_POT_LABELS[share.fourPot]}</span>
+                  <span className="text-xs tabular-nums text-[var(--text-muted)]">
+                    {formatPercent(totalAssetRatio)}
+                  </span>
+                </div>
+                <div className="text-sm font-medium text-[var(--text-primary)] tabular-nums">
+                  {formatCny(share.amount)}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
