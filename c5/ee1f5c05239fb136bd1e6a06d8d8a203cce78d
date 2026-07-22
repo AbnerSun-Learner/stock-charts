@@ -1,0 +1,79 @@
+.cursor/rules/dual-repo-data-boundary.mdc
+  s_f7038c20f4bf70::t_7b838ad458d09f 12,18-19,21,31,33
+.env.example
+  s_f7038c20f4bf70::t_394b3525d75704 1-6
+__tests__/family-finance/aggregates.test.ts
+  s_f7038c20f4bf70::t_bea6c5ed3cadbc 1-141
+docs/superpowers/plans/2026-07-22-family-finance-overview.md
+  s_f7038c20f4bf70::t_f137f5eeec01be 1-55
+docs/superpowers/specs/2026-07-22-family-finance-overview-design.md
+  s_f7038c20f4bf70::t_b8408d69056da4 1-106
+package-lock.json
+  s_f7038c20f4bf70::t_e71b8715262c99 12-13,2297-2392,2632-2695,4976-4988,7204-7212
+package.json
+  s_f7038c20f4bf70::t_50bc4d358b1859 17-18
+src/app/auth/callback/route.ts
+  s_f7038c20f4bf70::t_c107ef27ad4bbd 1-54
+src/app/page.tsx
+  s_f7038c20f4bf70::t_a658309b0bcab2 2,5,17
+src/app/view/family/ledger/page.tsx
+  s_f7038c20f4bf70::t_2132b802ebf01d 1-15
+src/app/view/family/page.tsx
+  s_f7038c20f4bf70::t_941d741fd4acb1 1-15
+src/app/view/family/policies/page.tsx
+  s_f7038c20f4bf70::t_bbdb105be11fae 1-15
+src/components/app-shell/antd-provider.tsx
+  s_f7038c20f4bf70::t_79ff4ac59e8318 3,37
+src/components/auth/auth-gate.tsx
+  s_f7038c20f4bf70::t_1a3d34b36de62b 1-119
+src/components/auth/login-modal.tsx
+  s_f7038c20f4bf70::t_48c6d59c1dafa8 1-62
+src/components/auth/user-menu.tsx
+  s_f7038c20f4bf70::t_ca4fbeb381dcd8 1-58
+src/components/family/family-asset-structure-pie.tsx
+  s_f7038c20f4bf70::t_d0f713661c84cc 1-91
+src/components/family/family-ledger-page.tsx
+  s_f7038c20f4bf70::t_a216cf160eb133 1-333
+src/components/family/family-overview-page.tsx
+  s_f7038c20f4bf70::t_9ce85efa1f5bd8 1-326
+src/components/family/family-policies-page.tsx
+  s_f7038c20f4bf70::t_61eade29fc5d75 1-264
+src/components/home/home-family-finance-section.tsx
+  s_f7038c20f4bf70::t_6e7a231d76ea30 1-68
+src/components/home/home-tool-card.tsx
+  s_f7038c20f4bf70::t_f91ac8a886dfc3 1-55
+src/components/home/home-tool-grid.tsx
+  s_f7038c20f4bf70::t_6f332cfeb02ddb 5-6,64-66,71-91
+src/components/navigation/view-breadcrumb.tsx
+  s_f7038c20f4bf70::t_25fef1c0cde41d 6,11-13,22-33
+src/lib/family-finance/aggregates.ts
+  s_f7038c20f4bf70::t_236d4e1f8ac22b 1-150
+src/lib/family-finance/format.ts
+  s_f7038c20f4bf70::t_4361547b5457bc 1-15
+src/lib/supabase/auth.ts
+  s_f7038c20f4bf70::t_9182554d258a35 1-61
+src/lib/supabase/client.ts
+  s_f7038c20f4bf70::t_7d04340c29aade 1-20
+src/lib/supabase/family-finance-repository.ts
+  s_f7038c20f4bf70::t_78fb6124e42b1c 1-313
+src/lib/supabase/server.ts
+  s_f7038c20f4bf70::t_7c2901c3c0964c 1-33
+src/types/family-finance.ts
+  s_f7038c20f4bf70::t_ed97ca96c0dfef 1-185
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "c5ee1f5c05239fb136bd1e6a06d8d8a203cce78d",
+  "prompts": {},
+  "sessions": {
+    "s_f7038c20f4bf70": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "e03a23d4-34e7-4ef9-9eef-99c80511b08c",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
