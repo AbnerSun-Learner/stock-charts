@@ -1,0 +1,86 @@
+src/components/family/family-asset-history-line.tsx
+  s_cd0aea728c748a::t_410eb94a066ba7 81
+  s_cd0aea728c748a::t_c1c8c36ab37fdb 74
+  s_cd0aea728c748a::t_b000e5d9318a3e 78-80
+rules/family-finance-ui.md
+  s_cd0aea728c748a::t_f474e0cad3b16e 1-4
+src/components/home/home-family-finance-section.tsx
+  s_cd0aea728c748a::t_470a5775592928 6,39-40
+  s_cd0aea728c748a::t_4fac07d3dd6616 11
+src/components/family/family-mental-accounts-panel.tsx
+  s_cd0aea728c748a::t_c03da42e369190 139,153-154
+  s_697c2c4aa3b89a::t_5ce71ca912d3be 128,136,142-146,165,173,257-268,270-279
+docs/superpowers/specs/2026-07-23-family-finance-coinbase-ui-refresh-design.md
+  s_cd0aea728c748a::t_1c81d81f50b818 44-62,162-163
+  s_cd0aea728c748a::t_f474e0cad3b16e 1-43,63-64,66-161,164-165
+  s_cd0aea728c748a::t_be75062276516e 65
+src/components/family/family-asset-structure-pie.tsx
+  s_cd0aea728c748a::t_410eb94a066ba7 107
+  s_cd0aea728c748a::t_c1c8c36ab37fdb 53
+src/app/globals.css
+  s_cd0aea728c748a::t_c03da42e369190 518-519,527-528,534-535,546,549,553-554,558,562,569-570,686-693,695-701,703-708,710-712,719-720,722-724,726-731,733-735,812-813,823-824,849-850
+  s_cd0aea728c748a::t_9a931f45d1ea10 243-245,248,303-305
+  s_cd0aea728c748a::t_4fac07d3dd6616 151-159,163,204,217,223,234,251-252,267-268,275-276,283,295,306,317,328,334-335,346,353,363,369,382-383
+  s_cd0aea728c748a::t_7995f7955b5f71 643,648,651,656
+  s_cd0aea728c748a::t_196c4d6cb8e006 538-539,621,825-844,854-855,858-860,863-866,869-870
+  s_cd0aea728c748a::t_410eb94a066ba7 617-620,713-718
+  s_cd0aea728c748a::t_33509c30a943cf 685,694,702,709,721,725,732
+  s_cd0aea728c748a::t_db720ef3d68caf 499-517,520-526,529-533,536-537,540-545,547-548,550-552,555-557,559-561,563-568,571-616,622-642,644-647,649-650,652-655,657-684,807-811,814-822,845-848,851-853,856-857,861-862,871-872
+  s_cd0aea728c748a::t_c1c8c36ab37fdb 736-789,791-798,800-802,804-806,867-868
+  s_cd0aea728c748a::t_b000e5d9318a3e 790,799,803
+  s_cd0aea728c748a::t_aa0a201c0de901 165,176
+  s_cd0aea728c748a::t_470a5775592928 149-150,160-162,164,166-175,177-203,205-216,218-222,224-233,235-242,246-247,249-250,253-266,269-274,277-282,284-294,296-302,307-316,318-327,329-333,336-345,347-352,354-362,364-368,370-381,384-426
+src/components/family/family-finance-metric-card.tsx
+  s_cd0aea728c748a::t_410eb94a066ba7 32-34
+  s_cd0aea728c748a::t_db720ef3d68caf 1-31,35-38
+__tests__/family-finance/metric-card.test.ts
+  s_cd0aea728c748a::t_3f137c3e3951ba 4-5,25-71
+  s_cd0aea728c748a::t_d34f84626ebe21 1-2
+  s_cd0aea728c748a::t_63a21ab78fd611 3,6-24,72-73
+src/components/family/family-overview-page.tsx
+  s_cd0aea728c748a::t_c03da42e369190 31,75-81,83-88,93-103,229-234,236,243-244,248-254,257-263,266-269,271,287,307
+  s_cd0aea728c748a::t_0cf8611bb27e56 284-286
+  s_cd0aea728c748a::t_6236747069a889 288-290,304-306
+  s_cd0aea728c748a::t_38265d637d48b1 308-310
+  s_697c2c4aa3b89a::t_f784999dfb16af 276-283,291-303,311-315
+src/components/family/family-mental-account-liquid.tsx
+  s_cd0aea728c748a::t_410eb94a066ba7 62,66-68,72-74,83-85
+  s_697c2c4aa3b89a::t_f7a978b1889365 27-30,37-38,53-54
+rules/ui-scope-interpretation.md
+  s_cd0aea728c748a::t_fbed6d7f03a0d6 1-5
+src/components/family/family-ledger-page.tsx
+  s_cd0aea728c748a::t_c1c8c36ab37fdb 7,227-242,245-252,266,268-274,276,278,284,291,297,304,309-311
+  s_cd0aea728c748a::t_410eb94a066ba7 190-192
+docs/superpowers/plans/2026-07-23-family-finance-coinbase-ui-refresh.md
+  s_cd0aea728c748a::t_f2ec7b80d4fc2b 1-324,326-327,343-477,479-482
+  s_cd0aea728c748a::t_6885d0aea78de1 325,328-342,478
+src/components/home/home-family-finance-card.tsx
+  s_cd0aea728c748a::t_9a931f45d1ea10 52,57-61,77
+  s_cd0aea728c748a::t_470a5775592928 1-51,53-56,62-76,78-109
+src/components/family/family-policies-page.tsx
+  s_697c2c4aa3b89a::t_eed681bc8ee241 163,165-171,192,199,205,211-213,215
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "d945afd252d75f9366bd0eb6d7ef13fc06402c5a",
+  "prompts": {},
+  "sessions": {
+    "s_697c2c4aa3b89a": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "5d60a631-283c-43af-bc3f-29361fd8fae4",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    },
+    "s_cd0aea728c748a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8d7e-4c87-7df1-a011-01baf9ce9815",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
