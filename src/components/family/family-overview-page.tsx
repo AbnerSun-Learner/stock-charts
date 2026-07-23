@@ -24,13 +24,12 @@ import {
   type FamilyLedgerItem,
   type FamilyMember,
   type FamilyMemberRole,
+  type FamilyMentalAccount,
 } from '@/types/family-finance';
-import {
-  computeLedgerTotals,
-  computeMemberAssetShares,
-} from '@/lib/family-finance/aggregates';
+import { computeLedgerTotals } from '@/lib/family-finance/aggregates';
 import { formatCny } from '@/lib/family-finance/format';
-import { FamilyMemberDistributionPie } from '@/components/family/family-member-distribution-pie';
+import { FamilyAssetSankey } from '@/components/family/family-asset-sankey';
+import { FamilyMentalAccountsPanel } from '@/components/family/family-mental-accounts-panel';
 import { FamilyPoliciesPage } from '@/components/family/family-policies-page';
 
 /**
@@ -43,6 +42,7 @@ export function FamilyOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<FamilyLedgerItem[]>([]);
   const [members, setMembers] = useState<FamilyMember[]>([]);
+  const [mentalAccounts, setMentalAccounts] = useState<FamilyMentalAccount[]>([]);
   const [memberDrawer, setMemberDrawer] = useState(false);
   const [memberForm] = Form.useForm();
 
@@ -50,9 +50,14 @@ export function FamilyOverviewPage() {
     setLoading(true);
     try {
       await repo.ensureSelfMember();
-      const [ledgerItems, m] = await Promise.all([repo.listLedgerItems(), repo.listMembers()]);
+      const [ledgerItems, m, mental] = await Promise.all([
+        repo.listLedgerItems(),
+        repo.listMembers(),
+        repo.listMentalAccounts(),
+      ]);
       setItems(ledgerItems);
       setMembers(m);
+      setMentalAccounts(mental);
     } catch (e) {
       message.error(e instanceof Error ? e.message : '加载失败');
     } finally {
@@ -65,14 +70,6 @@ export function FamilyOverviewPage() {
   }, [reload]);
 
   const totals = useMemo(() => computeLedgerTotals(items), [items]);
-  const memberNameById = useMemo(
-    () => new Map(members.map(m => [m.id, m.name])),
-    [members]
-  );
-  const memberShares = useMemo(
-    () => computeMemberAssetShares(items, memberNameById),
-    [items, memberNameById]
-  );
   const hasLedger = items.length > 0;
 
   const headerActions = (
@@ -268,19 +265,27 @@ export function FamilyOverviewPage() {
         </Col>
       </Row>
 
+      <Card title="资产结构" loading={loading}>
+        <FamilyAssetSankey items={items} members={members} />
+      </Card>
+
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>
-          <Card title="成员分布" loading={loading}>
-            {memberShares.length === 0 ? (
-              <Empty description="无成员资产明细" />
-            ) : (
-              <FamilyMemberDistributionPie shares={memberShares} />
-            )}
+          <FamilyMentalAccountsPanel
+            repo={repo}
+            loading={loading}
+            items={items}
+            members={members}
+            accounts={mentalAccounts}
+            onChanged={reload}
+          />
+        </Col>
+        <Col xs={24} lg={12}>
+          <Card loading={loading}>
+            <FamilyPoliciesPage embedded />
           </Card>
         </Col>
       </Row>
-
-      <FamilyPoliciesPage embedded />
 
       {memberDrawerNode}
     </div>

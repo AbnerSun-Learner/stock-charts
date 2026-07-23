@@ -78,6 +78,36 @@ export interface InsurancePolicy {
   updatedAt: string;
 }
 
+/** 心理账户：命名资产目标，进度由关联的活钱/稳钱/长钱账目驱动。 */
+export interface FamilyMentalAccount {
+  id: string;
+  userId: string;
+  name: string;
+  targetAmount: number;
+  /** 预期达成目标日期，YYYY-MM-DD */
+  targetDate: string;
+  /** 关联的活账条目 id（互斥：一笔账目仅属一个心理账户） */
+  ledgerItemIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 心理账户进度（纯函数计算结果）。 */
+export interface MentalAccountProgress {
+  current: number;
+  /** 可为 >1；图表用 chartPercent */
+  percent: number;
+  chartPercent: number;
+  overflow: number;
+}
+
+/** 弹窗多选：可选活钱 / 稳钱 / 长钱账目。 */
+export interface SelectableMentalLedgerItem {
+  id: string;
+  label: string;
+  amount: number;
+}
+
 export interface LedgerTotals {
   totalAssets: number;
   totalLiabilities: number;

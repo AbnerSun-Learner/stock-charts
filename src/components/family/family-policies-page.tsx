@@ -165,11 +165,17 @@ export function FamilyPoliciesPage({ embedded = false }: { embedded?: boolean })
           {
             title: '类型',
             dataIndex: 'policyType',
+            width: 64,
+            onHeaderCell: () => ({ style: { whiteSpace: 'nowrap' } }),
+            onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
             render: (t: PolicyType) => POLICY_TYPE_LABELS[t],
           },
           {
             title: '被保人',
             dataIndex: 'memberId',
+            width: 88,
+            onHeaderCell: () => ({ style: { whiteSpace: 'nowrap' } }),
+            onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
             render: (id: string) => memberName.get(id) ?? '—',
           },
           {
@@ -192,9 +198,9 @@ export function FamilyPoliciesPage({ embedded = false }: { embedded?: boolean })
           },
           {
             title: '操作',
-            width: 140,
+            width: 72,
             render: (_, row) => (
-              <Space>
+              <Space direction="vertical" size="small">
                 <Button
                   type="link"
                   size="small"

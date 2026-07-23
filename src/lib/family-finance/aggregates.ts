@@ -77,6 +77,8 @@ function isStructureFourPot(pot: FourPot | null): pot is StructureFourPot {
   return pot === 'liquid' || pot === 'stable' || pot === 'long_term';
 }
 
+export { isStructureFourPot };
+
 /**
  * 资产结构占比：按活钱 / 稳钱 / 长钱聚合（仅 asset；不含 insurance 与未标注）。
  * 占比分母为三笔钱合计，保证饼图切片之和为 100%。

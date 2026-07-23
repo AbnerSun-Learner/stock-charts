@@ -4,6 +4,7 @@ import type {
   FamilyAssetHistoryRow,
   FamilyMember,
   FamilyMemberRole,
+  FamilyMentalAccount,
   FourPot,
   InsurancePolicy,
   LedgerCategory,
@@ -339,6 +340,210 @@ export class FamilyFinanceRepository {
 
   async deletePolicy(id: string): Promise<void> {
     const { error } = await this.client.from('insurance_policies').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+  }
+
+  /** 列出心理账户（含关联活账 id）。 */
+  async listMentalAccounts(): Promise<FamilyMentalAccount[]> {
+    const { data: accounts, error } = await this.client
+      .from('family_mental_accounts')
+      .select('*')
+      .order('updated_at', { ascending: false });
+    if (error) throw new Error(error.message);
+
+    const { data: links, error: linkError } = await this.client
+      .from('family_mental_account_links')
+      .select('mental_account_id, ledger_item_id');
+    if (linkError) throw new Error(linkError.message);
+
+    const idsByAccount = new Map<string, string[]>();
+    for (const row of links ?? []) {
+      const accountId = String(row.mental_account_id);
+      const list = idsByAccount.get(accountId) ?? [];
+      list.push(String(row.ledger_item_id));
+      idsByAccount.set(accountId, list);
+    }
+
+    return (accounts ?? []).map(row => ({
+      id: String(row.id),
+      userId: String(row.user_id),
+      name: String(row.name),
+      targetAmount: parseMoney(row.target_amount as string | number),
+      targetDate: String(row.target_date).slice(0, 10),
+      ledgerItemIds: idsByAccount.get(String(row.id)) ?? [],
+      createdAt: String(row.created_at),
+      updatedAt: String(row.updated_at),
+    }));
+  }
+
+  /**
+   * 创建或更新心理账户，并差量同步关联账目（活钱 / 稳钱 / 长钱）。
+   * 新建若 links 失败会回滚删除账户，避免孤儿记录。
+   */
+  async upsertMentalAccount(input: {
+    id?: string;
+    name: string;
+    targetAmount: number;
+    targetDate: string;
+    ledgerItemIds: string[];
+  }): Promise<FamilyMentalAccount> {
+    const userId = await this.requireUserId();
+    const name = input.name.trim();
+    if (!name || name.length > 32) {
+      throw new Error('名称必填且不超过 32 字');
+    }
+    if (!(input.targetAmount > 0)) {
+      throw new Error('预期目标必须大于 0');
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.targetDate)) {
+      throw new Error('请选择预期达成日期');
+    }
+    if (input.ledgerItemIds.length === 0) {
+      throw new Error('请至少关联一笔账目');
+    }
+
+    const uniqueIds = Array.from(new Set(input.ledgerItemIds));
+    await this.assertStructurePotExclusiveIds(uniqueIds, input.id);
+
+    const isCreate = !input.id;
+    const accountId = await this.saveMentalAccountRow({
+      id: input.id,
+      userId,
+      name,
+      targetAmount: input.targetAmount,
+      targetDate: input.targetDate,
+    });
+
+    try {
+      await this.syncMentalAccountLinks(accountId, userId, uniqueIds);
+    } catch (e) {
+      if (isCreate) {
+        await this.client.from('family_mental_accounts').delete().eq('id', accountId);
+      }
+      throw e;
+    }
+
+    const accounts = await this.listMentalAccounts();
+    const saved = accounts.find(a => a.id === accountId);
+    if (!saved) throw new Error('保存后读取心理账户失败');
+    return saved;
+  }
+
+  /** 校验关联账目均为活钱/稳钱/长钱，且未被其他心理账户占用。 */
+  private async assertStructurePotExclusiveIds(
+    uniqueIds: string[],
+    editingAccountId: string | undefined
+  ): Promise<void> {
+    const { data: ledgerRows, error: ledgerError } = await this.client
+      .from('family_ledger_items')
+      .select('id, side, four_pot')
+      .in('id', uniqueIds);
+    if (ledgerError) throw new Error(ledgerError.message);
+    if ((ledgerRows ?? []).length !== uniqueIds.length) {
+      throw new Error('部分关联账目不存在');
+    }
+    for (const row of ledgerRows ?? []) {
+      const pot = row.four_pot as string | null;
+      if (
+        row.side !== 'asset' ||
+        (pot !== 'liquid' && pot !== 'stable' && pot !== 'long_term')
+      ) {
+        throw new Error('只能关联标注为活钱、稳钱或长钱的资产账目');
+      }
+    }
+
+    const { data: occupiedLinks, error: occupiedError } = await this.client
+      .from('family_mental_account_links')
+      .select('ledger_item_id, mental_account_id')
+      .in('ledger_item_id', uniqueIds);
+    if (occupiedError) throw new Error(occupiedError.message);
+    for (const link of occupiedLinks ?? []) {
+      if (editingAccountId && String(link.mental_account_id) === editingAccountId) continue;
+      throw new Error('部分账目已被其他心理账户关联');
+    }
+  }
+
+  /** 写入心理账户主表，返回 id。 */
+  private async saveMentalAccountRow(input: {
+    id?: string;
+    userId: string;
+    name: string;
+    targetAmount: number;
+    targetDate: string;
+  }): Promise<string> {
+    const payload = {
+      user_id: input.userId,
+      name: input.name,
+      target_amount: parseMoney(input.targetAmount),
+      target_date: input.targetDate,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (input.id) {
+      const { data, error } = await this.client
+        .from('family_mental_accounts')
+        .update(payload)
+        .eq('id', input.id)
+        .select('id')
+        .single();
+      if (error) throw new Error(error.message);
+      return String(data.id);
+    }
+
+    const { data, error } = await this.client
+      .from('family_mental_accounts')
+      .insert(payload)
+      .select('id')
+      .single();
+    if (error) throw new Error(error.message);
+    return String(data.id);
+  }
+
+  /** 差量同步关联：只删移除项、只插新增项。 */
+  private async syncMentalAccountLinks(
+    accountId: string,
+    userId: string,
+    nextIds: string[]
+  ): Promise<void> {
+    const { data: existing, error: listError } = await this.client
+      .from('family_mental_account_links')
+      .select('ledger_item_id')
+      .eq('mental_account_id', accountId);
+    if (listError) throw new Error(listError.message);
+
+    const current = new Set((existing ?? []).map(r => String(r.ledger_item_id)));
+    const desired = new Set(nextIds);
+    const toRemove = Array.from(current).filter(id => !desired.has(id));
+    const toAdd = Array.from(desired).filter(id => !current.has(id));
+
+    if (toRemove.length > 0) {
+      const { error } = await this.client
+        .from('family_mental_account_links')
+        .delete()
+        .eq('mental_account_id', accountId)
+        .in('ledger_item_id', toRemove);
+      if (error) throw new Error(error.message);
+    }
+
+    if (toAdd.length > 0) {
+      const { error } = await this.client.from('family_mental_account_links').insert(
+        toAdd.map(ledgerItemId => ({
+          mental_account_id: accountId,
+          ledger_item_id: ledgerItemId,
+          user_id: userId,
+        }))
+      );
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error('部分账目已被其他心理账户关联');
+        }
+        throw new Error(error.message);
+      }
+    }
+  }
+
+  async deleteMentalAccount(id: string): Promise<void> {
+    const { error } = await this.client.from('family_mental_accounts').delete().eq('id', id);
     if (error) throw new Error(error.message);
   }
 }
