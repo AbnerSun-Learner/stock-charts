@@ -43,6 +43,7 @@ export function LoginModal({ open, onClose, redirectTo }: LoginModalProps) {
       onCancel={onClose}
       footer={null}
       destroyOnClose
+      centered
     >
       <Paragraph type="secondary" className="mb-4">
         本工具仅限家庭账号使用。请使用已授权的 GitHub 账号登录。
