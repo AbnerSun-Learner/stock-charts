@@ -1,0 +1,29 @@
+__tests__/family-finance/member-distribution-pie.test.ts
+  s_1b22460d3e2a61::t_67b4b0d761e34f 1-27
+docs/superpowers/plans/2026-07-23-family-member-distribution-pie.md
+  s_1b22460d3e2a61::t_ce16af277cd322 1-103
+docs/superpowers/specs/2026-07-23-family-member-distribution-pie-design.md
+  s_1b22460d3e2a61::t_d864b9d851b0aa 1-66
+src/components/family/family-member-distribution-pie.tsx
+  s_1b22460d3e2a61::t_12c48b3fd61c04 1-69
+src/components/family/family-overview-page.tsx
+  s_1b22460d3e2a61::t_5543f5ab805e03 33,277
+src/lib/family-finance/member-distribution-pie.ts
+  s_1b22460d3e2a61::t_60ac74fec85134 1-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "92c1038c0134f4f9cfc24e4e5b779250f0596c4b",
+  "prompts": {},
+  "sessions": {
+    "s_1b22460d3e2a61": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "eb498d72-7112-4bed-9564-773a26700145",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
