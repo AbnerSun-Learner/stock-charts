@@ -160,8 +160,15 @@ export function FamilyPoliciesPage({ embedded = false }: { embedded?: boolean })
         rowKey="id"
         dataSource={policies}
         pagination={{ pageSize: 10 }}
+        scroll={{ x: 'max-content' }}
         columns={[
-          { title: '名称', dataIndex: 'name' },
+          {
+            title: '名称',
+            dataIndex: 'name',
+            fixed: 'left',
+            width: 140,
+            ellipsis: true,
+          },
           {
             title: '类型',
             dataIndex: 'policyType',
@@ -182,25 +189,30 @@ export function FamilyPoliciesPage({ embedded = false }: { embedded?: boolean })
             title: '保额',
             dataIndex: 'coverageAmount',
             align: 'right',
+            width: 120,
             render: (v: number) => formatCny(v),
           },
           {
             title: '年缴',
             dataIndex: 'annualPremium',
             align: 'right',
+            width: 120,
             render: (v: number) => formatCny(v),
           },
           {
             title: '状态',
             dataIndex: 'status',
+            width: 80,
             render: (s: PolicyStatus) =>
               s === 'active' ? <Tag color="green">有效</Tag> : <Tag>{s}</Tag>,
           },
           {
             title: '操作',
-            width: 72,
+            width: 120,
+            onHeaderCell: () => ({ style: { whiteSpace: 'nowrap' } }),
+            onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
             render: (_, row) => (
-              <Space direction="vertical" size="small">
+              <Space size={0}>
                 <Button
                   type="link"
                   size="small"

@@ -71,12 +71,14 @@ export function FamilyAssetHistoryLine({
   }));
 
   return (
-    <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4">
+    <div className="family-asset-history-card">
       <div className="mb-3 flex items-baseline justify-between gap-3">
         <h3 className="m-0 text-sm font-medium">{title}</h3>
         <div className="text-right">
-          <div className="text-xs text-[var(--text-muted)]">三笔钱合计</div>
-          <div className="text-sm font-medium text-[var(--text-secondary)]">
+          <div className="family-asset-history-card__summary-label text-xs">
+            三笔钱合计
+          </div>
+          <div className="family-asset-history-card__summary-value family-finance-monetary-value text-sm font-medium">
             {formatCny(latest)}
           </div>
         </div>

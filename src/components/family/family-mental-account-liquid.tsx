@@ -24,12 +24,18 @@ interface FamilyMentalAccountLiquidProps {
  * 心理账户水波图：左侧进度，右侧带中文标签的金额与日期。
  * @see https://ant-design-charts.antgroup.com/examples/statistics/liquid/#liquid
  */
+function formatPercent(ratio: number): string {
+  return `${(ratio * 100).toFixed(2)}%`;
+}
+
 export function FamilyMentalAccountLiquid({
   progress,
   targetAmount,
   targetDate,
   height = 140,
 }: FamilyMentalAccountLiquidProps) {
+  const percentLabel = formatPercent(progress.chartPercent);
+
   return (
     <div className="flex items-center gap-3 sm:gap-4">
       <div className="shrink-0">
@@ -44,6 +50,8 @@ export function FamilyMentalAccountLiquid({
             waveLength: 80,
             textFill: LIQUID_COLOR,
             fill: LIQUID_COLOR,
+            // 覆盖 G2 默认 prettyNumber（最多 10 位小数）
+            contentText: percentLabel,
           }}
           interaction={{ tooltip: false }}
         />
@@ -51,17 +59,19 @@ export function FamilyMentalAccountLiquid({
       <dl className="min-w-0 flex-1 space-y-1.5 text-sm m-0">
         <div className="flex justify-between gap-3">
           <dt className="shrink-0 text-[var(--text-muted)]">完成进度</dt>
-          <dd className="m-0 font-medium text-[var(--text)]">
-            {Math.round(progress.chartPercent * 100)}%
-          </dd>
+          <dd className="m-0 font-medium text-[var(--text)]">{percentLabel}</dd>
         </div>
         <div className="flex justify-between gap-3">
           <dt className="shrink-0 text-[var(--text-muted)]">当前金额</dt>
-          <dd className="m-0 text-[var(--text)]">{formatCny(progress.current)}</dd>
+          <dd className="family-finance-monetary-value m-0 text-[var(--text)]">
+            {formatCny(progress.current)}
+          </dd>
         </div>
         <div className="flex justify-between gap-3">
           <dt className="shrink-0 text-[var(--text-muted)]">目标金额</dt>
-          <dd className="m-0 text-[var(--text)]">{formatCny(targetAmount)}</dd>
+          <dd className="family-finance-monetary-value m-0 text-[var(--text)]">
+            {formatCny(targetAmount)}
+          </dd>
         </div>
         <div className="flex justify-between gap-3">
           <dt className="shrink-0 text-[var(--text-muted)]">预期达成</dt>
@@ -70,7 +80,9 @@ export function FamilyMentalAccountLiquid({
         {progress.overflow > 0 ? (
           <div className="flex justify-between gap-3">
             <dt className="shrink-0 text-[var(--text-muted)]">已超额</dt>
-            <dd className="m-0 text-[var(--text)]">{formatCny(progress.overflow)}</dd>
+            <dd className="family-finance-monetary-value m-0 text-[var(--text)]">
+              {formatCny(progress.overflow)}
+            </dd>
           </div>
         ) : null}
       </dl>

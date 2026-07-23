@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   App,
   Button,
+  Card,
   Form,
   Input,
   InputNumber,
@@ -186,7 +187,9 @@ export function FamilyLedgerPage() {
         title: '金额',
         dataIndex: 'amount',
         align: 'right',
-        render: (v: number) => formatCny(v),
+        render: (v: number) => (
+          <span className="family-finance-monetary-value">{formatCny(v)}</span>
+        ),
       },
       {
         title: '操作',
@@ -221,21 +224,32 @@ export function FamilyLedgerPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-[var(--font-display)] text-xl font-semibold m-0 mb-1">家庭资产记账</h1>
-        <p className="text-sm text-[var(--text-muted)] m-0">
-          总资产 {formatCny(totals.totalAssets)}
-          {' · '}
-          总负债 {formatCny(totals.totalLiabilities)}
-          {' · '}
-          净资产 {formatCny(totals.netWorth)}
-        </p>
-      </div>
+    <div className="family-finance-page family-ledger-page space-y-6">
+      <header className="family-finance-header">
+        <div>
+          <div className="family-finance-eyebrow">资产记账</div>
+          <h1>家庭资产记账</h1>
+          <p>维护成员资产和家庭负债，保存后会同步更新家庭财务总览。</p>
+        </div>
+        <Button
+          type="primary"
+          size="large"
+          className="family-finance-primary-action"
+          onClick={openCreate}
+        >
+          + 添加资产/负债
+        </Button>
+      </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4 min-h-[280px] flex flex-col">
-          <h3 className="text-sm font-medium m-0 mb-3">资产结构</h3>
+        <Card className="family-finance-section-card family-ledger-structure-card">
+          <div>
+            <div className="family-finance-section__eyebrow">资产配置</div>
+            <h2 className="family-finance-section__title">资产结构</h2>
+            <p className="family-finance-section__description">
+              按活钱、稳钱和长钱查看当前资产分布。
+            </p>
+          </div>
           <div className="flex flex-1 items-center justify-center w-full">
             {fourPotShares.length === 0 ? (
               <Empty description="暂无活钱/稳钱/长钱标注资产" />
@@ -249,48 +263,52 @@ export function FamilyLedgerPage() {
               </div>
             )}
           </div>
-        </div>
+        </Card>
 
-        <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-sm font-medium m-0">条目列表</h3>
-            <Button type="dashed" size="small" onClick={openCreate}>
-              + 添加资产/负债
-            </Button>
+        <Card className="family-finance-section-card family-ledger-items-card">
+          <div>
+            <div className="family-finance-section__eyebrow">账本明细</div>
+            <h2 className="family-finance-section__title">条目列表</h2>
+            <p className="family-finance-section__description">
+              资产与负债会分别展示，便于核对家庭账本。
+            </p>
           </div>
-          <div className="space-y-4">
+          <div className="family-finance-section__content space-y-4">
             <div>
-              <h4 className="text-xs font-medium text-[var(--text-muted)] m-0 mb-2">资产</h4>
+              <h3 className="family-ledger-table-title">资产</h3>
               <Table
                 size="small"
                 loading={loading}
                 rowKey="id"
                 pagination={{ pageSize: 6 }}
+                scroll={{ x: 'max-content' }}
                 dataSource={assetItems}
                 columns={buildColumns('asset')}
                 locale={{ emptyText: '暂无资产条目' }}
               />
             </div>
             <div>
-              <h4 className="text-xs font-medium text-[var(--text-muted)] m-0 mb-2">负债</h4>
+              <h3 className="family-ledger-table-title">负债</h3>
               <Table
                 size="small"
                 loading={loading}
                 rowKey="id"
                 pagination={{ pageSize: 6 }}
+                scroll={{ x: 'max-content' }}
                 dataSource={liabilityItems}
                 columns={buildColumns('liability')}
                 locale={{ emptyText: '暂无负债条目' }}
               />
             </div>
           </div>
-        </div>
+        </Card>
       </div>
 
       <section className="space-y-4">
         <div>
-          <h2 className="m-0 mb-1 text-base font-semibold">成员资产变动</h2>
-          <p className="m-0 text-sm text-[var(--text-muted)]">
+          <div className="family-finance-section__eyebrow">成员资产</div>
+          <h2 className="family-finance-section__title">成员资产变动</h2>
+          <p className="family-finance-section__description">
             每次保存条目都会刷新当天快照，分别跟踪活钱、稳钱和长钱
           </p>
         </div>

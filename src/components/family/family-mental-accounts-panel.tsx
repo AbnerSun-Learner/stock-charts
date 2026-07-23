@@ -125,6 +125,7 @@ export function FamilyMentalAccountsPanel({
   };
 
   const remove = (account: FamilyMentalAccount) => {
+    let deleted = false;
     modal.confirm({
       title: `删除心理账户「${account.name}」？`,
       content: '不会删除关联的活账条目。',
@@ -132,11 +133,16 @@ export function FamilyMentalAccountsPanel({
       onOk: async () => {
         try {
           await repo.deleteMentalAccount(account.id);
-          message.success('已删除');
-          await onChanged();
+          deleted = true;
         } catch (e) {
           message.error(e instanceof Error ? e.message : '删除失败');
+          throw e;
         }
+      },
+      afterClose: () => {
+        if (!deleted) return;
+        message.success('已删除');
+        void onChanged();
       },
     });
   };
@@ -144,7 +150,8 @@ export function FamilyMentalAccountsPanel({
   return (
     <>
       <Card
-        title="心理账户"
+        className="family-finance-section-card family-mental-accounts-card"
+        title={<h2 className="family-finance-section__title">心理账户</h2>}
         loading={loading}
         extra={
           <Button type="primary" size="small" onClick={openCreate}>
@@ -155,13 +162,7 @@ export function FamilyMentalAccountsPanel({
         {accounts.length === 0 ? (
           <Empty description="尚未设立心理账户" />
         ) : (
-          <div
-            className={
-              accounts.length === 1
-                ? 'flex justify-center'
-                : 'grid grid-cols-1 sm:grid-cols-2 gap-3'
-            }
-          >
+          <div className="flex flex-col gap-3">
             {accounts.map(account => {
               const progress = computeMentalAccountProgress(account, items);
               const hasValidLink = account.ledgerItemIds.some(id => {
@@ -169,14 +170,7 @@ export function FamilyMentalAccountsPanel({
                 return Boolean(item && item.side === 'asset' && isStructureFourPot(item.fourPot));
               });
               return (
-                <div
-                  key={account.id}
-                  className={
-                    accounts.length === 1
-                      ? 'w-full max-w-md rounded-lg border border-[#93c5fd] bg-[#eff6ff]/40 p-3'
-                      : 'rounded-lg border border-[#93c5fd] bg-[#eff6ff]/40 p-3'
-                  }
-                >
+                <div key={account.id} className="family-mental-account-item">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="font-medium truncate" title={account.name}>
                       {account.name}
@@ -260,9 +254,29 @@ export function FamilyMentalAccountsPanel({
           <Form.Item
             name="targetDate"
             label="预期达成日期"
-            rules={[{ required: true, message: '请选择预期达成日期' }]}
+            rules={[
+              { required: true, message: '请选择预期达成日期' },
+              {
+                validator: async (_, value: Dayjs | null) => {
+                  // 仅新建时校验：不可选当天之前
+                  if (editing || !value) return;
+                  if (value.isBefore(dayjs().startOf('day'))) {
+                    throw new Error('预期达成日期不能早于今天');
+                  }
+                },
+              },
+            ]}
           >
-            <DatePicker className="w-full" placeholder="选择日期" />
+            <DatePicker
+              className="w-full"
+              placeholder="选择日期"
+              disabledDate={
+                editing
+                  ? undefined
+                  : current =>
+                      Boolean(current && current.isBefore(dayjs().startOf('day')))
+              }
+            />
           </Form.Item>
           <Form.Item
             name="ledgerItemIds"

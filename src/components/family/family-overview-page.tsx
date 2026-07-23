@@ -14,7 +14,6 @@ import {
   Row,
   Select,
   Space,
-  Statistic,
   Table,
 } from 'antd';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -27,9 +26,9 @@ import {
   type FamilyMentalAccount,
 } from '@/types/family-finance';
 import { computeLedgerTotals } from '@/lib/family-finance/aggregates';
-import { formatCny } from '@/lib/family-finance/format';
 import { FamilyAssetSankey } from '@/components/family/family-asset-sankey';
 import { FamilyMentalAccountsPanel } from '@/components/family/family-mental-accounts-panel';
+import { FamilyFinanceMetricCard } from '@/components/family/family-finance-metric-card';
 import { FamilyPoliciesPage } from '@/components/family/family-policies-page';
 
 /**
@@ -73,12 +72,33 @@ export function FamilyOverviewPage() {
   const hasLedger = items.length > 0;
 
   const headerActions = (
-    <Space wrap>
-      <Button onClick={() => setMemberDrawer(true)}>成员管理</Button>
+    <Space wrap className="family-finance-header__actions">
+      <Button
+        className="family-finance-secondary-action family-finance-action--secondary"
+        onClick={() => setMemberDrawer(true)}
+      >
+        成员管理
+      </Button>
       <Link href="/view/family/ledger">
-        <Button type="primary">{hasLedger ? '更新资产' : '前往资产记账'}</Button>
+        <Button
+          type="primary"
+          className="family-finance-primary-action family-finance-action--primary"
+        >
+          {hasLedger ? '更新资产' : '前往资产记账'}
+        </Button>
       </Link>
     </Space>
+  );
+
+  const pageHeader = (
+    <header className="family-finance-header">
+      <div>
+        <div className="family-finance-eyebrow">家庭资产</div>
+        <h1>家庭财务总览</h1>
+        <p>把家庭当作一家小公司，在同一张财务视图里看清资产、负债与保障。</p>
+      </div>
+      {headerActions}
+    </header>
   );
 
   const memberDrawerNode = (
@@ -206,86 +226,92 @@ export function FamilyOverviewPage() {
 
   if (!loading && !hasLedger) {
     return (
-      <div className="py-8">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
-          <div>
-            <h1 className="font-[var(--font-display)] text-xl font-semibold m-0 mb-2">
-              家庭财务总览
-            </h1>
-            <p className="text-[var(--text-muted)] m-0">把家庭当作一家小公司 · 财报摘要</p>
-          </div>
-          {headerActions}
-        </div>
-        <Empty description="尚无资产条目。请前往资产记账添加后，总览会即时展示。" />
-        <div className="mt-8">
+      <div className="family-finance-page family-overview-page space-y-6">
+        {pageHeader}
+        <Card className="family-finance-section-card family-finance-empty-card">
+          <Empty description="尚无资产条目。请前往资产记账添加后，总览会即时展示。" />
+        </Card>
+        <Card className="family-finance-section-card family-overview-policies-card">
           <FamilyPoliciesPage embedded />
-        </div>
+        </Card>
         {memberDrawerNode}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div>
-          <h1 className="font-[var(--font-display)] text-xl font-semibold m-0 mb-1">家庭财务总览</h1>
-          <p className="text-sm text-[var(--text-muted)] m-0">把家庭当作一家小公司 · 财报摘要</p>
-        </div>
-        {headerActions}
-      </div>
+    <div className="family-finance-page family-overview-page space-y-6">
+      {pageHeader}
 
       <Row gutter={[16, 16]}>
         <Col xs={24} md={8}>
-          <Card loading={loading}>
-            <Statistic
-              title="总资产"
-              value={totals.totalAssets}
-              formatter={v => formatCny(Number(v))}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} md={8}>
-          <Card loading={loading}>
-            <Statistic
-              title="总负债"
-              value={totals.totalLiabilities}
-              formatter={v => formatCny(Number(v))}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} md={8}>
-          <Card loading={loading}>
-            <Statistic
-              title="净资产"
-              value={totals.netWorth}
-              formatter={v => formatCny(Number(v))}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      <Card title="资产结构" loading={loading}>
-        <FamilyAssetSankey items={items} members={members} />
-      </Card>
-
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={12}>
-          <FamilyMentalAccountsPanel
-            repo={repo}
+          <FamilyFinanceMetricCard
+            label="总资产"
+            value={totals.totalAssets}
+            tone="primary"
             loading={loading}
-            items={items}
-            members={members}
-            accounts={mentalAccounts}
-            onChanged={reload}
+            hint="家庭当前资产合计"
           />
         </Col>
-        <Col xs={24} lg={12}>
-          <Card loading={loading}>
-            <FamilyPoliciesPage embedded />
-          </Card>
+        <Col xs={24} md={8}>
+          <FamilyFinanceMetricCard
+            label="总负债"
+            value={totals.totalLiabilities}
+            tone="neutral"
+            loading={loading}
+            hint="家庭共同负债合计"
+          />
+        </Col>
+        <Col xs={24} md={8}>
+          <FamilyFinanceMetricCard
+            label="净资产"
+            value={totals.netWorth}
+            tone={totals.netWorth < 0 ? 'negative' : 'positive'}
+            loading={loading}
+            hint="总资产扣除总负债"
+          />
         </Col>
       </Row>
+
+      <div className="family-overview-structure-and-panels flex flex-col gap-8">
+        <Card
+          className="family-finance-section-card family-overview-structure-card"
+          loading={loading}
+          title={
+            <div>
+              <h2 className="family-finance-section__title">资产结构</h2>
+              <p className="family-finance-section__description">
+                从家庭总资产到成员与四笔钱，查看资金分布与负债关系。
+              </p>
+            </div>
+          }
+        >
+          <FamilyAssetSankey items={items} members={members} />
+        </Card>
+
+        <Row gutter={[16, 16]} className="family-overview-panels-row">
+          <Col xs={24} lg={12}>
+            <div className="family-overview-mental-panel">
+              <FamilyMentalAccountsPanel
+                repo={repo}
+                loading={loading}
+                items={items}
+                members={members}
+                accounts={mentalAccounts}
+                onChanged={reload}
+              />
+            </div>
+          </Col>
+          <Col xs={24} lg={12}>
+            <Card
+              className="family-finance-section-card family-overview-policies-card"
+              loading={loading}
+            >
+              <FamilyPoliciesPage embedded />
+            </Card>
+          </Col>
+        </Row>
+      </div>
 
       {memberDrawerNode}
     </div>

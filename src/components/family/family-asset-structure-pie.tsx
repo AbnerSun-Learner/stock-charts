@@ -50,7 +50,7 @@ export function FamilyAssetStructurePie({
   }));
 
   return (
-    <div className="flex w-full items-center justify-center gap-5">
+    <div className="family-asset-structure-chart flex w-full flex-col items-center justify-center gap-5 sm:flex-row">
       <div className="min-w-0 flex-1">
         <Pie
           data={data}
@@ -104,7 +104,7 @@ export function FamilyAssetStructurePie({
                     {formatPercent(totalAssetRatio)}
                   </span>
                 </div>
-                <div className="text-sm font-medium text-[var(--text-primary)] tabular-nums">
+                <div className="family-finance-monetary-value text-sm font-medium text-[var(--text-primary)]">
                   {formatCny(share.amount)}
                 </div>
               </div>
