@@ -11,7 +11,6 @@ import {
   Empty,
   Form,
   Input,
-  Progress,
   Row,
   Select,
   Space,
@@ -31,6 +30,7 @@ import {
   computeMemberAssetShares,
 } from '@/lib/family-finance/aggregates';
 import { formatCny } from '@/lib/family-finance/format';
+import { FamilyMemberDistributionPie } from '@/components/family/family-member-distribution-pie';
 import { FamilyPoliciesPage } from '@/components/family/family-policies-page';
 
 /**
@@ -274,23 +274,7 @@ export function FamilyOverviewPage() {
             {memberShares.length === 0 ? (
               <Empty description="无成员资产明细" />
             ) : (
-              <div className="space-y-3">
-                {memberShares.map(m => (
-                  <div key={m.memberId ?? m.memberName}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>{m.memberName}</span>
-                      <span>
-                        {formatCny(m.amount)}（{(m.ratio * 100).toFixed(0)}%）
-                      </span>
-                    </div>
-                    <Progress
-                      percent={Math.round(m.ratio * 100)}
-                      showInfo={false}
-                      strokeColor="#2563eb"
-                    />
-                  </div>
-                ))}
-              </div>
+              <FamilyMemberDistributionPie shares={memberShares} />
             )}
           </Card>
         </Col>
