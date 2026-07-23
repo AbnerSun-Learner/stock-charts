@@ -1,0 +1,47 @@
+__tests__/family-finance/asset-sankey.test.ts
+  s_6a5d4fb8621570::t_4b6f8e288baf8e 1-125
+__tests__/family-finance/mental-account.test.ts
+  s_6a5d4fb8621570::t_a829462524e87a 1-135
+docs/superpowers/plans/2026-07-23-family-mental-account.md
+  s_6a5d4fb8621570::t_b0d5495168ea33 1-47
+docs/superpowers/specs/2026-07-23-family-asset-sankey-design.md
+  s_6a5d4fb8621570::t_bc7370d5ca6611 1-55
+docs/superpowers/specs/2026-07-23-family-mental-account-design.md
+  s_6a5d4fb8621570::t_d2806ebe042c54 1-127
+src/components/family/family-asset-sankey.tsx
+  s_6a5d4fb8621570::t_c3c02b3b32f749 1-181
+src/components/family/family-mental-account-liquid.tsx
+  s_6a5d4fb8621570::t_a8445d1d13ef14 1-79
+src/components/family/family-mental-accounts-panel.tsx
+  s_6a5d4fb8621570::t_544390ed688b79 1-295
+src/components/family/family-overview-page.tsx
+  s_6a5d4fb8621570::t_3057ac76714ce9 27,29,31-32,45,53-57,60,268-271,274-285
+src/components/family/family-policies-page.tsx
+  s_6a5d4fb8621570::t_e94c3e9895af31 168-170,176-178,201,203
+src/lib/family-finance/aggregates.ts
+  s_6a5d4fb8621570::t_5ca871a19d567c 80-81
+src/lib/family-finance/asset-sankey.ts
+  s_6a5d4fb8621570::t_ce47dd26370c8f 1-128
+src/lib/family-finance/mental-account.ts
+  s_6a5d4fb8621570::t_043f1363644c81 1-87
+src/lib/supabase/family-finance-repository.ts
+  s_6a5d4fb8621570::t_54bf38c35f1019 7,345-548
+src/types/family-finance.ts
+  s_6a5d4fb8621570::t_2b3c96d1288bf4 81-110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "5dc9d15b69393ca23f86dbc393d91884c42c7295",
+  "prompts": {},
+  "sessions": {
+    "s_6a5d4fb8621570": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bed082af-f1c6-4872-9c73-9c2c111fe094",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
