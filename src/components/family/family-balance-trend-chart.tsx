@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, Empty, Segmented } from 'antd';
 import {
@@ -18,7 +18,7 @@ import {
 
 const Line = dynamic(() => import('@ant-design/charts').then(mod => mod.Line), {
   ssr: false,
-  loading: () => <div className="h-[240px] animate-pulse rounded-lg bg-[var(--bg-muted)]" />,
+  loading: () => <div className="h-full min-h-[220px] animate-pulse rounded-lg bg-[var(--bg-muted)]" />,
 });
 
 const RANGE_OPTIONS: { label: string; value: BalanceTrendRange }[] = [
@@ -45,6 +45,26 @@ function formatCompactAmount(value: number): string {
   }).format(value);
 }
 
+/** 跟踪容器高度，使折线填满 KPI 行拉伸后的卡片。 */
+function useContainerHeight(): [RefObject<HTMLDivElement | null>, number] {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => {
+      setHeight(Math.max(0, Math.floor(el.getBoundingClientRect().height)));
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return [ref, height];
+}
+
 interface FamilyBalanceTrendChartProps {
   points: FamilyBalanceSnapshot[];
   loading: boolean;
@@ -52,6 +72,7 @@ interface FamilyBalanceTrendChartProps {
 
 /**
  * 总览 KPI 区资产负债趋势：可切换时间范围，图例可显示净资产。
+ * 卡片高度随左侧三张 KPI 拉伸对齐，折线区域自适应填满。
  */
 export function FamilyBalanceTrendChart({
   points,
@@ -59,6 +80,7 @@ export function FamilyBalanceTrendChart({
 }: FamilyBalanceTrendChartProps) {
   const [range, setRange] = useState<BalanceTrendRange>('90d');
   const asOfDate = useMemo(() => shanghaiTodayIso(), []);
+  const [chartBodyRef, chartHeight] = useContainerHeight();
 
   const filtered = useMemo(
     () => filterBalanceSnapshots(points, range, asOfDate),
@@ -87,57 +109,60 @@ export function FamilyBalanceTrendChart({
         </div>
       }
     >
-      {filtered.length === 0 ? (
-        <div className="flex h-[240px] items-center justify-center">
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyDescription} />
-        </div>
-      ) : (
-        <Line
-          data={series}
-          xField="date"
-          yField="amount"
-          colorField="type"
-          height={240}
-          paddingLeft={56}
-          paddingRight={16}
-          scale={{
-            y: { nice: true },
-            color: {
-              domain: [...BALANCE_TREND_TYPES],
-              range: [...TREND_COLORS],
-            },
-          }}
-          axis={{
-            x: { title: false, labelFormatter: formatTrendDate },
-            y: {
-              title: false,
-              labelFormatter: (value: number) => formatCompactAmount(Number(value)),
-            },
-          }}
-          style={{ lineWidth: 2 }}
-          point={{
-            size: 3,
-            style: { fill: '#fff', lineWidth: 2 },
-          }}
-          legend={{
-            color: {
-              position: 'bottom',
-              layout: { justifyContent: 'center' },
-              // G2 v5：初始仅选中总资产/总负债；净资产靠图例点选显示
-              defaultSelect: ['总资产', '总负债'],
-            },
-          }}
-          tooltip={{
-            title: (datum: BalanceTrendPoint) => datum.date,
-            items: [
-              (datum: BalanceTrendPoint) => ({
-                name: datum.type,
-                value: formatCny(datum.amount),
-              }),
-            ],
-          }}
-        />
-      )}
+      <div ref={chartBodyRef} className="family-balance-trend-chart-body">
+        {filtered.length === 0 ? (
+          <div className="flex h-full min-h-[220px] items-center justify-center">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyDescription} />
+          </div>
+        ) : chartHeight > 0 ? (
+          <Line
+            data={series}
+            xField="date"
+            yField="amount"
+            colorField="type"
+            height={chartHeight}
+            autoFit
+            paddingLeft={56}
+            paddingRight={16}
+            scale={{
+              y: { nice: true },
+              color: {
+                domain: [...BALANCE_TREND_TYPES],
+                range: [...TREND_COLORS],
+              },
+            }}
+            axis={{
+              x: { title: false, labelFormatter: formatTrendDate },
+              y: {
+                title: false,
+                labelFormatter: (value: number) => formatCompactAmount(Number(value)),
+              },
+            }}
+            style={{ lineWidth: 2 }}
+            point={{
+              size: 3,
+              style: { fill: '#fff', lineWidth: 2 },
+            }}
+            legend={{
+              color: {
+                position: 'bottom',
+                layout: { justifyContent: 'center' },
+                // G2 v5：初始仅选中总资产/总负债；净资产靠图例点选显示
+                defaultSelect: ['总资产', '总负债'],
+              },
+            }}
+            tooltip={{
+              title: (datum: BalanceTrendPoint) => datum.date,
+              items: [
+                (datum: BalanceTrendPoint) => ({
+                  name: datum.type,
+                  value: formatCny(datum.amount),
+                }),
+              ],
+            }}
+          />
+        ) : null}
+      </div>
     </Card>
   );
 }

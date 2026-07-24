@@ -22,6 +22,8 @@ describe('mental account priority UI contracts', () => {
     expect(panel).toContain("name=\"startDate\"");
     expect(panel).toContain('FamilyMentalGoalsBarChart');
     expect(panel).toContain('groupMentalAccountsByPriority');
+    expect(panel).toContain('family-mental-accounts-card');
+    expect(panel).toContain('family-mental-goals-card');
     expect(panel).toContain('lg={16}');
     expect(panel).toContain('lg={8}');
 

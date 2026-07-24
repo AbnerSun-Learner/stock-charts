@@ -182,18 +182,18 @@ export function FamilyMentalAccountsPanel({
 
   return (
     <>
-      <Card
-        className="family-finance-section-card family-mental-accounts-card"
-        title={<h2 className="family-finance-section__title">心理账户</h2>}
-        loading={loading}
-        extra={
-          <Button type="primary" size="small" onClick={openCreate}>
-            添加心理账户
-          </Button>
-        }
-      >
-        <Row gutter={[16, 16]} className="family-mental-accounts-layout">
-          <Col xs={24} lg={16}>
+      <Row gutter={[16, 16]} className="family-mental-accounts-layout">
+        <Col xs={24} lg={16}>
+          <Card
+            className="family-finance-section-card family-mental-accounts-card"
+            title={<h2 className="family-finance-section__title">心理账户</h2>}
+            loading={loading}
+            extra={
+              <Button type="primary" size="small" onClick={openCreate}>
+                添加心理账户
+              </Button>
+            }
+          >
             {accounts.length === 0 ? (
               <Empty description="尚未设立心理账户" />
             ) : (
@@ -281,15 +281,20 @@ export function FamilyMentalAccountsPanel({
                 ))}
               </div>
             )}
-          </Col>
-          <Col xs={24} lg={8}>
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card
+            className="family-finance-section-card family-mental-goals-card"
+            title={<h2 className="family-finance-section__title">目标总览</h2>}
+            loading={loading}
+          >
             <div className="family-mental-goals-chart-wrap">
-              <h3 className="family-mental-goals-chart-title">目标总览</h3>
               <FamilyMentalGoalsBarChart aggregates={goalAggregates} />
             </div>
-          </Col>
-        </Row>
-      </Card>
+          </Card>
+        </Col>
+      </Row>
 
       <Modal
         title={editing ? '编辑心理账户' : '添加心理账户'}

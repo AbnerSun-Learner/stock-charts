@@ -14,6 +14,8 @@ describe('FamilyBalanceTrendChart source contract', () => {
     expect(source).toContain('暂无历史趋势，更新资产后将按日累计');
     expect(source).toContain('该范围内暂无数据');
     expect(source).toContain("defaultSelect: ['总资产', '总负债']");
+    expect(source).toContain('family-balance-trend-chart-body');
+    expect(source).toContain('ResizeObserver');
   });
 });
 
