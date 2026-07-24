@@ -268,13 +268,34 @@ export function FamilyMentalAccountsPanel({
                         );
                         return (
                           <div key={account.id} className="family-mental-account-item">
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <div className="flex min-w-0 flex-1 items-center gap-2">
+                            <div className="mb-2">
+                              <div className="flex items-start justify-between gap-2">
                                 <Tooltip title={account.name}>
-                                  <div className="min-w-0 truncate font-medium">{account.name}</div>
+                                  <div className="min-w-0 flex-1 truncate font-medium">
+                                    {account.name}
+                                  </div>
                                 </Tooltip>
+                                <Space size="small">
+                                  <Button
+                                    type="text"
+                                    size="small"
+                                    icon={<EditOutlined />}
+                                    aria-label="编辑"
+                                    onClick={() => openEdit(account)}
+                                  />
+                                  <Button
+                                    type="text"
+                                    size="small"
+                                    danger
+                                    icon={<CloseOutlined />}
+                                    aria-label="删除"
+                                    onClick={() => remove(account)}
+                                  />
+                                </Space>
+                              </div>
+                              <div className="mt-1 flex min-w-0 items-center gap-1.5">
                                 <span
-                                  className={`inline-block max-w-[36%] shrink-0 truncate rounded-md px-1.5 py-0.5 text-xs font-semibold ${PACE_MESSAGE_CLASS[pace.status]}`}
+                                  className={`inline-block max-w-full truncate rounded-md px-1.5 py-0.5 text-xs font-semibold ${PACE_MESSAGE_CLASS[pace.status]}`}
                                 >
                                   {pace.message}
                                 </span>
@@ -285,23 +306,6 @@ export function FamilyMentalAccountsPanel({
                                   />
                                 </Tooltip>
                               </div>
-                              <Space size="small">
-                                <Button
-                                  type="text"
-                                  size="small"
-                                  icon={<EditOutlined />}
-                                  aria-label="编辑"
-                                  onClick={() => openEdit(account)}
-                                />
-                                <Button
-                                  type="text"
-                                  size="small"
-                                  danger
-                                  icon={<CloseOutlined />}
-                                  aria-label="删除"
-                                  onClick={() => remove(account)}
-                                />
-                              </Space>
                             </div>
                             {!hasValidLink ? (
                               <div className="space-y-2">

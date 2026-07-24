@@ -42,13 +42,13 @@ function formatTrendDate(value: string): string {
 /** 跟踪容器高度，使折线填满 KPI 行拉伸后的卡片。 */
 function useContainerHeight(): [RefObject<HTMLDivElement>, number] {
   const ref = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState(280);
+  const [height, setHeight] = useState(360);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const update = () => {
-      const next = Math.max(280, Math.floor(el.getBoundingClientRect().height));
+      const next = Math.max(360, Math.floor(el.getBoundingClientRect().height));
       // 忽略亚像素抖动，避免反复改 height 导致 G2 折线路径错位
       setHeight(prev => (Math.abs(prev - next) < 8 ? prev : next));
     };
@@ -116,7 +116,7 @@ export function FamilyBalanceTrendChart({
     >
       <div ref={chartBodyRef} className="family-balance-trend-chart-body">
         {filtered.length === 0 ? (
-          <div className="flex h-full min-h-[280px] items-center justify-center">
+          <div className="flex h-full min-h-[360px] items-center justify-center">
             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyDescription} />
           </div>
         ) : (
