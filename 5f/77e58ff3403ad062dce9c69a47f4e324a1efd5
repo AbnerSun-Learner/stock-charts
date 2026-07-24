@@ -1,0 +1,27 @@
+__tests__/family-finance/balance-trend-ui.test.ts
+  s_0b53e6cbe93902::t_a5c79d7fd8b585 17-18
+__tests__/family-finance/mental-account-ui.test.ts
+  s_0b53e6cbe93902::t_c46dfbc3e7bd81 25-26
+src/app/globals.css
+  s_0b53e6cbe93902::t_134852bab34f7b 685-689,694,697-699,701-703,712-719,733-739,832-833
+src/components/family/family-balance-trend-chart.tsx
+  s_0b53e6cbe93902::t_b6269300850a0a 3,21,48-67,75,83,112-165
+src/components/family/family-mental-accounts-panel.tsx
+  s_0b53e6cbe93902::t_fa650bdeb7af0e 185-196,284-291,295-297
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "5f77e58ff3403ad062dce9c69a47f4e324a1efd5",
+  "prompts": {},
+  "sessions": {
+    "s_0b53e6cbe93902": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "ce492bbf-c439-4020-ad13-c7805ed3e7e8",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
