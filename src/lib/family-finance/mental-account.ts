@@ -2,12 +2,120 @@ import type {
   FamilyLedgerItem,
   FamilyMember,
   FamilyMentalAccount,
+  MentalAccountPriority,
+  MentalAccountPriorityGroup,
   MentalAccountProgress,
+  MentalGoalPriorityAggregate,
   SelectableMentalLedgerItem,
 } from '@/types/family-finance';
-import { FOUR_POT_LABELS } from '@/types/family-finance';
+import { FOUR_POT_LABELS, MENTAL_ACCOUNT_PRIORITIES } from '@/types/family-finance';
 import { isStructureFourPot, roundMoney } from '@/lib/family-finance/aggregates';
 import { formatCny } from '@/lib/family-finance/format';
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * 校验优先级枚举。
+ */
+export function isValidMentalAccountPriority(
+  value: string
+): value is MentalAccountPriority {
+  return (MENTAL_ACCOUNT_PRIORITIES as readonly string[]).includes(value);
+}
+
+/**
+ * 校验开始日期 ≤ 预期达成日期（均为 YYYY-MM-DD）。
+ */
+export function assertMentalAccountDateRange(
+  startDate: string,
+  targetDate: string
+): void {
+  if (!ISO_DATE_RE.test(startDate)) {
+    throw new Error('请选择开始日期');
+  }
+  if (!ISO_DATE_RE.test(targetDate)) {
+    throw new Error('请选择预期达成日期');
+  }
+  if (startDate > targetDate) {
+    throw new Error('开始日期不能晚于预期达成日期');
+  }
+}
+
+/**
+ * 计算心理账户时间进度：日历日 (today−start)/(target−start)，夹到 [0,1]。
+ * @param today YYYY-MM-DD，默认取本地今天
+ */
+export function computeMentalAccountTimeProgress(
+  startDate: string,
+  targetDate: string,
+  today: string = localIsoDate()
+): number {
+  if (!ISO_DATE_RE.test(startDate) || !ISO_DATE_RE.test(targetDate)) {
+    return 0;
+  }
+  if (!ISO_DATE_RE.test(today)) {
+    return 0;
+  }
+
+  const startDay = isoDateToUtcDay(startDate);
+  const targetDay = isoDateToUtcDay(targetDate);
+  const todayDay = isoDateToUtcDay(today);
+
+  if (startDay === targetDay) {
+    return todayDay >= startDay ? 1 : 0;
+  }
+  if (todayDay <= startDay) return 0;
+  if (todayDay >= targetDay) return 1;
+  return (todayDay - startDay) / (targetDay - startDay);
+}
+
+export type MentalPaceStatus = 'ahead' | 'behind' | 'on_track';
+
+export interface MentalPaceComparison {
+  status: MentalPaceStatus;
+  /** 鼓励文案 */
+  message: string;
+  timePercent: number;
+}
+
+/**
+ * 存款进度（建议用 chartPercent）与时间进度对比；按百分号两位对齐后比较。
+ */
+export function compareMentalAccountPace(
+  depositPercent: number,
+  timePercent: number
+): MentalPaceComparison {
+  const deposit = clampUnit(depositPercent);
+  const time = clampUnit(timePercent);
+  const depositPct = Number((deposit * 100).toFixed(2));
+  const timePct = Number((time * 100).toFixed(2));
+
+  if (depositPct === timePct) {
+    return { status: 'on_track', message: '继续保持哦', timePercent: time };
+  }
+  if (depositPct > timePct) {
+    return { status: 'ahead', message: '你们好棒棒', timePercent: time };
+  }
+  return { status: 'behind', message: '需要抓紧存钱啦', timePercent: time };
+}
+
+function clampUnit(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(1, Math.max(0, value));
+}
+
+/** 本地日历日 YYYY-MM-DD。 */
+function localIsoDate(): string {
+  const now = new Date();
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+/** YYYY-MM-DD → UTC 日序号（避免本地时区解析偏移）。 */
+function isoDateToUtcDay(isoDate: string): number {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  return Date.UTC(year, month - 1, day) / 86_400_000;
+}
 
 /**
  * 计算心理账户进度：计入仍存在且标注为活钱/稳钱/长钱的关联条目。
@@ -36,6 +144,42 @@ export function computeMentalAccountProgress(
     chartPercent: Math.min(1, Math.max(0, percent)),
     overflow: roundMoney(Math.max(0, current - target)),
   };
+}
+
+/**
+ * 按 P0 → P1 → P2 分组；空组省略；组内按 targetDate 升序。
+ */
+export function groupMentalAccountsByPriority(
+  accounts: FamilyMentalAccount[]
+): MentalAccountPriorityGroup[] {
+  return MENTAL_ACCOUNT_PRIORITIES.flatMap(priority => {
+    const group = accounts
+      .filter(a => a.priority === priority)
+      .slice()
+      .sort((a, b) => a.targetDate.localeCompare(b.targetDate));
+    return group.length === 0 ? [] : [{ priority, accounts: group }];
+  });
+}
+
+/**
+ * 按优先级汇总目标合计与已达成（固定三档，无账户为 0）。
+ */
+export function aggregateMentalGoalsByPriority(
+  accounts: FamilyMentalAccount[],
+  items: FamilyLedgerItem[]
+): MentalGoalPriorityAggregate[] {
+  return MENTAL_ACCOUNT_PRIORITIES.map(priority => {
+    const matched = accounts.filter(a => a.priority === priority);
+    let targetSum = 0;
+    let currentSum = 0;
+    for (const account of matched) {
+      targetSum = roundMoney(targetSum + account.targetAmount);
+      currentSum = roundMoney(
+        currentSum + computeMentalAccountProgress(account, items).current
+      );
+    }
+    return { priority, targetSum, currentSum };
+  });
 }
 
 /**

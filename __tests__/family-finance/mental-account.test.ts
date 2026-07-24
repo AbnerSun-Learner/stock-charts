@@ -1,7 +1,12 @@
 import type { FamilyLedgerItem, FamilyMember, FamilyMentalAccount } from '@/types/family-finance';
 import {
+  aggregateMentalGoalsByPriority,
+  assertMentalAccountDateRange,
+  compareMentalAccountPace,
   computeMentalAccountProgress,
+  computeMentalAccountTimeProgress,
   formatMentalLedgerOptionLabel,
+  groupMentalAccountsByPriority,
   listSelectableMentalLedgerItems,
 } from '@/lib/family-finance/mental-account';
 
@@ -29,7 +34,10 @@ function account(
     userId: 'u1',
     name: '应急金',
     targetAmount: 10000,
+    priority: 'P1',
+    startDate: '2026-01-01',
     targetDate: '2026-12-31',
+    showLinkedAccounts: true,
     createdAt: '',
     updatedAt: '',
     ...partial,
@@ -75,6 +83,76 @@ describe('computeMentalAccountProgress', () => {
     );
     expect(result.percent).toBe(0);
     expect(result.chartPercent).toBe(0);
+  });
+});
+
+describe('assertMentalAccountDateRange', () => {
+  it('开始等于达成时通过', () => {
+    expect(() => assertMentalAccountDateRange('2026-07-24', '2026-07-24')).not.toThrow();
+  });
+
+  it('开始晚于达成时抛错', () => {
+    expect(() => assertMentalAccountDateRange('2026-08-01', '2026-07-24')).toThrow(
+      '开始日期不能晚于预期达成日期'
+    );
+  });
+});
+
+describe('groupMentalAccountsByPriority', () => {
+  it('按 P0→P1→P2 分组，空组省略，组内按 targetDate 升序', () => {
+    const groups = groupMentalAccountsByPriority([
+      account({ id: 'p2a', priority: 'P2', targetDate: '2027-01-01', ledgerItemIds: [] }),
+      account({ id: 'p0b', priority: 'P0', targetDate: '2026-12-01', ledgerItemIds: [] }),
+      account({ id: 'p0a', priority: 'P0', targetDate: '2026-06-01', ledgerItemIds: [] }),
+      account({ id: 'p1a', priority: 'P1', targetDate: '2026-09-01', ledgerItemIds: [] }),
+    ]);
+    expect(groups.map(g => g.priority)).toEqual(['P0', 'P1', 'P2']);
+    expect(groups[0].accounts.map(a => a.id)).toEqual(['p0a', 'p0b']);
+    expect(groups[1].accounts.map(a => a.id)).toEqual(['p1a']);
+    expect(groups[2].accounts.map(a => a.id)).toEqual(['p2a']);
+  });
+
+  it('无账户时返回空数组', () => {
+    expect(groupMentalAccountsByPriority([])).toEqual([]);
+  });
+});
+
+describe('aggregateMentalGoalsByPriority', () => {
+  it('空列表返回三档 0', () => {
+    expect(aggregateMentalGoalsByPriority([], [])).toEqual([
+      { priority: 'P0', targetSum: 0, currentSum: 0 },
+      { priority: 'P1', targetSum: 0, currentSum: 0 },
+      { priority: 'P2', targetSum: 0, currentSum: 0 },
+    ]);
+  });
+
+  it('按优先级合计目标与已达成（超额 current 仍计入）', () => {
+    const items = [
+      ledger({ id: 'a', amount: 6000, fourPot: 'liquid' }),
+      ledger({ id: 'b', amount: 2000, fourPot: 'stable' }),
+    ];
+    const result = aggregateMentalGoalsByPriority(
+      [
+        account({
+          id: 'ma0',
+          priority: 'P0',
+          targetAmount: 5000,
+          ledgerItemIds: ['a'],
+        }),
+        account({
+          id: 'ma1',
+          priority: 'P1',
+          targetAmount: 10000,
+          ledgerItemIds: ['b'],
+        }),
+      ],
+      items
+    );
+    expect(result).toEqual([
+      { priority: 'P0', targetSum: 5000, currentSum: 6000 },
+      { priority: 'P1', targetSum: 10000, currentSum: 2000 },
+      { priority: 'P2', targetSum: 0, currentSum: 0 },
+    ]);
   });
 });
 
@@ -131,5 +209,28 @@ describe('formatMentalLedgerOptionLabel', () => {
     expect(label).toContain('我');
     expect(label).toContain('稳钱');
     expect(label).toMatch(/¥|￥|1,234/);
+  });
+});
+
+describe('computeMentalAccountTimeProgress', () => {
+  it('按日历日比例并夹到 [0,1]', () => {
+    expect(computeMentalAccountTimeProgress('2026-01-01', '2026-01-11', '2025-12-31')).toBe(0);
+    expect(computeMentalAccountTimeProgress('2026-01-01', '2026-01-11', '2026-01-06')).toBeCloseTo(0.5);
+    expect(computeMentalAccountTimeProgress('2026-01-01', '2026-01-11', '2026-01-11')).toBe(1);
+    expect(computeMentalAccountTimeProgress('2026-01-01', '2026-01-11', '2026-02-01')).toBe(1);
+  });
+
+  it('起止同日：今天起算为 100%', () => {
+    expect(computeMentalAccountTimeProgress('2026-07-24', '2026-07-24', '2026-07-23')).toBe(0);
+    expect(computeMentalAccountTimeProgress('2026-07-24', '2026-07-24', '2026-07-24')).toBe(1);
+  });
+});
+
+describe('compareMentalAccountPace', () => {
+  it('按百分号两位比较并返回对应文案', () => {
+    expect(compareMentalAccountPace(0.6, 0.5).message).toBe('你们好棒棒');
+    expect(compareMentalAccountPace(0.4, 0.5).message).toBe('需要抓紧存钱啦');
+    expect(compareMentalAccountPace(0.5, 0.5).message).toBe('继续保持哦');
+    expect(compareMentalAccountPace(0.50004, 0.5).message).toBe('继续保持哦');
   });
 });

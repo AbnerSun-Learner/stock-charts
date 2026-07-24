@@ -4,6 +4,7 @@ import { createElement } from 'react';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { FamilyAmountVisibilityProvider } from '@/components/family/family-amount-visibility';
 import { FamilyFinanceMetricCard } from '@/components/family/family-finance-metric-card';
 
 describe('FamilyFinanceMetricCard', () => {
@@ -25,6 +26,24 @@ describe('FamilyFinanceMetricCard', () => {
     expect(html).toContain('family-finance-monetary-value');
   });
 
+  it('Provider 隐藏态渲染 **** 且不泄露金额', () => {
+    const html = renderToStaticMarkup(
+      createElement(FamilyAmountVisibilityProvider, {
+        value: false,
+        children: createElement(FamilyFinanceMetricCard, {
+          label: '总资产',
+          value: 123456,
+          tone: 'primary',
+          loading: false,
+          hint: '家庭当前资产合计',
+        }),
+      })
+    );
+
+    expect(html).toContain('****');
+    expect(html).not.toContain('¥123,456.00');
+  });
+
   it('renders negative values with the negative tone and formatted amount', () => {
     const html = renderToStaticMarkup(
       createElement(FamilyFinanceMetricCard, {
@@ -37,7 +56,7 @@ describe('FamilyFinanceMetricCard', () => {
     );
 
     expect(html).toContain('family-finance-metric--negative');
-    expect(html).toContain('-¥123,456.00');
+    expect(html).toContain('- ¥123,456.00');
   });
 
   it('renders the loading skeleton without the amount', () => {

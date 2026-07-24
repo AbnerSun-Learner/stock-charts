@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { EyeFilled, EyeInvisibleFilled } from '@ant-design/icons';
 import {
   App,
   Button,
@@ -20,13 +21,16 @@ import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { FamilyFinanceRepository } from '@/lib/supabase/family-finance-repository';
 import {
   MEMBER_ROLE_LABELS,
+  type FamilyBalanceSnapshot,
   type FamilyLedgerItem,
   type FamilyMember,
   type FamilyMemberRole,
   type FamilyMentalAccount,
 } from '@/types/family-finance';
 import { computeLedgerTotals } from '@/lib/family-finance/aggregates';
+import { FamilyAmountVisibilityProvider } from '@/components/family/family-amount-visibility';
 import { FamilyAssetSankey } from '@/components/family/family-asset-sankey';
+import { FamilyBalanceTrendChart } from '@/components/family/family-balance-trend-chart';
 import { FamilyMentalAccountsPanel } from '@/components/family/family-mental-accounts-panel';
 import { FamilyFinanceMetricCard } from '@/components/family/family-finance-metric-card';
 import { FamilyPoliciesPage } from '@/components/family/family-policies-page';
@@ -42,21 +46,28 @@ export function FamilyOverviewPage() {
   const [items, setItems] = useState<FamilyLedgerItem[]>([]);
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [mentalAccounts, setMentalAccounts] = useState<FamilyMentalAccount[]>([]);
+  const [balanceSnapshots, setBalanceSnapshots] = useState<FamilyBalanceSnapshot[]>(
+    []
+  );
   const [memberDrawer, setMemberDrawer] = useState(false);
+  /** 金额默认隐藏；每次进入页面重置，不持久化。 */
+  const [amountsVisible, setAmountsVisible] = useState(false);
   const [memberForm] = Form.useForm();
 
   const reload = useCallback(async () => {
     setLoading(true);
     try {
       await repo.ensureSelfMember();
-      const [ledgerItems, m, mental] = await Promise.all([
+      const [ledgerItems, m, mental, snapshots] = await Promise.all([
         repo.listLedgerItems(),
         repo.listMembers(),
         repo.listMentalAccounts(),
+        repo.listBalanceSnapshots(),
       ]);
       setItems(ledgerItems);
       setMembers(m);
       setMentalAccounts(mental);
+      setBalanceSnapshots(snapshots);
     } catch (e) {
       message.error(e instanceof Error ? e.message : '加载失败');
     } finally {
@@ -72,7 +83,7 @@ export function FamilyOverviewPage() {
   const hasLedger = items.length > 0;
 
   const headerActions = (
-    <Space wrap className="family-finance-header__actions">
+    <Space wrap className="family-finance-header__actions" align="center">
       <Button
         className="family-finance-secondary-action family-finance-action--secondary"
         onClick={() => setMemberDrawer(true)}
@@ -94,7 +105,18 @@ export function FamilyOverviewPage() {
     <header className="family-finance-header">
       <div>
         <div className="family-finance-eyebrow">家庭资产</div>
-        <h1>家庭财务总览</h1>
+        <div className="family-finance-header__title-row">
+          <h1>家庭财务总览</h1>
+          <button
+            type="button"
+            className="family-amount-visibility-toggle"
+            aria-label={amountsVisible ? '隐藏金额' : '显示金额'}
+            aria-pressed={amountsVisible}
+            onClick={() => setAmountsVisible(v => !v)}
+          >
+            {amountsVisible ? <EyeFilled /> : <EyeInvisibleFilled />}
+          </button>
+        </div>
         <p>把家庭当作一家小公司，在同一张财务视图里看清资产、负债与保障。</p>
       </div>
       {headerActions}
@@ -226,94 +248,99 @@ export function FamilyOverviewPage() {
 
   if (!loading && !hasLedger) {
     return (
-      <div className="family-finance-page family-overview-page space-y-6">
-        {pageHeader}
-        <Card className="family-finance-section-card family-finance-empty-card">
-          <Empty description="尚无资产条目。请前往资产记账添加后，总览会即时展示。" />
-        </Card>
-        <Card className="family-finance-section-card family-overview-policies-card">
-          <FamilyPoliciesPage embedded />
-        </Card>
-        {memberDrawerNode}
-      </div>
+      <FamilyAmountVisibilityProvider value={amountsVisible}>
+        <div className="family-finance-page family-overview-page space-y-6">
+          {pageHeader}
+          <Card className="family-finance-section-card family-finance-empty-card">
+            <Empty description="尚无资产条目。请前往资产记账添加后，总览会即时展示。" />
+          </Card>
+          <Card className="family-finance-section-card family-overview-policies-card">
+            <FamilyPoliciesPage embedded />
+          </Card>
+          {memberDrawerNode}
+        </div>
+      </FamilyAmountVisibilityProvider>
     );
   }
 
   return (
-    <div className="family-finance-page family-overview-page space-y-6">
-      {pageHeader}
+    <FamilyAmountVisibilityProvider value={amountsVisible}>
+      <div className="family-finance-page family-overview-page space-y-6">
+        {pageHeader}
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} md={8}>
-          <FamilyFinanceMetricCard
-            label="总资产"
-            value={totals.totalAssets}
-            tone="primary"
-            loading={loading}
-            hint="家庭当前资产合计"
-          />
-        </Col>
-        <Col xs={24} md={8}>
-          <FamilyFinanceMetricCard
-            label="总负债"
-            value={totals.totalLiabilities}
-            tone="neutral"
-            loading={loading}
-            hint="家庭共同负债合计"
-          />
-        </Col>
-        <Col xs={24} md={8}>
-          <FamilyFinanceMetricCard
-            label="净资产"
-            value={totals.netWorth}
-            tone={totals.netWorth < 0 ? 'negative' : 'positive'}
-            loading={loading}
-            hint="总资产扣除总负债"
-          />
-        </Col>
-      </Row>
-
-      <div className="family-overview-structure-and-panels flex flex-col gap-8">
-        <Card
-          className="family-finance-section-card family-overview-structure-card"
-          loading={loading}
-          title={
-            <div>
-              <h2 className="family-finance-section__title">资产结构</h2>
-              <p className="family-finance-section__description">
-                从家庭总资产到成员与四笔钱，查看资金分布与负债关系。
-              </p>
-            </div>
-          }
-        >
-          <FamilyAssetSankey items={items} members={members} />
-        </Card>
-
-        <Row gutter={[16, 16]} className="family-overview-panels-row">
-          <Col xs={24} lg={12}>
-            <div className="family-overview-mental-panel">
-              <FamilyMentalAccountsPanel
-                repo={repo}
+        <Row gutter={[16, 16]} className="family-overview-kpi-trend-row">
+          <Col xs={24} lg={8}>
+            <div className="family-overview-kpi-stack">
+              <FamilyFinanceMetricCard
+                label="总资产"
+                value={totals.totalAssets}
+                tone="primary"
                 loading={loading}
-                items={items}
-                members={members}
-                accounts={mentalAccounts}
-                onChanged={reload}
+                hint="家庭当前资产合计"
+              />
+              <FamilyFinanceMetricCard
+                label="总负债"
+                value={totals.totalLiabilities}
+                tone="neutral"
+                loading={loading}
+                hint="家庭共同负债合计"
+              />
+              <FamilyFinanceMetricCard
+                label="净资产"
+                value={totals.netWorth}
+                tone={totals.netWorth < 0 ? 'negative' : 'positive'}
+                loading={loading}
+                hint="总资产扣除总负债"
               />
             </div>
           </Col>
-          <Col xs={24} lg={12}>
-            <Card
-              className="family-finance-section-card family-overview-policies-card"
-              loading={loading}
-            >
-              <FamilyPoliciesPage embedded />
-            </Card>
+          <Col xs={24} lg={16}>
+            <FamilyBalanceTrendChart points={balanceSnapshots} loading={loading} />
           </Col>
         </Row>
-      </div>
 
-      {memberDrawerNode}
-    </div>
+        <div className="family-overview-structure-and-panels flex flex-col gap-8">
+          <Card
+            className="family-finance-section-card family-overview-structure-card"
+            loading={loading}
+            title={
+              <div>
+                <h2 className="family-finance-section__title">资产结构</h2>
+                <p className="family-finance-section__description">
+                  从家庭总资产到成员与四笔钱，查看资金分布与负债关系。
+                </p>
+              </div>
+            }
+          >
+            <FamilyAssetSankey items={items} members={members} />
+          </Card>
+
+          <Row gutter={[16, 16]} className="family-overview-panels-row">
+            <Col xs={24}>
+              <div className="family-overview-mental-panel">
+                <FamilyMentalAccountsPanel
+                  repo={repo}
+                  loading={loading}
+                  items={items}
+                  members={members}
+                  accounts={mentalAccounts}
+                  onChanged={reload}
+                />
+              </div>
+            </Col>
+            <Col xs={24}>
+              <Card
+                className="family-finance-section-card family-overview-policies-card"
+                loading={loading}
+              >
+                <FamilyPoliciesPage embedded />
+              </Card>
+            </Col>
+          </Row>
+        </div>
+
+        {memberDrawerNode}
+      </div>
+    </FamilyAmountVisibilityProvider>
   );
 }

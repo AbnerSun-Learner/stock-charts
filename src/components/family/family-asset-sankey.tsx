@@ -13,6 +13,7 @@ import {
   type FamilyAssetSankeyLink,
 } from '@/lib/family-finance/asset-sankey';
 import { formatCny } from '@/lib/family-finance/format';
+import { useFamilyAmountVisibility } from '@/components/family/family-amount-visibility';
 
 const Sankey = dynamic(() => import('@ant-design/charts').then(mod => mod.Sankey), {
   ssr: false,
@@ -95,7 +96,11 @@ function buildNodeColorResolver(links: FamilyAssetSankeyLink[]): (key: string) =
  * 配色对齐参考图；汇总柱纯色加宽；连线透明度 0.6。
  */
 export function FamilyAssetSankey({ items, members, height = 420 }: FamilyAssetSankeyProps) {
-  const data = useMemo(() => buildFamilyAssetSankeyLinks(items, members), [items, members]);
+  const amountsVisible = useFamilyAmountVisibility();
+  const data = useMemo(
+    () => buildFamilyAssetSankeyLinks(items, members, { amountsVisible }),
+    [items, members, amountsVisible]
+  );
   const resolveColor = useMemo(() => buildNodeColorResolver(data), [data]);
 
   if (data.length === 0) {
@@ -122,6 +127,7 @@ export function FamilyAssetSankey({ items, members, height = 420 }: FamilyAssetS
       </div>
 
       <Sankey
+        key={amountsVisible ? 'amt-visible' : 'amt-masked'}
         data={data}
         height={height}
         marginLeft={16}
@@ -171,7 +177,8 @@ export function FamilyAssetSankey({ items, members, height = 420 }: FamilyAssetS
             {
               field: 'value',
               name: '金额',
-              valueFormatter: (v: number) => formatCny(Number(v)),
+              valueFormatter: (v: number) =>
+                formatCny(Number(v), { visible: amountsVisible }),
             },
           ],
         }}
