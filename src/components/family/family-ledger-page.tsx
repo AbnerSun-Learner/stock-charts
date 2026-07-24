@@ -22,12 +22,14 @@ import {
   LIABILITY_CATEGORIES,
   CATEGORY_LABELS,
   FOUR_POT_LABELS,
+  STRUCTURE_FOUR_POTS,
   type FamilyLedgerItem,
   type FamilyAssetHistory,
   type FamilyMember,
   type FourPot,
   type LedgerCategory,
   type LedgerSide,
+  type StructureFourPot,
 } from '@/types/family-finance';
 import {
   computeFourPotShares,
@@ -54,6 +56,10 @@ export function FamilyLedgerPage() {
   const [itemSaving, setItemSaving] = useState(false);
   const itemSavingRef = useRef(false);
   const [editing, setEditing] = useState<FamilyLedgerItem | null>(null);
+  /** 资产表：四笔钱筛选（仅活钱/稳钱/长钱）；null 表示全部 */
+  const [assetFourPotFilter, setAssetFourPotFilter] = useState<StructureFourPot | null>(null);
+  /** 资产表：成员筛选；null 表示全部 */
+  const [assetMemberFilter, setAssetMemberFilter] = useState<string | null>(null);
   const [form] = Form.useForm();
   const sideWatch: LedgerSide = Form.useWatch('side', form) ?? 'asset';
 
@@ -87,6 +93,13 @@ export function FamilyLedgerPage() {
     [members]
   );
   const assetItems = useMemo(() => items.filter(i => i.side === 'asset'), [items]);
+  const filteredAssetItems = useMemo(() => {
+    return assetItems.filter(item => {
+      if (assetFourPotFilter != null && item.fourPot !== assetFourPotFilter) return false;
+      if (assetMemberFilter != null && item.memberId !== assetMemberFilter) return false;
+      return true;
+    });
+  }, [assetItems, assetFourPotFilter, assetMemberFilter]);
   const liabilityItems = useMemo(
     () => items.filter(i => i.side === 'liability'),
     [items]
@@ -112,7 +125,8 @@ export function FamilyLedgerPage() {
       name: row.name,
       amount: row.amount,
       memberId: row.memberId,
-      fourPot: row.fourPot,
+      // 保险（资金标签）已下线：编辑时清空，需改选活钱/稳钱/长钱
+      fourPot: row.fourPot === 'insurance' ? undefined : row.fourPot,
       note: row.note,
     });
     setItemModalOpen(true);
@@ -275,16 +289,48 @@ export function FamilyLedgerPage() {
           </div>
           <div className="family-finance-section__content space-y-4">
             <div>
-              <h3 className="family-ledger-table-title">资产</h3>
+              <div className="family-ledger-table-toolbar">
+                <h3 className="family-ledger-table-title">资产</h3>
+                <Space wrap size="small" className="family-ledger-asset-filters">
+                  <Select
+                    allowClear
+                    placeholder="四笔钱"
+                    value={assetFourPotFilter ?? undefined}
+                    onChange={(v: StructureFourPot | undefined) =>
+                      setAssetFourPotFilter(v ?? null)
+                    }
+                    options={STRUCTURE_FOUR_POTS.map(k => ({
+                      value: k,
+                      label: FOUR_POT_LABELS[k],
+                    }))}
+                    className="family-ledger-filter-select"
+                    aria-label="按四笔钱筛选资产"
+                  />
+                  <Select
+                    allowClear
+                    placeholder="家庭成员"
+                    value={assetMemberFilter ?? undefined}
+                    onChange={(v: string | undefined) => setAssetMemberFilter(v ?? null)}
+                    options={members.map(m => ({ value: m.id, label: m.name }))}
+                    className="family-ledger-filter-select"
+                    aria-label="按家庭成员筛选资产"
+                  />
+                </Space>
+              </div>
               <Table
                 size="small"
                 loading={loading}
                 rowKey="id"
                 pagination={{ pageSize: 6 }}
                 scroll={{ x: 'max-content' }}
-                dataSource={assetItems}
+                dataSource={filteredAssetItems}
                 columns={buildColumns('asset')}
-                locale={{ emptyText: '暂无资产条目' }}
+                locale={{
+                  emptyText:
+                    assetItems.length === 0
+                      ? '暂无资产条目'
+                      : '无匹配的资产条目',
+                }}
               />
             </div>
             <div>
@@ -382,7 +428,7 @@ export function FamilyLedgerPage() {
               >
                 <Select
                   allowClear
-                  options={(Object.keys(FOUR_POT_LABELS) as FourPot[]).map(k => ({
+                  options={STRUCTURE_FOUR_POTS.map(k => ({
                     value: k,
                     label: FOUR_POT_LABELS[k],
                   }))}

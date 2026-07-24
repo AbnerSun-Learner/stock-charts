@@ -773,6 +773,15 @@ body::after {
   margin-top: 24px;
 }
 
+.family-finance-page.family-ledger-page .family-ledger-table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+
 .family-finance-page.family-ledger-page .family-ledger-table-title {
   margin: 0 0 8px;
   color: var(--family-body);
@@ -780,7 +789,16 @@ body::after {
   font-weight: 600;
 }
 
-.family-finance-page.family-ledger-page .family-ledger-items-card .ant-table-wrapper + .family-ledger-table-title {
+.family-finance-page.family-ledger-page .family-ledger-table-toolbar .family-ledger-table-title {
+  margin-bottom: 0;
+}
+
+.family-finance-page.family-ledger-page .family-ledger-filter-select {
+  min-width: 132px;
+}
+
+.family-finance-page.family-ledger-page .family-ledger-items-card .ant-table-wrapper + .family-ledger-table-title,
+.family-finance-page.family-ledger-page .family-ledger-items-card .ant-table-wrapper + .family-ledger-table-toolbar {
   margin-top: 24px;
 }
 
