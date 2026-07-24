@@ -249,10 +249,22 @@ export function FamilyMentalAccountsPanel({
                               </Space>
                             </div>
                             {!hasValidLink ? (
-                              <Empty
-                                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                description="关联账目已失效，请重新关联"
-                              />
+                              <div className="space-y-2">
+                                <dl className="space-y-1.5 text-sm m-0">
+                                  <div className="flex justify-between gap-3">
+                                    <dt className="shrink-0 text-[var(--text-muted)]">开始日期</dt>
+                                    <dd className="m-0 text-[var(--text)]">{account.startDate}</dd>
+                                  </div>
+                                  <div className="flex justify-between gap-3">
+                                    <dt className="shrink-0 text-[var(--text-muted)]">预期达成</dt>
+                                    <dd className="m-0 text-[var(--text)]">{account.targetDate}</dd>
+                                  </div>
+                                </dl>
+                                <Empty
+                                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                  description="关联账目已失效，请重新关联"
+                                />
+                              </div>
                             ) : (
                               <FamilyMentalAccountLiquid
                                 progress={progress}

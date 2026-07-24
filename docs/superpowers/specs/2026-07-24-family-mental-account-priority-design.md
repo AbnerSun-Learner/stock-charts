@@ -38,7 +38,7 @@
 | 列 | 类型 | 约束 |
 | --- | --- | --- |
 | `priority` | text | `NOT NULL`，`CHECK (priority IN ('P0','P1','P2'))`；回填 `'P1'` |
-| `start_date` | date | `NOT NULL`；回填为 migration 执行日当天 |
+| `start_date` | date | `NOT NULL`；回填为 `least(上海时区当天, target_date)` |
 
 应用层（Repository / 表单）校验：`start_date ≤ target_date`。migration 同步加 `CHECK (start_date <= target_date)`，与应用层一致。
 
