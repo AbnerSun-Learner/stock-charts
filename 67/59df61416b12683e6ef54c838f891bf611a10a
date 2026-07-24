@@ -1,0 +1,23 @@
+__tests__/family-finance/mental-account-ui.test.ts
+  s_ea3b1e2e472428::t_a54a59e79fc701 1-48
+docs/superpowers/specs/2026-07-24-family-mental-account-priority-design.md
+  s_ea3b1e2e472428::t_c7f3fe053a3bbc 41
+src/components/family/family-mental-accounts-panel.tsx
+  s_ea3b1e2e472428::t_53c012b5eb9908 252-267
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "6759df61416b12683e6ef54c838f891bf611a10a",
+  "prompts": {},
+  "sessions": {
+    "s_ea3b1e2e472428": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "461a8de7-8b18-454a-acdb-aa39cbd349bc",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
