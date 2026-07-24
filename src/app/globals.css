@@ -753,6 +753,37 @@ body::after {
   line-height: 1.2;
 }
 
+.family-finance-page.family-overview-page .family-finance-header__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.family-finance-page.family-overview-page .family-amount-visibility-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 4px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--family-body);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.family-finance-page.family-overview-page .family-amount-visibility-toggle:hover {
+  color: var(--family-ink);
+  background: color-mix(in srgb, var(--family-ink) 6%, transparent);
+}
+
+.family-finance-page.family-overview-page .family-amount-visibility-toggle:focus-visible {
+  outline: 2px solid var(--accent, #0052ff);
+  outline-offset: 2px;
+}
+
 .family-finance-page.family-overview-page .family-finance-header p {
   max-width: 640px;
   margin: 12px 0 0;

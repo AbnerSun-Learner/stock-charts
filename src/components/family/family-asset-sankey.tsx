@@ -13,6 +13,7 @@ import {
   type FamilyAssetSankeyLink,
 } from '@/lib/family-finance/asset-sankey';
 import { formatCny } from '@/lib/family-finance/format';
+import { useFamilyAmountVisibility } from '@/components/family/family-amount-visibility';
 
 const Sankey = dynamic(() => import('@ant-design/charts').then(mod => mod.Sankey), {
   ssr: false,
@@ -97,6 +98,7 @@ function buildNodeColorResolver(links: FamilyAssetSankeyLink[]): (key: string) =
 export function FamilyAssetSankey({ items, members, height = 420 }: FamilyAssetSankeyProps) {
   const data = useMemo(() => buildFamilyAssetSankeyLinks(items, members), [items, members]);
   const resolveColor = useMemo(() => buildNodeColorResolver(data), [data]);
+  const amountsVisible = useFamilyAmountVisibility();
 
   if (data.length === 0) {
     return <Empty description="暂无已标注四笔钱的资产，无法绘制桑基图" />;
@@ -171,7 +173,8 @@ export function FamilyAssetSankey({ items, members, height = 420 }: FamilyAssetS
             {
               field: 'value',
               name: '金额',
-              valueFormatter: (v: number) => formatCny(Number(v)),
+              valueFormatter: (v: number) =>
+                formatCny(Number(v), { visible: amountsVisible }),
             },
           ],
         }}

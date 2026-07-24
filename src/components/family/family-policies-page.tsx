@@ -25,6 +25,7 @@ import {
 } from '@/types/family-finance';
 import { computePolicyCoverage } from '@/lib/family-finance/aggregates';
 import { formatCny } from '@/lib/family-finance/format';
+import { useFamilyAmountVisibility } from '@/components/family/family-amount-visibility';
 
 /**
  * 保单管理页面；可作为家庭财务总览内嵌面板复用。
@@ -32,6 +33,7 @@ import { formatCny } from '@/lib/family-finance/format';
 export function FamilyPoliciesPage({ embedded = false }: { embedded?: boolean }) {
   const { message, modal } = App.useApp();
   const repo = useMemo(() => new FamilyFinanceRepository(createBrowserSupabaseClient()), []);
+  const amountsVisible = useFamilyAmountVisibility();
 
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<FamilyMember[]>([]);
@@ -190,14 +192,14 @@ export function FamilyPoliciesPage({ embedded = false }: { embedded?: boolean })
             dataIndex: 'coverageAmount',
             align: 'right',
             width: 120,
-            render: (v: number) => formatCny(v),
+            render: (v: number) => formatCny(v, { visible: amountsVisible }),
           },
           {
             title: '年缴',
             dataIndex: 'annualPremium',
             align: 'right',
             width: 120,
-            render: (v: number) => formatCny(v),
+            render: (v: number) => formatCny(v, { visible: amountsVisible }),
           },
           {
             title: '状态',

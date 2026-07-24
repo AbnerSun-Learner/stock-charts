@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useFamilyAmountVisibility } from '@/components/family/family-amount-visibility';
 import { formatCny } from '@/lib/family-finance/format';
 import type { MentalAccountProgress } from '@/types/family-finance';
 
@@ -38,6 +39,7 @@ export function FamilyMentalAccountLiquid({
   height = 140,
 }: FamilyMentalAccountLiquidProps) {
   const percentLabel = formatPercent(progress.chartPercent);
+  const amountsVisible = useFamilyAmountVisibility();
 
   return (
     <div className="flex items-center gap-3 sm:gap-4">
@@ -67,13 +69,13 @@ export function FamilyMentalAccountLiquid({
         <div className="flex justify-between gap-3">
           <dt className="shrink-0 text-[var(--text-muted)]">当前金额</dt>
           <dd className="family-finance-monetary-value m-0 text-[var(--text)]">
-            {formatCny(progress.current)}
+            {formatCny(progress.current, { visible: amountsVisible })}
           </dd>
         </div>
         <div className="flex justify-between gap-3">
           <dt className="shrink-0 text-[var(--text-muted)]">目标金额</dt>
           <dd className="family-finance-monetary-value m-0 text-[var(--text)]">
-            {formatCny(targetAmount)}
+            {formatCny(targetAmount, { visible: amountsVisible })}
           </dd>
         </div>
         <div className="flex justify-between gap-3">
@@ -88,7 +90,7 @@ export function FamilyMentalAccountLiquid({
           <div className="flex justify-between gap-3">
             <dt className="shrink-0 text-[var(--text-muted)]">已超额</dt>
             <dd className="family-finance-monetary-value m-0 text-[var(--text)]">
-              {formatCny(progress.overflow)}
+              {formatCny(progress.overflow, { visible: amountsVisible })}
             </dd>
           </div>
         ) : null}

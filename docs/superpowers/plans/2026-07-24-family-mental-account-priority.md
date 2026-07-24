@@ -19,24 +19,25 @@
 
 ## File Structure
 
-| 文件 | 职责 |
-| --- | --- |
-| `scheduled-tasks/.../20260724_family_mental_accounts_priority_start_date.sql` | 增列 + 回填 + CHECK |
-| `src/types/family-finance.ts` | `MentalAccountPriority`、字段扩展、聚合结果类型 |
-| `src/lib/family-finance/mental-account.ts` | 校验、分组、聚合纯函数 |
-| `src/lib/supabase/family-finance-repository.ts` | 读写与排序 |
-| `src/components/family/family-mental-goals-bar-chart.tsx` | 分组柱状图 |
-| `src/components/family/family-mental-accounts-panel.tsx` | 表单 + 左列表右图 |
-| `src/components/family/family-mental-account-liquid.tsx` | 展示开始日期 |
-| `src/components/family/family-overview-page.tsx` | 保单下移全宽 |
-| `src/app/globals.css` | 瀑布流 / 左右栏样式 |
-| `__tests__/family-finance/mental-account.test.ts` | 纯函数单测 |
+| 文件                                                                          | 职责                                            |
+| ----------------------------------------------------------------------------- | ----------------------------------------------- |
+| `scheduled-tasks/.../20260724_family_mental_accounts_priority_start_date.sql` | 增列 + 回填 + CHECK                             |
+| `src/types/family-finance.ts`                                                 | `MentalAccountPriority`、字段扩展、聚合结果类型 |
+| `src/lib/family-finance/mental-account.ts`                                    | 校验、分组、聚合纯函数                          |
+| `src/lib/supabase/family-finance-repository.ts`                               | 读写与排序                                      |
+| `src/components/family/family-mental-goals-bar-chart.tsx`                     | 分组柱状图                                      |
+| `src/components/family/family-mental-accounts-panel.tsx`                      | 表单 + 左列表右图                               |
+| `src/components/family/family-mental-account-liquid.tsx`                      | 展示开始日期                                    |
+| `src/components/family/family-overview-page.tsx`                              | 保单下移全宽                                    |
+| `src/app/globals.css`                                                         | 瀑布流 / 左右栏样式                             |
+| `__tests__/family-finance/mental-account.test.ts`                             | 纯函数单测                                      |
 
 ---
 
 ### Task 1: DDL（scheduled-tasks）
 
 **Files:**
+
 - Create: `/Users/abnersun/Downloads/code/scheduled-tasks/src/scheduled_tasks/models/migrations/20260724_family_mental_accounts_priority_start_date.sql`
 
 - [ ] **Step 1: 写入幂等 migration**
@@ -104,12 +105,15 @@ git commit -m "feat(family): 心理账户增加优先级与开始日期"
 ### Task 2: 类型 + 纯函数（TDD）
 
 **Files:**
+
 - Modify: `src/types/family-finance.ts`
 - Modify: `src/lib/family-finance/mental-account.ts`
 - Modify: `__tests__/family-finance/mental-account.test.ts`
 
 **Interfaces:**
+
 - Produces:
+
   - `export type MentalAccountPriority = 'P0' | 'P1' | 'P2'`
   - `export const MENTAL_ACCOUNT_PRIORITIES: MentalAccountPriority[] = ['P0','P1','P2']`
   - `FamilyMentalAccount.priority` / `.startDate`
@@ -124,6 +128,7 @@ git commit -m "feat(family): 心理账户增加优先级与开始日期"
 `account()` 默认补 `priority: 'P1'`, `startDate: '2026-01-01'`。
 
 新增用例覆盖：
+
 - `assertMentalAccountDateRange`：相等通过；开始晚于达成抛错
 - `groupMentalAccountsByPriority`：顺序 P0→P1→P2；空组省略；同组按 targetDate
 - `aggregateMentalGoalsByPriority`：空列表三档 0；混合优先级合计；超额 current 仍计入
@@ -151,15 +156,18 @@ git commit -m "feat(family): 心理账户优先级聚合与日期校验纯函数
 ### Task 3: Repository 读写
 
 **Files:**
+
 - Modify: `src/lib/supabase/family-finance-repository.ts`
 
 **Interfaces:**
+
 - Consumes: `isValidMentalAccountPriority`, `assertMentalAccountDateRange`, `MentalAccountPriority`
 - Produces: `listMentalAccounts` 映射 `priority`/`startDate`；排序 `priority ASC, target_date ASC`；`upsertMentalAccount` 入参含 `priority`/`startDate`
 
 - [ ] **Step 1: 更新 map / upsert / saveMentalAccountRow**
 
 校验：
+
 - priority 枚举
 - startDate / targetDate `YYYY-MM-DD`
 - `assertMentalAccountDateRange(startDate, targetDate)`
@@ -177,9 +185,11 @@ git commit -m "feat(family): Repository 读写心理账户优先级与开始日�
 ### Task 4: 分组柱状图组件
 
 **Files:**
+
 - Create: `src/components/family/family-mental-goals-bar-chart.tsx`
 
 **Interfaces:**
+
 - Consumes: `aggregateMentalGoalsByPriority` 或预聚合 `MentalGoalPriorityAggregate[]`
 - Produces: `FamilyMentalGoalsBarChart({ aggregates, height? })`
 
@@ -198,6 +208,7 @@ git commit -m "feat(family): 新增心理账户优先级目标柱状图"
 ### Task 5: 面板表单 + 左列表右图 + Liquid
 
 **Files:**
+
 - Modify: `src/components/family/family-mental-accounts-panel.tsx`
 - Modify: `src/components/family/family-mental-account-liquid.tsx`
 - Modify: `src/app/globals.css`
@@ -223,6 +234,7 @@ git commit -m "feat(family): 心理账户表单与分组瀑布流布局"
 ### Task 6: 总览保单下移全宽
 
 **Files:**
+
 - Modify: `src/components/family/family-overview-page.tsx`
 
 - [ ] **Step 1: 心理账户 `Col xs={24}` 整行；保单单独下一行 `Col xs={24}`**
@@ -247,12 +259,12 @@ git commit -m "feat(family): 总览心理账户整行保单下移"
 
 ## Spec Coverage Checklist
 
-| Spec 项 | Task |
-| --- | --- |
-| priority / start_date DDL + 回填 | 1 |
-| 类型与聚合纯函数 | 2 |
-| Repository | 3 |
-| 分组柱状图 | 4 |
-| 表单 + 瀑布流 + 开始日展示 | 5 |
-| 保单全宽下移 | 6 |
-| 测试与验证 | 2, 7 |
+| Spec 项                          | Task |
+| -------------------------------- | ---- |
+| priority / start_date DDL + 回填 | 1    |
+| 类型与聚合纯函数                 | 2    |
+| Repository                       | 3    |
+| 分组柱状图                       | 4    |
+| 表单 + 瀑布流 + 开始日展示       | 5    |
+| 保单全宽下移                     | 6    |
+| 测试与验证                       | 2, 7 |
