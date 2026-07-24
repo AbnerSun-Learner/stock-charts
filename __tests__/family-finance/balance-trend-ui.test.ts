@@ -16,7 +16,8 @@ describe('FamilyBalanceTrendChart source contract', () => {
     expect(source).toContain("defaultSelect: ['总资产', '总负债']");
     expect(source).toContain('family-balance-trend-chart-body');
     expect(source).toContain('ResizeObserver');
-    expect(source).toContain('Math.max(chartHeight, 280)');
+    expect(source).toContain('seriesField="type"');
+    expect(source).toContain('colorField="type"');
   });
 });
 

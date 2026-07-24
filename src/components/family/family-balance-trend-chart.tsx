@@ -40,15 +40,17 @@ function formatTrendDate(value: string): string {
 }
 
 /** 跟踪容器高度，使折线填满 KPI 行拉伸后的卡片。 */
-function useContainerHeight(): [RefObject<HTMLDivElement | null>, number] {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [height, setHeight] = useState(0);
+function useContainerHeight(): [RefObject<HTMLDivElement>, number] {
+  const ref = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState(280);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const update = () => {
-      setHeight(Math.max(0, Math.floor(el.getBoundingClientRect().height)));
+      const next = Math.max(280, Math.floor(el.getBoundingClientRect().height));
+      // 忽略亚像素抖动，避免反复改 height 导致 G2 折线路径错位
+      setHeight(prev => (Math.abs(prev - next) < 8 ? prev : next));
     };
     update();
     const observer = new ResizeObserver(update);
@@ -114,9 +116,10 @@ export function FamilyBalanceTrendChart({
             data={series}
             xField="date"
             yField="amount"
+            // color 只着色；series 负责按类型拆线，否则多系列折线会串线
+            seriesField="type"
             colorField="type"
-            // ResizeObserver 未就绪时用兜底高度，避免 flex 塌缩导致图不渲染
-            height={Math.max(chartHeight, 280)}
+            height={chartHeight}
             autoFit
             paddingLeft={56}
             paddingRight={16}

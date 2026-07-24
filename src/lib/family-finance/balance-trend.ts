@@ -7,8 +7,13 @@ import type {
   BalanceTrendRange,
   FamilyBalanceSnapshot,
 } from '@/types/family-finance';
+import { BALANCE_TREND_TYPES } from '@/types/family-finance';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+const TYPE_ORDER = new Map(
+  BALANCE_TREND_TYPES.map((type, index) => [type, index] as const)
+);
 
 /** Asia/Shanghai 日历今日 YYYY-MM-DD。 */
 export function shanghaiTodayIso(): string {
@@ -51,7 +56,7 @@ export function filterBalanceSnapshots(
   return [...filtered].sort((a, b) => a.date.localeCompare(b.date));
 }
 
-/** 每个快照展开为总资产 / 总负债 / 净资产三条长表点。 */
+/** 每个快照展开为总资产 / 总负债 / 净资产三条长表点（按类型固定序、再按日期）。 */
 export function toBalanceTrendSeries(
   points: FamilyBalanceSnapshot[]
 ): BalanceTrendPoint[] {
@@ -63,5 +68,8 @@ export function toBalanceTrendSeries(
       { date: point.date, type: '净资产', amount: point.netWorth }
     );
   }
-  return series;
+  return series.sort((a, b) => {
+    const typeDiff = (TYPE_ORDER.get(a.type) ?? 0) - (TYPE_ORDER.get(b.type) ?? 0);
+    return typeDiff !== 0 ? typeDiff : a.date.localeCompare(b.date);
+  });
 }

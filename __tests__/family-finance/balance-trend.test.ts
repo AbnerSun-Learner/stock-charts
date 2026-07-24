@@ -69,11 +69,14 @@ describe('filterBalanceSnapshots', () => {
 });
 
 describe('toBalanceTrendSeries', () => {
-  it('每个快照展开为总资产/总负债/净资产三条', () => {
-    const series = toBalanceTrendSeries([sample[2]]);
+  it('每个快照展开为总资产/总负债/净资产三条，并按固定类型序与日期排序', () => {
+    const series = toBalanceTrendSeries([sample[2], sample[0]]);
     expect(series).toEqual([
+      { date: '2026-01-01', type: '总资产', amount: 100 },
       { date: '2026-07-24', type: '总资产', amount: 120 },
+      { date: '2026-01-01', type: '总负债', amount: 40 },
       { date: '2026-07-24', type: '总负债', amount: 50 },
+      { date: '2026-01-01', type: '净资产', amount: 60 },
       { date: '2026-07-24', type: '净资产', amount: 70 },
     ]);
   });
