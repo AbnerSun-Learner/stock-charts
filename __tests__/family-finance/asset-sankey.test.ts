@@ -108,6 +108,19 @@ describe('buildFamilyAssetSankeyLinks', () => {
       )
     ).toEqual([]);
   });
+
+  it('amountsVisible=false 时节点金额为 ****', () => {
+    const items = [
+      liability({ id: 'd1', name: '房贷', amount: 40 }),
+      asset({ id: 'a1', name: '活期', amount: 30, fourPot: 'liquid', memberId: 'm1' }),
+    ];
+    const links = buildFamilyAssetSankeyLinks(items, members, { amountsVisible: false });
+    expect(links.every(l => !l.source.includes('¥') && !l.target.includes('¥'))).toBe(true);
+    expect(links.some(l => l.source.includes('****') || l.target.includes('****'))).toBe(true);
+    expect(links.some(l => l.source.startsWith('负债') && l.target.startsWith('总资产') && l.value === 40)).toBe(
+      true
+    );
+  });
 });
 
 describe('isSankeyHubNode / hasSankeyLiabilityHub', () => {

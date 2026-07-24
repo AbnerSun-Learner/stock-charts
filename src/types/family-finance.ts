@@ -102,6 +102,8 @@ export interface FamilyMentalAccount {
   targetDate: string;
   /** 关联的活账条目 id（互斥：一笔账目仅属一个心理账户） */
   ledgerItemIds: string[];
+  /** 水波图是否展示关联账目名称 */
+  showLinkedAccounts: boolean;
   createdAt: string;
   updatedAt: string;
 }

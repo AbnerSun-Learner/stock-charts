@@ -49,7 +49,22 @@ describe('mental account priority UI contracts', () => {
 
     expect(liquid).toContain('linkedAccountNames');
     expect(liquid).toContain('关联账户');
+    expect(liquid).toContain('时间进度');
+    expect(liquid).toContain('showLinkedAccounts');
     expect(panel).toContain('linkedAccountNames={linkedAccountNames}');
+    expect(panel).toContain('name="showLinkedAccounts"');
+    expect(panel).toContain('showLinkedAccounts={account.showLinkedAccounts}');
+  });
+
+  it('账目表包含创建与更新时间列', () => {
+    const ledger = readFileSync(
+      join(root, 'src/components/family/family-ledger-page.tsx'),
+      'utf8'
+    );
+    expect(ledger).toContain("title: '创建时间'");
+    expect(ledger).toContain("title: '更新时间'");
+    expect(ledger).toContain('formatDateTime');
+    expect(ledger).toContain('ellipsis: { showTitle: false }');
   });
 
   it('总览心理账户整行且保单下移全宽', () => {

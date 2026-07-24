@@ -2,7 +2,9 @@ import type { FamilyLedgerItem, FamilyMember, FamilyMentalAccount } from '@/type
 import {
   aggregateMentalGoalsByPriority,
   assertMentalAccountDateRange,
+  compareMentalAccountPace,
   computeMentalAccountProgress,
+  computeMentalAccountTimeProgress,
   formatMentalLedgerOptionLabel,
   groupMentalAccountsByPriority,
   listSelectableMentalLedgerItems,
@@ -35,6 +37,7 @@ function account(
     priority: 'P1',
     startDate: '2026-01-01',
     targetDate: '2026-12-31',
+    showLinkedAccounts: true,
     createdAt: '',
     updatedAt: '',
     ...partial,
@@ -206,5 +209,28 @@ describe('formatMentalLedgerOptionLabel', () => {
     expect(label).toContain('我');
     expect(label).toContain('稳钱');
     expect(label).toMatch(/¥|￥|1,234/);
+  });
+});
+
+describe('computeMentalAccountTimeProgress', () => {
+  it('按日历日比例并夹到 [0,1]', () => {
+    expect(computeMentalAccountTimeProgress('2026-01-01', '2026-01-11', '2025-12-31')).toBe(0);
+    expect(computeMentalAccountTimeProgress('2026-01-01', '2026-01-11', '2026-01-06')).toBeCloseTo(0.5);
+    expect(computeMentalAccountTimeProgress('2026-01-01', '2026-01-11', '2026-01-11')).toBe(1);
+    expect(computeMentalAccountTimeProgress('2026-01-01', '2026-01-11', '2026-02-01')).toBe(1);
+  });
+
+  it('起止同日：今天起算为 100%', () => {
+    expect(computeMentalAccountTimeProgress('2026-07-24', '2026-07-24', '2026-07-23')).toBe(0);
+    expect(computeMentalAccountTimeProgress('2026-07-24', '2026-07-24', '2026-07-24')).toBe(1);
+  });
+});
+
+describe('compareMentalAccountPace', () => {
+  it('按百分号两位比较并返回对应文案', () => {
+    expect(compareMentalAccountPace(0.6, 0.5).message).toBe('你们好棒棒');
+    expect(compareMentalAccountPace(0.4, 0.5).message).toBe('需要抓紧存钱啦');
+    expect(compareMentalAccountPace(0.5, 0.5).message).toBe('继续保持哦');
+    expect(compareMentalAccountPace(0.50004, 0.5).message).toBe('继续保持哦');
   });
 });

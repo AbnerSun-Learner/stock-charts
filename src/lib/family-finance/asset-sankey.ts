@@ -9,6 +9,11 @@ export interface FamilyAssetSankeyLink {
   value: number;
 }
 
+export interface BuildFamilyAssetSankeyLinksOptions {
+  /** 为 false 时节点名中的金额显示为 ****；缺省视为显示 */
+  amountsVisible?: boolean;
+}
+
 const POT_ORDER: FourPot[] = ['liquid', 'stable', 'long_term', 'insurance'];
 
 /** 桑基中间层用更短的保险标签。 */
@@ -19,18 +24,22 @@ const SANK_POT_LABELS: Record<FourPot, string> = {
   insurance: '保险',
 };
 
-function potNodeLabel(pot: FourPot, amount: number): string {
-  return `${SANK_POT_LABELS[pot]} · ${formatCny(amount)}`;
+function potNodeLabel(pot: FourPot, amount: number, amountsVisible: boolean): string {
+  return `${SANK_POT_LABELS[pot]} · ${formatCny(amount, { visible: amountsVisible })}`;
 }
 
-function liabilityItemLabel(item: FamilyLedgerItem): string {
-  return `${item.name} · ${formatCny(item.amount)}`;
+function liabilityItemLabel(item: FamilyLedgerItem, amountsVisible: boolean): string {
+  return `${item.name} · ${formatCny(item.amount, { visible: amountsVisible })}`;
 }
 
-function assetItemLabel(item: FamilyLedgerItem, memberNameById: Map<string, string>): string {
+function assetItemLabel(
+  item: FamilyLedgerItem,
+  memberNameById: Map<string, string>,
+  amountsVisible: boolean
+): string {
   const member =
     item.memberId != null ? (memberNameById.get(item.memberId) ?? '未知成员') : '家庭';
-  return `${item.name} · ${member} · ${formatCny(item.amount)}`;
+  return `${item.name} · ${member} · ${formatCny(item.amount, { visible: amountsVisible })}`;
 }
 
 /** 桑基汇总节点前缀（用于加宽柱与顶部标注）。 */
@@ -48,8 +57,10 @@ export function isSankeyHubNode(key: string): boolean {
  */
 export function buildFamilyAssetSankeyLinks(
   items: FamilyLedgerItem[],
-  members: FamilyMember[]
+  members: FamilyMember[],
+  options?: BuildFamilyAssetSankeyLinksOptions
 ): FamilyAssetSankeyLink[] {
+  const amountsVisible = options?.amountsVisible !== false;
   const memberNameById = new Map(members.map(m => [m.id, m.name]));
   const assets = items.filter(
     i => i.side === 'asset' && i.fourPot != null && i.amount > 0
@@ -61,13 +72,13 @@ export function buildFamilyAssetSankeyLinks(
   const totalLiabilities = roundMoney(liabilities.reduce((s, i) => s + i.amount, 0));
   const netWorth = roundMoney(totalAssets - totalLiabilities);
 
-  const totalNode = `${SANK_TOTAL_HUB_PREFIX} · ${formatCny(totalAssets)}`;
-  const liabilityNode = `${SANK_LIABILITY_HUB_PREFIX} · ${formatCny(totalLiabilities)}`;
+  const totalNode = `${SANK_TOTAL_HUB_PREFIX} · ${formatCny(totalAssets, { visible: amountsVisible })}`;
+  const liabilityNode = `${SANK_LIABILITY_HUB_PREFIX} · ${formatCny(totalLiabilities, { visible: amountsVisible })}`;
   const links: FamilyAssetSankeyLink[] = [];
 
   for (const item of liabilities) {
     links.push({
-      source: liabilityItemLabel(item),
+      source: liabilityItemLabel(item, amountsVisible),
       target: liabilityNode,
       value: roundMoney(item.amount),
     });
@@ -83,7 +94,7 @@ export function buildFamilyAssetSankeyLinks(
 
   if (netWorth > 0) {
     links.push({
-      source: `净资产 · ${formatCny(netWorth)}`,
+      source: `净资产 · ${formatCny(netWorth, { visible: amountsVisible })}`,
       target: totalNode,
       value: netWorth,
     });
@@ -99,7 +110,7 @@ export function buildFamilyAssetSankeyLinks(
   for (const pot of POT_ORDER) {
     const sum = potSums.get(pot) ?? 0;
     if (sum <= 0) continue;
-    const potLabel = potNodeLabel(pot, sum);
+    const potLabel = potNodeLabel(pot, sum, amountsVisible);
     links.push({
       source: totalNode,
       target: potLabel,
@@ -109,7 +120,7 @@ export function buildFamilyAssetSankeyLinks(
     for (const item of assets.filter(a => a.fourPot === pot)) {
       links.push({
         source: potLabel,
-        target: assetItemLabel(item, memberNameById),
+        target: assetItemLabel(item, memberNameById, amountsVisible),
         value: roundMoney(item.amount),
       });
     }

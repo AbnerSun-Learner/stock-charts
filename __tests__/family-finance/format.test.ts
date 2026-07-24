@@ -1,4 +1,4 @@
-import { formatCompactCny, formatCny } from '@/lib/family-finance/format';
+import { formatCompactCny, formatCny, formatDateTime } from '@/lib/family-finance/format';
 
 describe('formatCny', () => {
   it('格式化正数人民币', () => {
@@ -34,5 +34,16 @@ describe('formatCompactCny', () => {
 
   it('缺省时使用紧凑记法', () => {
     expect(formatCompactCny(1234567)).toMatch(/万|百万|千万|亿|1/);
+  });
+});
+
+describe('formatDateTime', () => {
+  it('将 ISO 时间格式化为本地 YYYY-MM-DD HH:mm', () => {
+    const label = formatDateTime('2026-07-24T04:30:00.000Z');
+    expect(label).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+  });
+
+  it('非法输入原样返回', () => {
+    expect(formatDateTime('not-a-date')).toBe('not-a-date');
   });
 });

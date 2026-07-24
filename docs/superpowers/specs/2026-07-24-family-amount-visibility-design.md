@@ -41,7 +41,7 @@ header
 关（默认）
   KPI 值 → ****
   趋势 Y 轴 / tooltip → ****
-  Sankey tooltip 金额 → ****
+  Sankey 节点标签 / tooltip 金额 → ****
   心智账户「当前/目标/超额」→ ****
   嵌入保单表 保额/保费 → ****
 
@@ -81,7 +81,7 @@ format.ts
 | ------------ | -------------------------------------------------------- | ----------------------------------------------- |
 | KPI          | `FamilyFinanceMetricCard`                                | 主金额                                          |
 | 资产负债趋势 | `FamilyBalanceTrendChart`                                | Y 轴 `labelFormatter`、tooltip 金额             |
-| 资产结构     | `FamilyAssetSankey`                                      | tooltip / valueFormatter 金额                   |
+| 资产结构     | `FamilyAssetSankey`                                      | 节点标签金额 + tooltip / valueFormatter         |
 | 心智账户     | `FamilyMentalAccountLiquid`、`FamilyMentalGoalsBarChart` | 当前/目标/超额；柱图轴与 tooltip；进度 `%` 不遮 |
 | 嵌入保单     | `FamilyPoliciesPage` embedded                            | 保额、年缴保费列                                |
 

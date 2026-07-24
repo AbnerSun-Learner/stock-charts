@@ -96,9 +96,12 @@ function buildNodeColorResolver(links: FamilyAssetSankeyLink[]): (key: string) =
  * 配色对齐参考图；汇总柱纯色加宽；连线透明度 0.6。
  */
 export function FamilyAssetSankey({ items, members, height = 420 }: FamilyAssetSankeyProps) {
-  const data = useMemo(() => buildFamilyAssetSankeyLinks(items, members), [items, members]);
-  const resolveColor = useMemo(() => buildNodeColorResolver(data), [data]);
   const amountsVisible = useFamilyAmountVisibility();
+  const data = useMemo(
+    () => buildFamilyAssetSankeyLinks(items, members, { amountsVisible }),
+    [items, members, amountsVisible]
+  );
+  const resolveColor = useMemo(() => buildNodeColorResolver(data), [data]);
 
   if (data.length === 0) {
     return <Empty description="暂无已标注四笔钱的资产，无法绘制桑基图" />;
@@ -124,6 +127,7 @@ export function FamilyAssetSankey({ items, members, height = 420 }: FamilyAssetS
       </div>
 
       <Sankey
+        key={amountsVisible ? 'amt-visible' : 'amt-masked'}
         data={data}
         height={height}
         marginLeft={16}

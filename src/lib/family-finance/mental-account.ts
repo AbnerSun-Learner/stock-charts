@@ -42,6 +42,82 @@ export function assertMentalAccountDateRange(
 }
 
 /**
+ * 计算心理账户时间进度：日历日 (today−start)/(target−start)，夹到 [0,1]。
+ * @param today YYYY-MM-DD，默认取本地今天
+ */
+export function computeMentalAccountTimeProgress(
+  startDate: string,
+  targetDate: string,
+  today: string = localIsoDate()
+): number {
+  if (!ISO_DATE_RE.test(startDate) || !ISO_DATE_RE.test(targetDate)) {
+    return 0;
+  }
+  if (!ISO_DATE_RE.test(today)) {
+    return 0;
+  }
+
+  const startDay = isoDateToUtcDay(startDate);
+  const targetDay = isoDateToUtcDay(targetDate);
+  const todayDay = isoDateToUtcDay(today);
+
+  if (startDay === targetDay) {
+    return todayDay >= startDay ? 1 : 0;
+  }
+  if (todayDay <= startDay) return 0;
+  if (todayDay >= targetDay) return 1;
+  return (todayDay - startDay) / (targetDay - startDay);
+}
+
+export type MentalPaceStatus = 'ahead' | 'behind' | 'on_track';
+
+export interface MentalPaceComparison {
+  status: MentalPaceStatus;
+  /** 鼓励文案 */
+  message: string;
+  timePercent: number;
+}
+
+/**
+ * 存款进度（建议用 chartPercent）与时间进度对比；按百分号两位对齐后比较。
+ */
+export function compareMentalAccountPace(
+  depositPercent: number,
+  timePercent: number
+): MentalPaceComparison {
+  const deposit = clampUnit(depositPercent);
+  const time = clampUnit(timePercent);
+  const depositPct = Number((deposit * 100).toFixed(2));
+  const timePct = Number((time * 100).toFixed(2));
+
+  if (depositPct === timePct) {
+    return { status: 'on_track', message: '继续保持哦', timePercent: time };
+  }
+  if (depositPct > timePct) {
+    return { status: 'ahead', message: '你们好棒棒', timePercent: time };
+  }
+  return { status: 'behind', message: '需要抓紧存钱啦', timePercent: time };
+}
+
+function clampUnit(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(1, Math.max(0, value));
+}
+
+/** 本地日历日 YYYY-MM-DD。 */
+function localIsoDate(): string {
+  const now = new Date();
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+/** YYYY-MM-DD → UTC 日序号（避免本地时区解析偏移）。 */
+function isoDateToUtcDay(isoDate: string): number {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  return Date.UTC(year, month - 1, day) / 86_400_000;
+}
+
+/**
  * 计算心理账户进度：计入仍存在且标注为活钱/稳钱/长钱的关联条目。
  */
 export function computeMentalAccountProgress(

@@ -13,6 +13,7 @@ import {
   Space,
   Table,
   Empty,
+  Tooltip,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -33,11 +34,10 @@ import {
   computeFourPotShares,
   computeLedgerTotals,
 } from '@/lib/family-finance/aggregates';
-import { formatCny } from '@/lib/family-finance/format';
+import { formatCny, formatDateTime } from '@/lib/family-finance/format';
 import { FamilyAssetStructurePie } from '@/components/family/family-asset-structure-pie';
 import { FamilyAssetHistoryLine } from '@/components/family/family-asset-history-line';
 import { buildFamilyAssetHistory } from '@/lib/family-finance/history';
-
 /**
  * 家庭资产记账主界面。
  */
@@ -160,7 +160,16 @@ export function FamilyLedgerPage() {
 
   const buildColumns = (side: LedgerSide): ColumnsType<FamilyLedgerItem> => {
     const cols: ColumnsType<FamilyLedgerItem> = [
-      { title: '名称', dataIndex: 'name', ellipsis: true },
+      {
+        title: '名称',
+        dataIndex: 'name',
+        ellipsis: { showTitle: false },
+        render: (name: string) => (
+          <Tooltip placement="topLeft" title={name}>
+            <span>{name}</span>
+          </Tooltip>
+        ),
+      },
       {
         title: '分类',
         dataIndex: 'category',
@@ -172,7 +181,15 @@ export function FamilyLedgerPage() {
         {
           title: '成员',
           dataIndex: 'memberId',
-          render: (id: string | null) => memberNameById.get(id ?? '') ?? '—',
+          ellipsis: { showTitle: false },
+          render: (id: string | null) => {
+            const label = memberNameById.get(id ?? '') ?? '—';
+            return (
+              <Tooltip placement="topLeft" title={label}>
+                <span>{label}</span>
+              </Tooltip>
+            );
+          },
         },
         {
           title: '四笔钱',
@@ -190,6 +207,34 @@ export function FamilyLedgerPage() {
         render: (v: number) => (
           <span className="family-finance-monetary-value">{formatCny(v)}</span>
         ),
+      },
+      {
+        title: '创建时间',
+        dataIndex: 'createdAt',
+        width: 150,
+        ellipsis: { showTitle: false },
+        render: (iso: string) => {
+          const label = formatDateTime(iso);
+          return (
+            <Tooltip placement="topLeft" title={label}>
+              <span>{label}</span>
+            </Tooltip>
+          );
+        },
+      },
+      {
+        title: '更新时间',
+        dataIndex: 'updatedAt',
+        width: 150,
+        ellipsis: { showTitle: false },
+        render: (iso: string) => {
+          const label = formatDateTime(iso);
+          return (
+            <Tooltip placement="topLeft" title={label}>
+              <span>{label}</span>
+            </Tooltip>
+          );
+        },
       },
       {
         title: '操作',

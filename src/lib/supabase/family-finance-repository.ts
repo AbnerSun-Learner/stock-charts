@@ -401,6 +401,7 @@ export class FamilyFinanceRepository {
         startDate: String(row.start_date).slice(0, 10),
         targetDate: String(row.target_date).slice(0, 10),
         ledgerItemIds: idsByAccount.get(String(row.id)) ?? [],
+        showLinkedAccounts: row.show_linked_accounts !== false,
         createdAt: String(row.created_at),
         updatedAt: String(row.updated_at),
       };
@@ -419,6 +420,7 @@ export class FamilyFinanceRepository {
     startDate: string;
     targetDate: string;
     ledgerItemIds: string[];
+    showLinkedAccounts: boolean;
   }): Promise<FamilyMentalAccount> {
     const userId = await this.requireUserId();
     const name = input.name.trim();
@@ -448,6 +450,7 @@ export class FamilyFinanceRepository {
       priority: input.priority,
       startDate: input.startDate,
       targetDate: input.targetDate,
+      showLinkedAccounts: input.showLinkedAccounts,
     });
 
     try {
@@ -508,6 +511,7 @@ export class FamilyFinanceRepository {
     priority: MentalAccountPriority;
     startDate: string;
     targetDate: string;
+    showLinkedAccounts: boolean;
   }): Promise<string> {
     const payload = {
       user_id: input.userId,
@@ -516,6 +520,7 @@ export class FamilyFinanceRepository {
       priority: input.priority,
       start_date: input.startDate,
       target_date: input.targetDate,
+      show_linked_accounts: input.showLinkedAccounts,
       updated_at: new Date().toISOString(),
     };
 
