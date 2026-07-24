@@ -1,0 +1,25 @@
+__tests__/family-finance/balance-trend-ui.test.ts
+  s_0b53e6cbe93902::t_52be608398a96f 19-20
+__tests__/family-finance/balance-trend.test.ts
+  s_0b53e6cbe93902::t_5b24a1692f0d3a 72-73,75,77,79
+src/components/family/family-balance-trend-chart.tsx
+  s_0b53e6cbe93902::t_c49ad791f946ad 43-45,51-53,119-120,122
+src/lib/family-finance/balance-trend.ts
+  s_0b53e6cbe93902::t_3fcabbeb990c87 10,14-17,59,71-74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "96f7bb688a7deaf05059a138784b8d58928f1ede",
+  "prompts": {},
+  "sessions": {
+    "s_0b53e6cbe93902": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "ce492bbf-c439-4020-ad13-c7805ed3e7e8",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
