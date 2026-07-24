@@ -1,0 +1,23 @@
+__tests__/family-finance/mental-account-ui.test.ts
+  s_017447abcb39e2::t_255b6ffb8c5c56 40-54
+src/components/family/family-mental-account-liquid.tsx
+  s_017447abcb39e2::t_ae4276535418de 4,24-25,30,42,85-102
+src/components/family/family-mental-accounts-panel.tsx
+  s_017447abcb39e2::t_74015f89148c7f 218,220-227,229,280
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "4775c0b59264a9df5bfd0da47a6531890d1ea5ae",
+  "prompts": {},
+  "sessions": {
+    "s_017447abcb39e2": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "cd9e0f1f-1931-4503-a775-9cf934a1e250",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
