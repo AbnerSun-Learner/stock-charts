@@ -37,6 +37,21 @@ describe('mental account priority UI contracts', () => {
     expect(chart).toContain('已达成');
   });
 
+  it('水波图展示关联账户名称', () => {
+    const liquid = readFileSync(
+      join(root, 'src/components/family/family-mental-account-liquid.tsx'),
+      'utf8'
+    );
+    const panel = readFileSync(
+      join(root, 'src/components/family/family-mental-accounts-panel.tsx'),
+      'utf8'
+    );
+
+    expect(liquid).toContain('linkedAccountNames');
+    expect(liquid).toContain('关联账户');
+    expect(panel).toContain('linkedAccountNames={linkedAccountNames}');
+  });
+
   it('总览心理账户整行且保单下移全宽', () => {
     const overview = readFileSync(
       join(root, 'src/components/family/family-overview-page.tsx'),

@@ -215,12 +215,18 @@ export function FamilyMentalAccountsPanel({
                     <div className="family-mental-accounts-waterfall">
                       {group.accounts.map(account => {
                         const progress = computeMentalAccountProgress(account, items);
-                        const hasValidLink = account.ledgerItemIds.some(id => {
+                        const linkedAccountNames = account.ledgerItemIds.flatMap(id => {
                           const item = items.find(i => i.id === id);
-                          return Boolean(
-                            item && item.side === 'asset' && isStructureFourPot(item.fourPot)
-                          );
+                          if (
+                            !item ||
+                            item.side !== 'asset' ||
+                            !isStructureFourPot(item.fourPot)
+                          ) {
+                            return [];
+                          }
+                          return [item.name];
                         });
+                        const hasValidLink = linkedAccountNames.length > 0;
                         return (
                           <div key={account.id} className="family-mental-account-item">
                             <div className="flex items-start justify-between gap-2 mb-2">
@@ -271,6 +277,7 @@ export function FamilyMentalAccountsPanel({
                                 targetAmount={account.targetAmount}
                                 startDate={account.startDate}
                                 targetDate={account.targetDate}
+                                linkedAccountNames={linkedAccountNames}
                               />
                             )}
                           </div>

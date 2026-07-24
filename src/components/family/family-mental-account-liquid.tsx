@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { Tag } from 'antd';
 import { useFamilyAmountVisibility } from '@/components/family/family-amount-visibility';
 import { formatCny } from '@/lib/family-finance/format';
 import type { MentalAccountProgress } from '@/types/family-finance';
@@ -20,11 +21,13 @@ interface FamilyMentalAccountLiquidProps {
   startDate: string;
   /** YYYY-MM-DD */
   targetDate: string;
+  /** 计入进度的关联账目名称（顺序与关联 id 一致） */
+  linkedAccountNames: string[];
   height?: number;
 }
 
 /**
- * 心理账户水波图：左侧进度，右侧带中文标签的金额与日期。
+ * 心理账户水波图：左侧进度，右侧带中文标签的金额、日期与关联账户。
  * @see https://ant-design-charts.antgroup.com/examples/statistics/liquid/#liquid
  */
 function formatPercent(ratio: number): string {
@@ -36,6 +39,7 @@ export function FamilyMentalAccountLiquid({
   targetAmount,
   startDate,
   targetDate,
+  linkedAccountNames,
   height = 140,
 }: FamilyMentalAccountLiquidProps) {
   const percentLabel = formatPercent(progress.chartPercent);
@@ -76,6 +80,24 @@ export function FamilyMentalAccountLiquid({
           <dt className="shrink-0 text-[var(--text-muted)]">目标金额</dt>
           <dd className="family-finance-monetary-value m-0 text-[var(--text)]">
             {formatCny(targetAmount, { visible: amountsVisible })}
+          </dd>
+        </div>
+        <div className="flex items-start justify-between gap-3">
+          <dt className="shrink-0 pt-0.5 text-[var(--text-muted)]">关联账户</dt>
+          <dd className="m-0 flex max-w-[70%] flex-wrap justify-end gap-1">
+            {linkedAccountNames.length === 0 ? (
+              <span className="text-[var(--text-muted)]">—</span>
+            ) : (
+              linkedAccountNames.map((name, index) => (
+                <Tag
+                  key={`${name}-${index}`}
+                  className="m-0 max-w-full truncate"
+                  title={name}
+                >
+                  {name}
+                </Tag>
+              ))
+            )}
           </dd>
         </div>
         <div className="flex justify-between gap-3">
