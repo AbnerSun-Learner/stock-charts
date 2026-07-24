@@ -1,0 +1,47 @@
+__tests__/family-finance/amount-visibility-ui.test.ts
+  s_0b53e6cbe93902::t_68046914a67f5a 1-22
+__tests__/family-finance/format.test.ts
+  s_0b53e6cbe93902::t_dd19ef55606158 1,19-37
+__tests__/family-finance/metric-card.test.ts
+  s_0b53e6cbe93902::t_748e733e5d49e2 7,29-46
+docs/superpowers/plans/2026-07-24-family-amount-visibility.md
+  s_0b53e6cbe93902::t_b81a4078a469f1 1-189
+docs/superpowers/plans/2026-07-24-family-mental-account-priority.md
+  s_0b53e6cbe93902::t_8a5c7b76c82371 22-33,40,108,114,116,131,159,163,170,188,192,211,237,262-270
+docs/superpowers/specs/2026-07-24-family-amount-visibility-design.md
+  s_0b53e6cbe93902::t_7ac1be4371acee 1-121
+docs/superpowers/specs/2026-07-24-family-mental-account-priority-design.md
+  s_0b53e6cbe93902::t_fc7ff90afc9a9f 21-30,38-41,48-49,87-92,98-100,117-126,132-133,138-141,146-148
+src/app/globals.css
+  s_0b53e6cbe93902::t_85756e8995c9b2 756-786
+src/components/family/family-amount-visibility.tsx
+  s_0b53e6cbe93902::t_93208b902e7d61 1-32
+src/components/family/family-asset-sankey.tsx
+  s_0b53e6cbe93902::t_d12c7efa0be931 16,101,176-177
+src/components/family/family-finance-metric-card.tsx
+  s_0b53e6cbe93902::t_f1abc228653a32 4,24-25,36
+src/components/family/family-mental-account-liquid.tsx
+  s_0b53e6cbe93902::t_6a8e1e36c3d3d2 4,42,72,78,93
+src/components/family/family-overview-page.tsx
+  s_0b53e6cbe93902::t_4369275cb0cef6 5,31,53-54,86,108-119,251-262,267-269,271-277,279-293,297-298,302-344
+src/components/family/family-policies-page.tsx
+  s_0b53e6cbe93902::t_1e56a5ea4a412d 28,36,195,202
+src/lib/family-finance/format.ts
+  s_0b53e6cbe93902::t_c7e4ee85a67168 7-14,16-18,29-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "9ed2aa31a6d64564f937c651db27fcd557ce07b2",
+  "prompts": {},
+  "sessions": {
+    "s_0b53e6cbe93902": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "ce492bbf-c439-4020-ad13-c7805ed3e7e8",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
