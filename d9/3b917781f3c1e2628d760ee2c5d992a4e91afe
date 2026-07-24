@@ -1,0 +1,19 @@
+docs/superpowers/specs/2026-07-24-family-mental-account-priority-design.md
+  s_059825a246d0b6::t_4cbaf473d9c6c4 1-150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "d93b917781f3c1e2628d760ee2c5d992a4e91afe",
+  "prompts": {},
+  "sessions": {
+    "s_059825a246d0b6": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f7bf2f73-1a72-4b16-b79d-b08a9b904d1c",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
