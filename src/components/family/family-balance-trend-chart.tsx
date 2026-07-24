@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, Empty, Segmented } from 'antd';
 import {
@@ -69,6 +69,9 @@ interface FamilyBalanceTrendChartProps {
 /**
  * 总览 KPI 区资产负债趋势：可切换时间范围，图例可显示净资产。
  * 卡片高度随左侧三张 KPI 拉伸对齐，折线区域自适应填满。
+ *
+ * 金额隐藏时：tooltip / Y 轴文案遮罩，但几何仍用真实数值；
+ * 必须设 seriesField，否则多系列折线会串线（隐藏态重绘时尤其明显）。
  */
 export function FamilyBalanceTrendChart({
   points,
@@ -84,6 +87,11 @@ export function FamilyBalanceTrendChart({
     [points, range, asOfDate]
   );
   const series = useMemo(() => toBalanceTrendSeries(filtered), [filtered]);
+
+  const formatYAxisLabel = useCallback(
+    (value: number) => formatCompactCny(Number(value), { visible: amountsVisible }),
+    [amountsVisible]
+  );
 
   const emptyDescription =
     points.length === 0
@@ -113,10 +121,12 @@ export function FamilyBalanceTrendChart({
           </div>
         ) : (
           <Line
+            // 显隐切换会改轴文案并触发布局变化；强制重挂载避免折线路径残留错位
+            key={amountsVisible ? 'amt-visible' : 'amt-masked'}
             data={series}
             xField="date"
             yField="amount"
-            // color 只着色；series 负责按类型拆线，否则多系列折线会串线
+            // color 只着色；series 负责按类型拆线
             seriesField="type"
             colorField="type"
             height={chartHeight}
@@ -134,8 +144,7 @@ export function FamilyBalanceTrendChart({
               x: { title: false, labelFormatter: formatTrendDate },
               y: {
                 title: false,
-                labelFormatter: (value: number) =>
-                  formatCompactCny(Number(value), { visible: amountsVisible }),
+                labelFormatter: formatYAxisLabel,
               },
             }}
             style={{ lineWidth: 2 }}

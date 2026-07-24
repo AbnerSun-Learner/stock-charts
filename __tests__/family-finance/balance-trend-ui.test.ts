@@ -18,6 +18,7 @@ describe('FamilyBalanceTrendChart source contract', () => {
     expect(source).toContain('ResizeObserver');
     expect(source).toContain('seriesField="type"');
     expect(source).toContain('colorField="type"');
+    expect(source).toContain("key={amountsVisible ? 'amt-visible' : 'amt-masked'}");
   });
 });
 
