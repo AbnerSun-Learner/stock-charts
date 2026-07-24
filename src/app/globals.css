@@ -700,7 +700,7 @@ body::after {
   flex: 1;
   width: 100%;
   height: 100%;
-  min-height: 0;
+  min-height: 320px;
 }
 
 .family-finance-page.family-overview-page .family-balance-trend-card > .ant-card-head {
@@ -713,7 +713,6 @@ body::after {
   display: flex;
   flex: 1;
   flex-direction: column;
-  min-height: 0;
   padding-top: 12px;
 }
 
@@ -732,9 +731,9 @@ body::after {
 
 .family-finance-page.family-overview-page .family-balance-trend-chart-body {
   position: relative;
-  flex: 1;
+  flex: 1 1 auto;
   width: 100%;
-  min-height: 220px;
+  min-height: 280px;
 }
 
 .family-finance-page.family-overview-page .family-finance-eyebrow {
@@ -827,10 +826,37 @@ body::after {
 
 .family-finance-page.family-overview-page .family-mental-goals-chart-wrap {
   min-height: 280px;
+  position: relative;
+  z-index: 2;
+}
+
+.family-finance-page.family-overview-page .family-mental-accounts-card.ant-card {
+  position: relative;
+  z-index: 1;
+}
+
+.family-finance-page.family-overview-page .family-mental-goals-card.ant-card,
+.family-finance-page.family-overview-page .family-mental-goals-card > .ant-card-body {
+  overflow: visible;
+}
+
+.family-finance-page.family-overview-page .family-mental-goals-card.ant-card {
+  position: relative;
+  z-index: 2;
 }
 
 .family-finance-page.family-overview-page .family-mental-goals-card > .ant-card-body {
   padding-top: 12px;
+}
+
+/* G2 tooltip 默认挂在图容器内，需压过相邻心理账户卡片 */
+.family-finance-page.family-overview-page .family-mental-goals-chart-root,
+.family-finance-page.family-overview-page .family-mental-goals-card .g2-tooltip {
+  z-index: 1100;
+}
+
+.family-finance-page.family-overview-page .family-mental-goals-card .g2-tooltip {
+  z-index: 1100 !important;
 }
 
 /* 家庭资产记账页面：总览与明细分层展示，避免重复汇总数字。 */

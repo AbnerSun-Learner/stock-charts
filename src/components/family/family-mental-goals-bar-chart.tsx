@@ -2,7 +2,8 @@
 
 import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { formatCny } from '@/lib/family-finance/format';
+import { useFamilyAmountVisibility } from '@/components/family/family-amount-visibility';
+import { formatCompactCny, formatCny } from '@/lib/family-finance/format';
 import type { MentalGoalPriorityAggregate } from '@/types/family-finance';
 
 const Column = dynamic(() => import('@ant-design/charts').then(mod => mod.Column), {
@@ -23,13 +24,6 @@ interface MentalGoalBarRow {
   amount: number;
 }
 
-function formatCompactAmount(value: number): string {
-  return new Intl.NumberFormat('zh-CN', {
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  }).format(value);
-}
-
 /**
  * 心理账户目标总览：按 P0/P1/P2 分组柱对比目标合计与已达成。
  */
@@ -37,6 +31,7 @@ export function FamilyMentalGoalsBarChart({
   aggregates,
   height = 280,
 }: FamilyMentalGoalsBarChartProps) {
+  const amountsVisible = useFamilyAmountVisibility();
   const data = useMemo<MentalGoalBarRow[]>(
     () =>
       aggregates.flatMap(row => [
@@ -55,7 +50,8 @@ export function FamilyMentalGoalsBarChart({
   }, [aggregates]);
 
   return (
-    <Column
+    <div className="family-mental-goals-chart-root">
+      <Column
       data={data}
       xField="priority"
       yField="amount"
@@ -68,10 +64,14 @@ export function FamilyMentalGoalsBarChart({
       }}
       axis={{
         y: {
-          labelFormatter: (value: number) => formatCompactAmount(value),
+          labelFormatter: (value: number) =>
+            formatCompactCny(value, { visible: amountsVisible }),
         },
       }}
       tooltip={{
+        css: {
+          zIndex: 1100,
+        },
         items: [
           (datum: MentalGoalBarRow) => {
             const stats = completionByPriority.get(datum.priority);
@@ -79,14 +79,19 @@ export function FamilyMentalGoalsBarChart({
               stats && stats.targetSum > 0
                 ? `${((stats.currentSum / stats.targetSum) * 100).toFixed(1)}%`
                 : '—';
+            const amountText = formatCny(datum.amount, { visible: amountsVisible });
             return {
               name: datum.type,
-              value: `${formatCny(datum.amount)}（完成率 ${rate}）`,
+              // 隐藏态只遮金额；完成率本身非金额，但与金额拼接会泄露量级，故一并省略
+              value: amountsVisible
+                ? `${amountText}（完成率 ${rate}）`
+                : amountText,
             };
           },
         ],
       }}
       legend={{ position: 'top' }}
     />
+    </div>
   );
 }

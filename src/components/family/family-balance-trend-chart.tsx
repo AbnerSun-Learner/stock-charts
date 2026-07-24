@@ -8,7 +8,8 @@ import {
   shanghaiTodayIso,
   toBalanceTrendSeries,
 } from '@/lib/family-finance/balance-trend';
-import { formatCny } from '@/lib/family-finance/format';
+import { formatCompactCny, formatCny } from '@/lib/family-finance/format';
+import { useFamilyAmountVisibility } from '@/components/family/family-amount-visibility';
 import {
   BALANCE_TREND_TYPES,
   type BalanceTrendPoint,
@@ -36,13 +37,6 @@ const dateFormatter = new Intl.DateTimeFormat('zh-CN', {
 
 function formatTrendDate(value: string): string {
   return dateFormatter.format(new Date(`${value}T00:00:00+08:00`));
-}
-
-function formatCompactAmount(value: number): string {
-  return new Intl.NumberFormat('zh-CN', {
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  }).format(value);
 }
 
 /** 跟踪容器高度，使折线填满 KPI 行拉伸后的卡片。 */
@@ -81,6 +75,7 @@ export function FamilyBalanceTrendChart({
   const [range, setRange] = useState<BalanceTrendRange>('90d');
   const asOfDate = useMemo(() => shanghaiTodayIso(), []);
   const [chartBodyRef, chartHeight] = useContainerHeight();
+  const amountsVisible = useFamilyAmountVisibility();
 
   const filtered = useMemo(
     () => filterBalanceSnapshots(points, range, asOfDate),
@@ -111,16 +106,17 @@ export function FamilyBalanceTrendChart({
     >
       <div ref={chartBodyRef} className="family-balance-trend-chart-body">
         {filtered.length === 0 ? (
-          <div className="flex h-full min-h-[220px] items-center justify-center">
+          <div className="flex h-full min-h-[280px] items-center justify-center">
             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyDescription} />
           </div>
-        ) : chartHeight > 0 ? (
+        ) : (
           <Line
             data={series}
             xField="date"
             yField="amount"
             colorField="type"
-            height={chartHeight}
+            // ResizeObserver 未就绪时用兜底高度，避免 flex 塌缩导致图不渲染
+            height={Math.max(chartHeight, 280)}
             autoFit
             paddingLeft={56}
             paddingRight={16}
@@ -135,7 +131,8 @@ export function FamilyBalanceTrendChart({
               x: { title: false, labelFormatter: formatTrendDate },
               y: {
                 title: false,
-                labelFormatter: (value: number) => formatCompactAmount(Number(value)),
+                labelFormatter: (value: number) =>
+                  formatCompactCny(Number(value), { visible: amountsVisible }),
               },
             }}
             style={{ lineWidth: 2 }}
@@ -156,12 +153,12 @@ export function FamilyBalanceTrendChart({
               items: [
                 (datum: BalanceTrendPoint) => ({
                   name: datum.type,
-                  value: formatCny(datum.amount),
+                  value: formatCny(datum.amount, { visible: amountsVisible }),
                 }),
               ],
             }}
           />
-        ) : null}
+        )}
       </div>
     </Card>
   );
