@@ -5,28 +5,36 @@ import {
   App,
   Button,
   Card,
+  Col,
   DatePicker,
   Empty,
   Form,
   Input,
   InputNumber,
   Modal,
+  Row,
   Select,
   Space,
+  Tag,
 } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import type { FamilyFinanceRepository } from '@/lib/supabase/family-finance-repository';
 import {
+  aggregateMentalGoalsByPriority,
   computeMentalAccountProgress,
+  groupMentalAccountsByPriority,
   listSelectableMentalLedgerItems,
 } from '@/lib/family-finance/mental-account';
 import type {
   FamilyLedgerItem,
   FamilyMember,
   FamilyMentalAccount,
+  MentalAccountPriority,
 } from '@/types/family-finance';
+import { MENTAL_ACCOUNT_PRIORITIES } from '@/types/family-finance';
 import { isStructureFourPot } from '@/lib/family-finance/aggregates';
 import { FamilyMentalAccountLiquid } from '@/components/family/family-mental-account-liquid';
+import { FamilyMentalGoalsBarChart } from '@/components/family/family-mental-goals-bar-chart';
 import Link from 'next/link';
 
 interface FamilyMentalAccountsPanelProps {
@@ -41,12 +49,19 @@ interface FamilyMentalAccountsPanelProps {
 interface MentalAccountFormValues {
   name: string;
   targetAmount: number;
+  priority: MentalAccountPriority;
+  startDate: Dayjs;
   targetDate: Dayjs;
   ledgerItemIds: string[];
 }
 
+const PRIORITY_OPTIONS = MENTAL_ACCOUNT_PRIORITIES.map(value => ({
+  value,
+  label: value,
+}));
+
 /**
- * 总览心理账户区：列表水波图 + 添加/编辑弹窗。
+ * 总览心理账户区：左分组瀑布流 + 右目标柱状图 + 添加/编辑弹窗。
  */
 export function FamilyMentalAccountsPanel({
   repo,
@@ -74,10 +89,24 @@ export function FamilyMentalAccountsPanel({
     [items, members, accounts, editing]
   );
 
+  const priorityGroups = useMemo(
+    () => groupMentalAccountsByPriority(accounts),
+    [accounts]
+  );
+
+  const goalAggregates = useMemo(
+    () => aggregateMentalGoalsByPriority(accounts, items),
+    [accounts, items]
+  );
+
   const openCreate = () => {
     setEditing(null);
     form.resetFields();
-    form.setFieldsValue({ ledgerItemIds: [] });
+    form.setFieldsValue({
+      priority: 'P1',
+      startDate: dayjs(),
+      ledgerItemIds: [],
+    });
     setOpen(true);
   };
 
@@ -93,6 +122,8 @@ export function FamilyMentalAccountsPanel({
     form.setFieldsValue({
       name: account.name,
       targetAmount: account.targetAmount,
+      priority: account.priority,
+      startDate: dayjs(account.startDate),
       targetDate: dayjs(account.targetDate),
       ledgerItemIds: account.ledgerItemIds.filter(id => validIds.has(id)),
     });
@@ -109,6 +140,8 @@ export function FamilyMentalAccountsPanel({
         id: editing?.id,
         name: values.name,
         targetAmount: values.targetAmount,
+        priority: values.priority,
+        startDate: values.startDate.format('YYYY-MM-DD'),
         targetDate: values.targetDate.format('YYYY-MM-DD'),
         ledgerItemIds: values.ledgerItemIds,
       });
@@ -159,48 +192,91 @@ export function FamilyMentalAccountsPanel({
           </Button>
         }
       >
-        {accounts.length === 0 ? (
-          <Empty description="尚未设立心理账户" />
-        ) : (
-          <div className="flex flex-col gap-3">
-            {accounts.map(account => {
-              const progress = computeMentalAccountProgress(account, items);
-              const hasValidLink = account.ledgerItemIds.some(id => {
-                const item = items.find(i => i.id === id);
-                return Boolean(item && item.side === 'asset' && isStructureFourPot(item.fourPot));
-              });
-              return (
-                <div key={account.id} className="family-mental-account-item">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="font-medium truncate" title={account.name}>
-                      {account.name}
+        <Row gutter={[16, 16]} className="family-mental-accounts-layout">
+          <Col xs={24} lg={16}>
+            {accounts.length === 0 ? (
+              <Empty description="尚未设立心理账户" />
+            ) : (
+              <div className="family-mental-accounts-groups">
+                {priorityGroups.map(group => (
+                  <section
+                    key={group.priority}
+                    className="family-mental-accounts-group"
+                    aria-label={`${group.priority} 心理账户`}
+                  >
+                    <header className="family-mental-accounts-group__header">
+                      <span className="family-mental-accounts-group__title">
+                        {group.priority}
+                      </span>
+                      <span className="family-mental-accounts-group__count">
+                        {group.accounts.length} 个
+                      </span>
+                    </header>
+                    <div className="family-mental-accounts-waterfall">
+                      {group.accounts.map(account => {
+                        const progress = computeMentalAccountProgress(account, items);
+                        const hasValidLink = account.ledgerItemIds.some(id => {
+                          const item = items.find(i => i.id === id);
+                          return Boolean(
+                            item && item.side === 'asset' && isStructureFourPot(item.fourPot)
+                          );
+                        });
+                        return (
+                          <div key={account.id} className="family-mental-account-item">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div className="flex min-w-0 items-center gap-2">
+                                <Tag className="m-0 shrink-0">{account.priority}</Tag>
+                                <div className="font-medium truncate" title={account.name}>
+                                  {account.name}
+                                </div>
+                              </div>
+                              <Space size="small">
+                                <Button
+                                  type="link"
+                                  size="small"
+                                  onClick={() => openEdit(account)}
+                                >
+                                  编辑
+                                </Button>
+                                <Button
+                                  type="link"
+                                  size="small"
+                                  danger
+                                  onClick={() => remove(account)}
+                                >
+                                  删除
+                                </Button>
+                              </Space>
+                            </div>
+                            {!hasValidLink ? (
+                              <Empty
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                description="关联账目已失效，请重新关联"
+                              />
+                            ) : (
+                              <FamilyMentalAccountLiquid
+                                progress={progress}
+                                targetAmount={account.targetAmount}
+                                startDate={account.startDate}
+                                targetDate={account.targetDate}
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                    <Space size="small">
-                      <Button type="link" size="small" onClick={() => openEdit(account)}>
-                        编辑
-                      </Button>
-                      <Button type="link" size="small" danger onClick={() => remove(account)}>
-                        删除
-                      </Button>
-                    </Space>
-                  </div>
-                  {!hasValidLink ? (
-                    <Empty
-                      image={Empty.PRESENTED_IMAGE_SIMPLE}
-                      description="关联账目已失效，请重新关联"
-                    />
-                  ) : (
-                    <FamilyMentalAccountLiquid
-                      progress={progress}
-                      targetAmount={account.targetAmount}
-                      targetDate={account.targetDate}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+                  </section>
+                ))}
+              </div>
+            )}
+          </Col>
+          <Col xs={24} lg={8}>
+            <div className="family-mental-goals-chart-wrap">
+              <h3 className="family-mental-goals-chart-title">目标总览</h3>
+              <FamilyMentalGoalsBarChart aggregates={goalAggregates} />
+            </div>
+          </Col>
+        </Row>
       </Card>
 
       <Modal
@@ -252,16 +328,46 @@ export function FamilyMentalAccountsPanel({
             />
           </Form.Item>
           <Form.Item
+            name="priority"
+            label="优先级"
+            rules={[{ required: true, message: '请选择优先级' }]}
+          >
+            <Select options={PRIORITY_OPTIONS} placeholder="选择 P0 / P1 / P2" />
+          </Form.Item>
+          <Form.Item
+            name="startDate"
+            label="开始日期"
+            dependencies={['targetDate']}
+            rules={[
+              { required: true, message: '请选择开始日期' },
+              {
+                validator: async (_, value: Dayjs | null) => {
+                  if (!value) return;
+                  const targetDate = form.getFieldValue('targetDate') as Dayjs | undefined;
+                  if (targetDate && value.isAfter(targetDate, 'day')) {
+                    throw new Error('开始日期不能晚于预期达成日期');
+                  }
+                },
+              },
+            ]}
+          >
+            <DatePicker className="w-full" placeholder="选择开始日期" />
+          </Form.Item>
+          <Form.Item
             name="targetDate"
             label="预期达成日期"
+            dependencies={['startDate']}
             rules={[
               { required: true, message: '请选择预期达成日期' },
               {
                 validator: async (_, value: Dayjs | null) => {
-                  // 仅新建时校验：不可选当天之前
-                  if (editing || !value) return;
-                  if (value.isBefore(dayjs().startOf('day'))) {
+                  if (!value) return;
+                  if (!editing && value.isBefore(dayjs().startOf('day'))) {
                     throw new Error('预期达成日期不能早于今天');
+                  }
+                  const startDate = form.getFieldValue('startDate') as Dayjs | undefined;
+                  if (startDate && startDate.isAfter(value, 'day')) {
+                    throw new Error('开始日期不能晚于预期达成日期');
                   }
                 },
               },

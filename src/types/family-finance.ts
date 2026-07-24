@@ -78,12 +78,26 @@ export interface InsurancePolicy {
   updatedAt: string;
 }
 
+/** 心理账户优先级。 */
+export type MentalAccountPriority = 'P0' | 'P1' | 'P2';
+
+/** 优先级固定顺序：P0 → P1 → P2。 */
+export const MENTAL_ACCOUNT_PRIORITIES: readonly MentalAccountPriority[] = [
+  'P0',
+  'P1',
+  'P2',
+] as const;
+
 /** 心理账户：命名资产目标，进度由关联的活钱/稳钱/长钱账目驱动。 */
 export interface FamilyMentalAccount {
   id: string;
   userId: string;
   name: string;
   targetAmount: number;
+  /** 优先级 P0 / P1 / P2 */
+  priority: MentalAccountPriority;
+  /** 开始日期，YYYY-MM-DD，须 ≤ targetDate */
+  startDate: string;
   /** 预期达成目标日期，YYYY-MM-DD */
   targetDate: string;
   /** 关联的活账条目 id（互斥：一笔账目仅属一个心理账户） */
@@ -101,6 +115,19 @@ export interface MentalAccountProgress {
   overflow: number;
 }
 
+/** 按优先级汇总的目标 / 已达成金额。 */
+export interface MentalGoalPriorityAggregate {
+  priority: MentalAccountPriority;
+  targetSum: number;
+  currentSum: number;
+}
+
+/** 按优先级分组后的账户列表（空组不出现）。 */
+export interface MentalAccountPriorityGroup {
+  priority: MentalAccountPriority;
+  accounts: FamilyMentalAccount[];
+}
+
 /** 弹窗多选：可选活钱 / 稳钱 / 长钱账目。 */
 export interface SelectableMentalLedgerItem {
   id: string;
@@ -112,6 +139,27 @@ export interface LedgerTotals {
   totalAssets: number;
   totalLiabilities: number;
   netWorth: number;
+}
+
+/** 家庭日汇总快照（直读 family_snapshots）。 */
+export interface FamilyBalanceSnapshot {
+  date: string;
+  totalAssets: number;
+  totalLiabilities: number;
+  netWorth: number;
+}
+
+/** 总览资产负债趋势时间范围。 */
+export type BalanceTrendRange = '90d' | '1y' | 'all';
+
+export const BALANCE_TREND_TYPES = ['总资产', '总负债', '净资产'] as const;
+export type BalanceTrendType = (typeof BALANCE_TREND_TYPES)[number];
+
+/** 折线长表点。 */
+export interface BalanceTrendPoint {
+  date: string;
+  type: BalanceTrendType;
+  amount: number;
 }
 
 export interface CategoryShare {

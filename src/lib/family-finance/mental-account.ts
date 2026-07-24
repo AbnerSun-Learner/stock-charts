@@ -2,12 +2,44 @@ import type {
   FamilyLedgerItem,
   FamilyMember,
   FamilyMentalAccount,
+  MentalAccountPriority,
+  MentalAccountPriorityGroup,
   MentalAccountProgress,
+  MentalGoalPriorityAggregate,
   SelectableMentalLedgerItem,
 } from '@/types/family-finance';
-import { FOUR_POT_LABELS } from '@/types/family-finance';
+import { FOUR_POT_LABELS, MENTAL_ACCOUNT_PRIORITIES } from '@/types/family-finance';
 import { isStructureFourPot, roundMoney } from '@/lib/family-finance/aggregates';
 import { formatCny } from '@/lib/family-finance/format';
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * 校验优先级枚举。
+ */
+export function isValidMentalAccountPriority(
+  value: string
+): value is MentalAccountPriority {
+  return (MENTAL_ACCOUNT_PRIORITIES as readonly string[]).includes(value);
+}
+
+/**
+ * 校验开始日期 ≤ 预期达成日期（均为 YYYY-MM-DD）。
+ */
+export function assertMentalAccountDateRange(
+  startDate: string,
+  targetDate: string
+): void {
+  if (!ISO_DATE_RE.test(startDate)) {
+    throw new Error('请选择开始日期');
+  }
+  if (!ISO_DATE_RE.test(targetDate)) {
+    throw new Error('请选择预期达成日期');
+  }
+  if (startDate > targetDate) {
+    throw new Error('开始日期不能晚于预期达成日期');
+  }
+}
 
 /**
  * 计算心理账户进度：计入仍存在且标注为活钱/稳钱/长钱的关联条目。
@@ -36,6 +68,42 @@ export function computeMentalAccountProgress(
     chartPercent: Math.min(1, Math.max(0, percent)),
     overflow: roundMoney(Math.max(0, current - target)),
   };
+}
+
+/**
+ * 按 P0 → P1 → P2 分组；空组省略；组内按 targetDate 升序。
+ */
+export function groupMentalAccountsByPriority(
+  accounts: FamilyMentalAccount[]
+): MentalAccountPriorityGroup[] {
+  return MENTAL_ACCOUNT_PRIORITIES.flatMap(priority => {
+    const group = accounts
+      .filter(a => a.priority === priority)
+      .slice()
+      .sort((a, b) => a.targetDate.localeCompare(b.targetDate));
+    return group.length === 0 ? [] : [{ priority, accounts: group }];
+  });
+}
+
+/**
+ * 按优先级汇总目标合计与已达成（固定三档，无账户为 0）。
+ */
+export function aggregateMentalGoalsByPriority(
+  accounts: FamilyMentalAccount[],
+  items: FamilyLedgerItem[]
+): MentalGoalPriorityAggregate[] {
+  return MENTAL_ACCOUNT_PRIORITIES.map(priority => {
+    const matched = accounts.filter(a => a.priority === priority);
+    let targetSum = 0;
+    let currentSum = 0;
+    for (const account of matched) {
+      targetSum = roundMoney(targetSum + account.targetAmount);
+      currentSum = roundMoney(
+        currentSum + computeMentalAccountProgress(account, items).current
+      );
+    }
+    return { priority, targetSum, currentSum };
+  });
 }
 
 /**

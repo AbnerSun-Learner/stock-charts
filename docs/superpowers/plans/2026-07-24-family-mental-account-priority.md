@@ -56,7 +56,10 @@ set priority = 'P1'
 where priority is null;
 
 update public.family_mental_accounts
-set start_date = (current_timestamp at time zone 'Asia/Shanghai')::date
+set start_date = least(
+  (current_timestamp at time zone 'Asia/Shanghai')::date,
+  target_date
+)
 where start_date is null;
 
 alter table public.family_mental_accounts

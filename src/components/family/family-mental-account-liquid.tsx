@@ -16,6 +16,8 @@ interface FamilyMentalAccountLiquidProps {
   progress: MentalAccountProgress;
   targetAmount: number;
   /** YYYY-MM-DD */
+  startDate: string;
+  /** YYYY-MM-DD */
   targetDate: string;
   height?: number;
 }
@@ -31,6 +33,7 @@ function formatPercent(ratio: number): string {
 export function FamilyMentalAccountLiquid({
   progress,
   targetAmount,
+  startDate,
   targetDate,
   height = 140,
 }: FamilyMentalAccountLiquidProps) {
@@ -72,6 +75,10 @@ export function FamilyMentalAccountLiquid({
           <dd className="family-finance-monetary-value m-0 text-[var(--text)]">
             {formatCny(targetAmount)}
           </dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt className="shrink-0 text-[var(--text-muted)]">开始日期</dt>
+          <dd className="m-0 text-[var(--text)]">{startDate}</dd>
         </div>
         <div className="flex justify-between gap-3">
           <dt className="shrink-0 text-[var(--text-muted)]">预期达成</dt>

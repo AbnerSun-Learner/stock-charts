@@ -682,6 +682,36 @@ body::after {
   margin-top: 24px;
 }
 
+.family-finance-page.family-overview-page .family-overview-kpi-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+.family-finance-page.family-overview-page .family-overview-kpi-stack .family-finance-metric {
+  flex: 1;
+}
+
+.family-finance-page.family-overview-page .family-balance-trend-card > .ant-card-head {
+  min-height: auto;
+  padding: 16px 24px 0;
+  border-bottom: none;
+}
+
+.family-finance-page.family-overview-page .family-balance-trend-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.family-finance-page.family-overview-page .family-balance-trend-card .family-finance-section__title {
+  margin: 0;
+}
+
 .family-finance-page.family-overview-page .family-finance-eyebrow {
   margin-bottom: 8px;
   color: var(--family-primary);
@@ -727,10 +757,60 @@ body::after {
   border: 1px solid var(--family-hairline);
   border-radius: 12px;
   background: var(--family-surface-soft);
+  break-inside: avoid;
+  margin-bottom: 12px;
 }
 
 .family-finance-page.family-overview-page .family-mental-account-item .ant-space {
   gap: 8px !important;
+}
+
+.family-finance-page.family-overview-page .family-mental-accounts-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.family-finance-page.family-overview-page .family-mental-accounts-group__header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.family-finance-page.family-overview-page .family-mental-accounts-group__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.family-finance-page.family-overview-page .family-mental-accounts-group__count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.family-finance-page.family-overview-page .family-mental-accounts-waterfall {
+  column-count: 1;
+  column-gap: 12px;
+}
+
+@media (min-width: 992px) {
+  .family-finance-page.family-overview-page .family-mental-accounts-waterfall {
+    column-count: 2;
+  }
+}
+
+.family-finance-page.family-overview-page .family-mental-goals-chart-wrap {
+  height: 100%;
+  min-height: 280px;
+  padding: 4px 0 0;
+}
+
+.family-finance-page.family-overview-page .family-mental-goals-chart-title {
+  margin: 0 0 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
 /* 家庭资产记账页面：总览与明细分层展示，避免重复汇总数字。 */

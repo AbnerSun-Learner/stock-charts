@@ -20,6 +20,7 @@ import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { FamilyFinanceRepository } from '@/lib/supabase/family-finance-repository';
 import {
   MEMBER_ROLE_LABELS,
+  type FamilyBalanceSnapshot,
   type FamilyLedgerItem,
   type FamilyMember,
   type FamilyMemberRole,
@@ -27,6 +28,7 @@ import {
 } from '@/types/family-finance';
 import { computeLedgerTotals } from '@/lib/family-finance/aggregates';
 import { FamilyAssetSankey } from '@/components/family/family-asset-sankey';
+import { FamilyBalanceTrendChart } from '@/components/family/family-balance-trend-chart';
 import { FamilyMentalAccountsPanel } from '@/components/family/family-mental-accounts-panel';
 import { FamilyFinanceMetricCard } from '@/components/family/family-finance-metric-card';
 import { FamilyPoliciesPage } from '@/components/family/family-policies-page';
@@ -42,6 +44,9 @@ export function FamilyOverviewPage() {
   const [items, setItems] = useState<FamilyLedgerItem[]>([]);
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [mentalAccounts, setMentalAccounts] = useState<FamilyMentalAccount[]>([]);
+  const [balanceSnapshots, setBalanceSnapshots] = useState<FamilyBalanceSnapshot[]>(
+    []
+  );
   const [memberDrawer, setMemberDrawer] = useState(false);
   const [memberForm] = Form.useForm();
 
@@ -49,14 +54,16 @@ export function FamilyOverviewPage() {
     setLoading(true);
     try {
       await repo.ensureSelfMember();
-      const [ledgerItems, m, mental] = await Promise.all([
+      const [ledgerItems, m, mental, snapshots] = await Promise.all([
         repo.listLedgerItems(),
         repo.listMembers(),
         repo.listMentalAccounts(),
+        repo.listBalanceSnapshots(),
       ]);
       setItems(ledgerItems);
       setMembers(m);
       setMentalAccounts(mental);
+      setBalanceSnapshots(snapshots);
     } catch (e) {
       message.error(e instanceof Error ? e.message : '加载失败');
     } finally {
@@ -243,33 +250,34 @@ export function FamilyOverviewPage() {
     <div className="family-finance-page family-overview-page space-y-6">
       {pageHeader}
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} md={8}>
-          <FamilyFinanceMetricCard
-            label="总资产"
-            value={totals.totalAssets}
-            tone="primary"
-            loading={loading}
-            hint="家庭当前资产合计"
-          />
+      <Row gutter={[16, 16]} className="family-overview-kpi-trend-row">
+        <Col xs={24} lg={8}>
+          <div className="family-overview-kpi-stack">
+            <FamilyFinanceMetricCard
+              label="总资产"
+              value={totals.totalAssets}
+              tone="primary"
+              loading={loading}
+              hint="家庭当前资产合计"
+            />
+            <FamilyFinanceMetricCard
+              label="总负债"
+              value={totals.totalLiabilities}
+              tone="neutral"
+              loading={loading}
+              hint="家庭共同负债合计"
+            />
+            <FamilyFinanceMetricCard
+              label="净资产"
+              value={totals.netWorth}
+              tone={totals.netWorth < 0 ? 'negative' : 'positive'}
+              loading={loading}
+              hint="总资产扣除总负债"
+            />
+          </div>
         </Col>
-        <Col xs={24} md={8}>
-          <FamilyFinanceMetricCard
-            label="总负债"
-            value={totals.totalLiabilities}
-            tone="neutral"
-            loading={loading}
-            hint="家庭共同负债合计"
-          />
-        </Col>
-        <Col xs={24} md={8}>
-          <FamilyFinanceMetricCard
-            label="净资产"
-            value={totals.netWorth}
-            tone={totals.netWorth < 0 ? 'negative' : 'positive'}
-            loading={loading}
-            hint="总资产扣除总负债"
-          />
+        <Col xs={24} lg={16}>
+          <FamilyBalanceTrendChart points={balanceSnapshots} loading={loading} />
         </Col>
       </Row>
 
@@ -290,7 +298,7 @@ export function FamilyOverviewPage() {
         </Card>
 
         <Row gutter={[16, 16]} className="family-overview-panels-row">
-          <Col xs={24} lg={12}>
+          <Col xs={24}>
             <div className="family-overview-mental-panel">
               <FamilyMentalAccountsPanel
                 repo={repo}
@@ -302,7 +310,7 @@ export function FamilyOverviewPage() {
               />
             </div>
           </Col>
-          <Col xs={24} lg={12}>
+          <Col xs={24}>
             <Card
               className="family-finance-section-card family-overview-policies-card"
               loading={loading}

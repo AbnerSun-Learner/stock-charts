@@ -1,7 +1,7 @@
 # 家庭财务总览 · 心理账户优先级与目标总览
 
 **日期**：2026-07-24  
-**状态**：设计中  
+**状态**：已实现（2026-07-24；DDL 已应用到目标库；存量 start_date 使用 least(当天, target_date)）  
 **相关**：[心理账户设计](./2026-07-23-family-mental-account-design.md)、[资产结构桑基](./2026-07-23-family-asset-sankey-design.md)
 
 ## 目标
@@ -21,7 +21,7 @@
 | 项 | 选择 |
 | --- | --- |
 | 优先级 | 枚举 `P0` / `P1` / `P2`；创建/编辑必填下拉；新建默认 `P1` |
-| 历史回填 | 已有账户：`priority = P1`；`start_date = migration 执行日当天` |
+| 历史回填 | 已有账户：`priority = P1`；`start_date = least(上海时区当天, target_date)`（避免过去达成日违反 CHECK） |
 | 开始日期 | 必填；新建默认今天；须 `start_date ≤ target_date` |
 | 列表布局 | 分组瀑布流：P0 → P1 → P2；空组不渲染；组内多列砖墙，同组按 `target_date` 升序 |
 | 目标总览图 | 分组柱状图：X 轴 P0/P1/P2；每组两柱「目标合计」「已达成」 |

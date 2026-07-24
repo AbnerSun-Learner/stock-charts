@@ -37,7 +37,7 @@ describe('FamilyFinanceMetricCard', () => {
     );
 
     expect(html).toContain('family-finance-metric--negative');
-    expect(html).toContain('-¥123,456.00');
+    expect(html).toContain('- ¥123,456.00');
   });
 
   it('renders the loading skeleton without the amount', () => {

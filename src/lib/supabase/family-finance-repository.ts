@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   FamilyLedgerItem,
   FamilyAssetHistoryRow,
+  FamilyBalanceSnapshot,
   FamilyMember,
   FamilyMemberRole,
   FamilyMentalAccount,
@@ -9,10 +10,15 @@ import type {
   InsurancePolicy,
   LedgerCategory,
   LedgerSide,
+  MentalAccountPriority,
   PolicyStatus,
   PolicyType,
 } from '@/types/family-finance';
 import { parseMoney } from '@/lib/family-finance/aggregates';
+import {
+  assertMentalAccountDateRange,
+  isValidMentalAccountPriority,
+} from '@/lib/family-finance/mental-account';
 
 function mapMember(row: Record<string, unknown>): FamilyMember {
   return {
@@ -193,6 +199,22 @@ export class FamilyFinanceRepository {
     return (data ?? []).map(mapLedgerItem);
   }
 
+  /** 读取家庭日汇总快照（总资产 / 总负债 / 净资产）。 */
+  async listBalanceSnapshots(): Promise<FamilyBalanceSnapshot[]> {
+    const { data, error } = await this.client
+      .from('family_snapshots')
+      .select('as_of_date,total_assets,total_liabilities,net_worth')
+      .order('as_of_date', { ascending: true });
+    if (error) throw new Error(error.message);
+
+    return (data ?? []).map(row => ({
+      date: String(row.as_of_date),
+      totalAssets: parseMoney(row.total_assets as string | number),
+      totalLiabilities: parseMoney(row.total_liabilities as string | number),
+      netWorth: parseMoney(row.net_worth as string | number),
+    }));
+  }
+
   /** 读取每位成员按活钱 / 稳钱 / 长钱聚合的每日历史。 */
   async listAssetHistory(): Promise<FamilyAssetHistoryRow[]> {
     const { data, error } = await this.client
@@ -348,7 +370,8 @@ export class FamilyFinanceRepository {
     const { data: accounts, error } = await this.client
       .from('family_mental_accounts')
       .select('*')
-      .order('updated_at', { ascending: false });
+      .order('priority', { ascending: true })
+      .order('target_date', { ascending: true });
     if (error) throw new Error(error.message);
 
     const { data: links, error: linkError } = await this.client
@@ -364,16 +387,24 @@ export class FamilyFinanceRepository {
       idsByAccount.set(accountId, list);
     }
 
-    return (accounts ?? []).map(row => ({
-      id: String(row.id),
-      userId: String(row.user_id),
-      name: String(row.name),
-      targetAmount: parseMoney(row.target_amount as string | number),
-      targetDate: String(row.target_date).slice(0, 10),
-      ledgerItemIds: idsByAccount.get(String(row.id)) ?? [],
-      createdAt: String(row.created_at),
-      updatedAt: String(row.updated_at),
-    }));
+    return (accounts ?? []).map(row => {
+      const priority = String(row.priority);
+      if (!isValidMentalAccountPriority(priority)) {
+        throw new Error(`心理账户优先级非法: ${priority}`);
+      }
+      return {
+        id: String(row.id),
+        userId: String(row.user_id),
+        name: String(row.name),
+        targetAmount: parseMoney(row.target_amount as string | number),
+        priority,
+        startDate: String(row.start_date).slice(0, 10),
+        targetDate: String(row.target_date).slice(0, 10),
+        ledgerItemIds: idsByAccount.get(String(row.id)) ?? [],
+        createdAt: String(row.created_at),
+        updatedAt: String(row.updated_at),
+      };
+    });
   }
 
   /**
@@ -384,6 +415,8 @@ export class FamilyFinanceRepository {
     id?: string;
     name: string;
     targetAmount: number;
+    priority: MentalAccountPriority;
+    startDate: string;
     targetDate: string;
     ledgerItemIds: string[];
   }): Promise<FamilyMentalAccount> {
@@ -395,9 +428,10 @@ export class FamilyFinanceRepository {
     if (!(input.targetAmount > 0)) {
       throw new Error('预期目标必须大于 0');
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.targetDate)) {
-      throw new Error('请选择预期达成日期');
+    if (!isValidMentalAccountPriority(input.priority)) {
+      throw new Error('请选择优先级');
     }
+    assertMentalAccountDateRange(input.startDate, input.targetDate);
     if (input.ledgerItemIds.length === 0) {
       throw new Error('请至少关联一笔账目');
     }
@@ -411,6 +445,8 @@ export class FamilyFinanceRepository {
       userId,
       name,
       targetAmount: input.targetAmount,
+      priority: input.priority,
+      startDate: input.startDate,
       targetDate: input.targetDate,
     });
 
@@ -469,12 +505,16 @@ export class FamilyFinanceRepository {
     userId: string;
     name: string;
     targetAmount: number;
+    priority: MentalAccountPriority;
+    startDate: string;
     targetDate: string;
   }): Promise<string> {
     const payload = {
       user_id: input.userId,
       name: input.name,
       target_amount: parseMoney(input.targetAmount),
+      priority: input.priority,
+      start_date: input.startDate,
       target_date: input.targetDate,
       updated_at: new Date().toISOString(),
     };
