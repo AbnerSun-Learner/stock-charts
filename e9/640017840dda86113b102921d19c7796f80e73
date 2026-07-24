@@ -1,0 +1,25 @@
+__tests__/family-finance/balance-trend-ui.test.ts
+  s_059825a246d0b6::t_3bcfe54b92d962 19
+src/app/globals.css
+  s_059825a246d0b6::t_884a6fc3a04e0f 703,734,736,829-845,852-861
+src/components/family/family-balance-trend-chart.tsx
+  s_059825a246d0b6::t_40b89284c4b1db 11-12,78,109,112,118-119,134-135,156,161
+src/components/family/family-mental-goals-bar-chart.tsx
+  s_059825a246d0b6::t_fa6546ea526153 5-6,34,53-54,67-68,72-74,82,85-88,95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "e9640017840dda86113b102921d19c7796f80e73",
+  "prompts": {},
+  "sessions": {
+    "s_059825a246d0b6": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f7bf2f73-1a72-4b16-b79d-b08a9b904d1c",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
