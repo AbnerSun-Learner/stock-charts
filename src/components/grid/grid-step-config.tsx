@@ -15,6 +15,8 @@ interface GridStepConfigProps {
   onDynamicEnabledChange: (enabled: boolean) => void;
   mode: "stable" | "aggressive";
   onModeChange: (mode: "stable" | "aggressive") => void;
+  /** 嵌套在可折叠摘要内时隐藏重复标题 */
+  compactHeader?: boolean;
 }
 
 export function GridStepConfig({
@@ -28,6 +30,7 @@ export function GridStepConfig({
   onDynamicEnabledChange,
   mode,
   onModeChange,
+  compactHeader = false,
 }: GridStepConfigProps) {
   function getScaleFactor() {
     return mode === "stable" ? 0.3 : 0.6;
@@ -50,73 +53,83 @@ export function GridStepConfig({
     onLargeStepChange(normalizeValue(value, 30));
   }
 
-  return (
-    <div className="space-y-4 p-4 sm:p-6 md:p-7">
-      {/* 头部 */}
-      <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="ds-card-eyebrow mb-1.5">Step sizing</p>
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold text-[var(--foreground)]">
-              网格步长
-            </h3>
-            <HelpTooltip
-              size="md"
-              placement="bottomLeft"
-              maxWidth="20rem"
-              title={
-                <>
-                  <div className="mb-2 font-semibold text-[var(--foreground)]">
-                    计算逻辑公式：
-                  </div>
-                  <div className="space-y-1 font-mono text-[11px] text-[var(--muted-foreground)]">
-                    <div>P₁ = 基准价</div>
-                    <div>P₂ = P₁ × (1 - Step_initial)</div>
-                    <div>Pₙ = Pₙ₋₁ × (1 - Stepₙ₋₁)</div>
-                    <div className="mt-2 border-t border-[var(--border)] pt-2">
-                      <div className="text-[var(--foreground)]">
-                        动态步长更新：
-                      </div>
-                      <div>Stepₙ = Stepₙ₋₁ × (1 + Scale)</div>
-                      <div className="mt-1 text-[11px] leading-snug">
-                        稳健模式 Scale=0.3 · 抄底模式 Scale=0.6
-                      </div>
-                    </div>
-                  </div>
-                </>
-              }
-            />
+  const formulaTooltip = (
+    <>
+      <div className="mb-2 font-semibold text-[var(--foreground)]">
+        计算逻辑公式：
+      </div>
+      <div className="space-y-1 font-mono text-[11px] text-[var(--muted-foreground)]">
+        <div>P₁ = 基准价</div>
+        <div>P₂ = P₁ × (1 - Step_initial)</div>
+        <div>Pₙ = Pₙ₋₁ × (1 - Stepₙ₋₁)</div>
+        <div className="mt-2 border-t border-[var(--border)] pt-2">
+          <div className="text-[var(--foreground)]">动态步长更新：</div>
+          <div>Stepₙ = Stepₙ₋₁ × (1 + Scale)</div>
+          <div className="mt-1 text-[11px] leading-snug">
+            稳健模式 Scale=0.3 · 抄底模式 Scale=0.6
           </div>
         </div>
-
-        {/* 功能开关 */}
-        <div className="flex shrink-0 items-center gap-3 sm:pt-1">
-          <label
-            htmlFor="dynamic-switch"
-            className="cursor-pointer text-xs font-medium text-[var(--foreground)]"
-          >
-            启用动态间距
-          </label>
-          <button
-            id="dynamic-switch"
-            role="switch"
-            aria-checked={dynamicEnabled}
-            type="button"
-            onClick={() => onDynamicEnabledChange(!dynamicEnabled)}
-            className={`relative inline-flex h-7 w-11 items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] ${
-              dynamicEnabled
-                ? "bg-[var(--accent)]"
-                : "bg-[color-mix(in_srgb,var(--muted-foreground)_28%,var(--border))]"
-            }`}
-          >
-            <span
-              className={`inline-block h-[18px] w-[18px] transform rounded-full bg-[var(--card)] shadow-[var(--ds-shadow-sm)] transition-transform duration-200 ${
-                dynamicEnabled ? "translate-x-[22px]" : "translate-x-1"
-              }`}
-            />
-          </button>
-        </div>
       </div>
+    </>
+  );
+
+  const dynamicSwitch = (
+    <div className="flex shrink-0 items-center gap-3 sm:pt-1">
+      <label
+        htmlFor="dynamic-switch"
+        className="cursor-pointer text-xs font-medium text-[var(--foreground)]"
+      >
+        启用动态间距
+      </label>
+      <button
+        id="dynamic-switch"
+        role="switch"
+        aria-checked={dynamicEnabled}
+        type="button"
+        onClick={() => onDynamicEnabledChange(!dynamicEnabled)}
+        className={`relative inline-flex h-7 w-11 items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] ${
+          dynamicEnabled
+            ? "bg-[var(--accent)]"
+            : "bg-[color-mix(in_srgb,var(--muted-foreground)_28%,var(--border))]"
+        }`}
+      >
+        <span
+          className={`inline-block h-[18px] w-[18px] transform rounded-full bg-[var(--card)] shadow-[var(--ds-shadow-sm)] transition-transform duration-200 ${
+            dynamicEnabled ? "translate-x-[22px]" : "translate-x-1"
+          }`}
+        />
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4 p-4 sm:p-6 md:p-7">
+      {compactHeader ? (
+        <div className="mb-2 flex items-center justify-end gap-3">
+          <HelpTooltip
+            size="md"
+            placement="bottomLeft"
+            maxWidth="20rem"
+            title={formulaTooltip}
+          />
+          {dynamicSwitch}
+        </div>
+      ) : (
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="ds-section-title">网格步长</h3>
+              <HelpTooltip
+                size="md"
+                placement="bottomLeft"
+                maxWidth="20rem"
+                title={formulaTooltip}
+              />
+            </div>
+          </div>
+          {dynamicSwitch}
+        </div>
+      )}
 
       <div className="space-y-5">
         {/* 基础步长配置区 - 常驻 */}

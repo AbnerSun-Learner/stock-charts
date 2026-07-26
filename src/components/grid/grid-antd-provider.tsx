@@ -7,7 +7,7 @@ interface GridAntdProviderProps {
 }
 
 /**
- * 网格页专用 Ant Design 配置（与 stock-view 一致）。
+ * 网格页专用 Ant Design 配置（Coinbase 浅色 token）。
  */
 export function GridAntdProvider({ children }: GridAntdProviderProps) {
   return (
@@ -15,10 +15,16 @@ export function GridAntdProvider({ children }: GridAntdProviderProps) {
       theme={{
         token: {
           borderRadius: 12,
-          colorPrimary: '#0052FF',
+          colorPrimary: '#0052ff',
+          colorPrimaryHover: '#003ecc',
+          colorPrimaryActive: '#003ecc',
+          colorText: '#0a0b0d',
+          colorTextSecondary: '#5b616e',
+          colorBorder: '#dee1e6',
+          colorBgContainer: '#ffffff',
           zIndexPopupBase: 10000,
           colorBgSpotlight: '#ffffff',
-          colorTextLightSolid: '#0f172a',
+          colorTextLightSolid: '#0a0b0d',
           fontFamily:
             '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif',
         },
@@ -27,6 +33,9 @@ export function GridAntdProvider({ children }: GridAntdProviderProps) {
             controlHeight: 48,
             fontSize: 16,
             fontWeightStrong: 600,
+          },
+          Drawer: {
+            paddingLG: 0,
           },
         },
       }}

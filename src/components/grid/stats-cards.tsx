@@ -6,6 +6,8 @@ import type { StressTest } from "@/types/grid";
 interface StatsCardsProps {
   stressTest: StressTest;
   amountPerGrid?: number;
+  /** 隐藏已在主 KPI 行展示的指标，避免重复 */
+  omitPrimary?: boolean;
 }
 
 interface StatCardItem {
@@ -15,8 +17,19 @@ interface StatCardItem {
   color?: string | null;
 }
 
-export function StatsCards({ stressTest, amountPerGrid }: StatsCardsProps) {
+export function StatsCards({
+  stressTest,
+  amountPerGrid,
+  omitPrimary = false,
+}: StatsCardsProps) {
   const v2 = stressTest.v2;
+  const primaryLabels = new Set(
+    omitPrimary
+      ? v2
+        ? ['预算使用率', '预计最大投入', '扣费后收益率', '综合净利润']
+        : ['总买入金额', '收益率', '预期利润']
+      : []
+  );
 
   const fundingCards: StatCardItem[] = v2
     ? [
@@ -160,10 +173,15 @@ export function StatsCards({ stressTest, amountPerGrid }: StatsCardsProps) {
       ];
 
   const sections: { title: string; cards: StatCardItem[] }[] = [
-    { title: "资金压力", cards: fundingCards },
-    { title: "滚动收益", cards: profitCards },
-    { title: "底仓", cards: baseCards },
-  ];
+    { title: '资金压力', cards: fundingCards },
+    { title: '滚动收益', cards: profitCards },
+    { title: '底仓', cards: baseCards },
+  ]
+    .map(section => ({
+      ...section,
+      cards: section.cards.filter(card => !primaryLabels.has(card.label)),
+    }))
+    .filter(section => section.cards.length > 0);
 
   return (
     <div className="mb-8 space-y-6">
@@ -178,17 +196,17 @@ export function StatsCards({ stressTest, amountPerGrid }: StatsCardsProps) {
 
       {sections.map(section => (
         <div key={section.title}>
-          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted-foreground)]">
+          <p className="mb-3 text-xs font-medium text-[var(--muted-foreground)]">
             {section.title}
           </p>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
             {section.cards.map((item, i) => (
               <div
                 key={`${section.title}-${i}`}
-                className="rounded-xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--surface-subtle)_55%,var(--card))] p-4 shadow-[var(--ds-shadow-sm)] md:p-5"
+                className="rounded-[var(--radius-compact)] border border-[var(--border)] bg-[color-mix(in_srgb,var(--surface-subtle)_55%,var(--card))] p-4 md:p-5"
               >
                 <div className="mb-3 flex items-center gap-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted-foreground)]">
+                  <span className="text-xs font-medium text-[var(--muted-foreground)]">
                     {item.label}
                   </span>
                   {"tooltip" in item && item.tooltip ? (

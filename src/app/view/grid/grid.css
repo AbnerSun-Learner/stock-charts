@@ -1,44 +1,48 @@
 /**
- * 网格策略页设计体系（源自 stock-view，全部作用域限定在 .grid-shell 内）
- * https://github.com/AbnerSunLabs/stock-view
+ * 网格策略页设计体系（Coinbase 浅色金融工具，全部作用域限定在 .grid-shell 内）
+ * 参考：https://github.com/VoltAgent/awesome-design-md/tree/main/design-md/coinbase
  */
 
 .grid-shell {
-  --page-bg: #fafafa;
+  --page-bg: #ffffff;
   --background: var(--page-bg);
-  --foreground: #0f172a;
-  --muted-foreground: #64748b;
-  --muted: #f1f5f9;
+  --foreground: #0a0b0d;
+  --muted-foreground: #5b616e;
+  --muted: #f7f7f7;
   --card: #ffffff;
-  --accent-secondary: #4d7cff;
+  --accent-secondary: #003ecc;
   --accent-foreground: #ffffff;
-  --border: #e2e8f0;
+  --border: #dee1e6;
   --primary: #0052ff;
+  --primary-active: #003ecc;
   --accent: #0052ff;
-  --accent-warm: #ff6b00;
+  --accent-warm: #f4b000;
   --accent-electric-end: var(--accent-secondary);
-  --profit: #009933;
-  --loss: #ee2500;
-  --surface-subtle: #f1f5f9;
+  --profit: #05b169;
+  --loss: #cf202f;
+  --surface-subtle: #f7f7f7;
+  --surface-strong: #eef0f3;
   --hover-bg: color-mix(in srgb, #0052ff 9%, transparent);
   --border-color: var(--border);
   --correlation-on-brand: #ffffff;
-  --ds-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --ds-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-  --ds-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08);
-  --shadow-accent: 0 4px 14px rgba(0, 82, 255, 0.25);
-  --shadow-accent-lg: 0 8px 24px rgba(0, 82, 255, 0.35);
+  --ds-shadow-sm: 0 1px 2px rgba(10, 11, 13, 0.04);
+  --ds-shadow-md: 0 4px 12px rgba(10, 11, 13, 0.04);
+  --ds-shadow-lg: 0 8px 20px rgba(10, 11, 13, 0.06);
+  --shadow-accent: none;
+  --shadow-accent-lg: none;
+  --radius-card: 24px;
+  --radius-compact: 12px;
+  --radius-pill: 999px;
   --z-tooltip: 10000;
-  --font-english: Arial, 'Helvetica Neue', Helvetica, sans-serif;
-  --font-display: 'PingFang SC', 'Songti SC', Georgia, serif;
-  --font-sans: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Helvetica,
-    Arial, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans',
+    Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-display: var(--font-sans);
 
   background: var(--page-bg);
   color: var(--foreground);
   font-family: var(--font-sans);
   font-size: 15px;
-  line-height: 1.8;
+  line-height: 1.6;
 }
 
 .grid-shell .font-display {
@@ -46,53 +50,16 @@
   letter-spacing: -0.02em;
 }
 
-.grid-shell .ds-section-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-  padding: 0.5rem 1.25rem;
-  border-radius: 9999px;
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
-  background: color-mix(in srgb, var(--accent) 5%, var(--card));
-}
-
-.grid-shell .ds-section-label__text {
-  font-family: var(--font-english), 'PingFang SC', sans-serif;
-  font-size: 0.75rem;
-  line-height: 1rem;
+.grid-shell .ds-section-title {
+  margin: 0;
+  font-size: 1rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: var(--accent);
+  line-height: 1.3;
+  color: var(--foreground);
 }
 
 .grid-shell .ds-card-eyebrow {
-  font-family: var(--font-english), 'PingFang SC', sans-serif;
-  font-size: 0.75rem;
-  line-height: 1rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: var(--accent);
-}
-
-.grid-shell .ds-hero-glow {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background:
-    radial-gradient(
-      ellipse 85% 65% at 18% 12%,
-      color-mix(in srgb, var(--accent) 8%, transparent),
-      transparent 58%
-    ),
-    radial-gradient(
-      ellipse 75% 55% at 88% 78%,
-      color-mix(in srgb, var(--accent-secondary) 6%, transparent),
-      transparent 52%
-    );
+  display: none;
 }
 
 .grid-shell .site-container {
@@ -109,45 +76,136 @@
 }
 
 .grid-shell .site-container--grid {
-  max-width: 80rem;
-  padding-inline: 0.5rem;
+  max-width: 90rem;
+  padding-inline: 0.75rem;
 }
 
 @media (min-width: 1024px) {
   .grid-shell .site-container--grid {
-    padding-inline: 0.75rem;
+    padding-inline: 1.25rem;
   }
 }
 
+.grid-shell .grid-card {
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--ds-shadow-md);
+}
+
+.grid-shell .grid-card--compact {
+  border-radius: var(--radius-compact);
+}
+
 .grid-shell .marketing-primary-btn {
-  background: linear-gradient(
-    90deg,
-    var(--primary),
-    var(--accent-electric-end)
-  );
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  background: var(--primary);
   color: var(--correlation-on-brand);
-  border-radius: 0.75rem;
-  box-shadow: var(--shadow-accent);
-  transition:
-    transform 200ms ease,
-    box-shadow 200ms ease,
-    filter 200ms ease;
+  border-radius: var(--radius-pill);
+  box-shadow: none;
+  transition: background-color 160ms ease, opacity 160ms ease;
 }
 
 .grid-shell .marketing-primary-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-accent-lg);
-  filter: brightness(1.08);
+  background: var(--primary-active);
+  transform: none;
+  box-shadow: none;
+  filter: none;
 }
 
 .grid-shell .marketing-primary-btn:active:not(:disabled) {
-  transform: scale(0.98);
+  background: var(--primary-active);
+  transform: none;
 }
 
 .grid-shell .marketing-primary-btn:disabled {
   pointer-events: none;
   opacity: 0.35;
   box-shadow: none;
+}
+
+.grid-shell .grid-summary-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  padding: 0.875rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-compact);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--ds-shadow-sm);
+}
+
+.grid-shell .grid-summary-bar__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+}
+
+.grid-shell .grid-summary-bar__meta strong {
+  font-weight: 600;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.grid-shell .grid-summary-bar__edit {
+  min-height: 36px;
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-strong);
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.grid-shell .grid-summary-bar__edit:hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+
+.grid-shell .grid-step-details {
+  border: none;
+}
+
+.grid-shell .grid-step-details > summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.grid-shell .grid-step-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.grid-shell .grid-step-details__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid transparent;
+}
+
+.grid-shell .grid-step-details[open] > .grid-step-details__summary {
+  border-bottom-color: var(--border);
+}
+
+.grid-shell .grid-step-details__hint {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
 }
 
 .grid-shell table {
@@ -191,7 +249,7 @@
 
 .grid-shell .ant-input-number {
   width: 100%;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-compact);
   border-color: var(--border);
   background: var(--card);
 }
@@ -218,7 +276,10 @@
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
-/* Tooltip 挂到 grid-shell 内时继承 token */
+.grid-shell .ant-drawer .ant-drawer-body {
+  padding: 0;
+}
+
 .grid-shell .ant-tooltip {
   z-index: var(--z-tooltip) !important;
   --antd-arrow-background-color: #ffffff;
@@ -240,10 +301,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .grid-shell .marketing-primary-btn,
-  .grid-shell .marketing-primary-btn:hover,
-  .grid-shell .marketing-primary-btn:active {
-    transform: none;
-    filter: none;
+  .grid-shell .marketing-primary-btn {
+    transition: none;
   }
 }

@@ -85,11 +85,8 @@ export function BaseInfoConfig({
     <div className="space-y-4 p-4 sm:p-6 md:p-7">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <p className="ds-card-eyebrow mb-1.5">Benchmark</p>
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold text-[var(--foreground)]">
-              基准信息
-            </h3>
+            <h3 className="ds-section-title">基准信息</h3>
             <HelpTooltip
               size="md"
               placement="bottomLeft"

@@ -8,6 +8,36 @@ test.describe('网格策略', () => {
 
     await expect(page.getByText('网格计算结果')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/共 \d+ 个网格档位/)).toBeVisible();
+    await expect(page.getByRole('button', { name: '修改参数' })).toBeVisible();
+    await expect(page.locator('#grid-primary-kpis')).toBeVisible();
+  });
+
+  test('结果态可打开参数抽屉并重新生成', async ({ page }) => {
+    await page.goto('/view/grid');
+    await page.getByRole('button', { name: '生成策略' }).click();
+    await expect(page.getByRole('button', { name: '修改参数' })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    await page.getByRole('button', { name: '修改参数' }).click();
+    await expect(page.getByRole('button', { name: '重新生成' })).toBeVisible();
+    await page.getByRole('button', { name: '重新生成' }).click();
+    await expect(page.getByText('网格计算结果')).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('生成后表格处于全宽结果区', async ({ page }) => {
+    await page.goto('/view/grid');
+    await page.getByRole('button', { name: '生成策略' }).click();
+    await expect(page.getByText('网格计算结果')).toBeVisible({ timeout: 15_000 });
+
+    const table = page.locator('.grid-result-table');
+    const container = page.locator('.site-container--grid');
+    const tableBox = await table.boundingBox();
+    const containerBox = await container.boundingBox();
+    expect(tableBox).not.toBeNull();
+    expect(containerBox).not.toBeNull();
+    // 全宽结果：表格宽度应接近内容容器（允许 padding）
+    expect(tableBox!.width).toBeGreaterThan(containerBox!.width * 0.55);
   });
 
   test('生成后可下载网格表格 PNG', async ({ page }) => {
