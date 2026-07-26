@@ -249,7 +249,7 @@ export function StrategyComparisonChart({
       </div>
 
       {/* 图表 */}
-      <div className="h-[280px] sm:h-[350px] md:h-[400px] w-full">
+      <div className="h-[360px] w-full sm:h-[440px] md:h-[520px] xl:h-[560px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}

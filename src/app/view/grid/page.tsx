@@ -292,7 +292,7 @@ export default function GridStrategyPage() {
                   <GridPrimaryKpiRow stressTest={stressTest} />
 
                   <div className="grid grid-cols-1 gap-6 xl:grid-cols-12 xl:gap-8">
-                    <div className="grid-card p-4 sm:p-6 md:p-8 xl:col-span-7">
+                    <div className="grid-card flex h-full flex-col p-4 sm:p-6 md:p-8 xl:col-span-7">
                       <LazyStrategyComparisonChart
                         gridData={gridData}
                         basePrice={params.basePrice}
@@ -300,7 +300,7 @@ export default function GridStrategyPage() {
                       />
                     </div>
 
-                    <div className="grid-card p-4 sm:p-6 md:p-8 xl:col-span-5">
+                    <div className="grid-card h-full p-4 sm:p-6 md:p-8 xl:col-span-5">
                       <div className="mb-5 border-b border-[var(--border)] pb-4">
                         <h3 className="ds-section-title">资金与收益明细</h3>
                         <p className="mt-1 text-xs text-[var(--muted-foreground)]">
