@@ -63,7 +63,7 @@
 | 维度 | 当前状态 | 理想目标 |
 | --- | --- | --- |
 | 资金管理 | 先设单格金额，再被动得出总投入 | 先设总弹药和最低价，再反推单格金额，确保压力测试不超预算 |
-| 风险边界 | 跌到 `minPrice` 前停止，缺少最后一格防线 | 最后一网取 `min(计算价, minPrice)`：计算价低于 `minPrice` 以计算价为准，高于则以 `minPrice` 为准；跌破 `minPrice` 后停止加码 |
+| 风险边界 | 跌到 `minPrice` 前停止，缺少最后一格防线 | 最后一网夹到 `minPrice` 硬地板（计划内买入价不得更低）；市价跌破后停止加码 |
 | 步长 | 固定 5% / 15% / 30%，与 ETF 波动率无关 | 小网步长锚定 ATR 和交易成本，中大网表达不同周期 |
 | 三层重叠 | 多层同价位资金可能同时触发但未聚合展示 | 价位聚合展示资金压力，内部仍分层记账和配对卖出 |
 | 交易成本 | 利润未扣佣金、滑点和成本覆盖下限 | ETF 佣金万 1 免 5、免印花税、免过户费入模 |
@@ -134,24 +134,20 @@
 正确顺序：总弹药 -> 最低价 -> 网格结构 -> 反推单格金额 -> 压力测试
 ```
 
-#### 公理 B：`minPrice` 是加码停止边界，最后一网可深于边界
+#### 公理 B：`minPrice` 是计划买入价硬地板，也是市价加码停止线
 
-`minPrice` 表示用户设定的**自动加码停止线**。当**市价** `currentPrice <= minPrice` 时：
+`minPrice` 表示用户设定的**最低买入边界**与**自动加码停止线**：
 
-- 不再自动补仓或新增网格。
-- 不预留场外弹药继续摊平。
-- 展示状态改为「跌破网格区间，等待价格回到区间或人工重评」。
+- **计划内**：所有档位买入价必须 `>= minPrice`；触及边界时最后一网夹到 `minPrice`，不得更深。
+- **市价**：当 `currentPrice <= minPrice` 时不再自动补仓，状态改为「跌破网格区间，等待回到区间或人工重评」。
 
-这与**计划内最后一网买入价**不同。向下生成时，每层最后一网取（见 4.5 节）：
+向下生成时，每层最后一网取（见 4.5 节）：
 
 ```text
-lastGridPrice = min(calculatedLastPrice, minPrice)
+lastGridPrice = round_up_to_tick(minPrice)
 ```
 
-- 计算价 **低于** `minPrice`：以计算价为准（自然步长落点，可低于停止线）。
-- 计算价 **高于** `minPrice`：以 `minPrice` 为准（补档到停止线）。
-
-因此计划中可存在 `buyPrice < minPrice` 的兜底网，它们是开网时预设的最后一格防线；**市价**跌破 `minPrice` 后停止加码，与最后一网买入价是否低于 `minPrice` 不矛盾。
+当下一档理论价已 `<= minPrice`（或层达到档位上限仍高于边界）时，补一档到该硬地板后停止该层。
 
 #### 公理 C：步长必须大于成本，并且贴合标的波动
 
@@ -194,7 +190,7 @@ smallGridStep ≈ f(ATR20%, 日均振幅, T+0 属性)
 | `symbol` | string | ETF 代码，如 `510300` | 用户选择或筛选页传入 |
 | `exchange` | <code>'SSE' &#124; 'SZSE'</code> | 交易所 | 代码规则或数据源返回 |
 | `basePrice` / `P0` | number | 网格基准价 | 用户输入，后续可由最新价带入 |
-| `minPrice` / `Pmin` | number | 自动加码停止价；计划内最后一网买入价见 4.5 节 `min(计算价, minPrice)` | 用户输入 |
+| `minPrice` / `Pmin` | number | 计划买入价硬地板与市价加码停止线；最后一网见 4.5 节 | 用户输入 |
 | `priceUnit` / `tickSize` | number | 最小报价单位 | 默认 `0.001`，按 ETF 实际规则校验 |
 | `minTradeUnit` / `lotSize` | number | 最小交易单位 | ETF 默认 `100` |
 | `currentPrice` | number | 当前最新价 | Phase 2 行情源 |
@@ -503,25 +499,25 @@ step[i] = step[i - 1] * (1 + dynamicScale)   // i > 0
 向下生成时，当下一档理论买入价 `nextBuyPrice <= minPrice` 或需要收尾该层时，确定最后一网价格：
 
 ```text
-lastGridPrice = min(calculatedLastPrice, minPrice)
+lastGridPrice = round_up_to_tick(minPrice)
 ```
 
 含义：
 
-- 计算价 **小于** `minPrice`：以计算价为准（自然步长已落在边界内）。
-- 计算价 **大于** `minPrice`：以 `minPrice` 为准（补一档到用户设定的加码停止线）。
+- 计算价已触及或穿过 `minPrice`：最后一网夹到 `minPrice`（硬地板），不允许更深。
+- 层达档位上限且上一档仍高于 `minPrice`：同样补一档到 `minPrice` 收尾。
 
 流程：
 
 1. 不直接 `break`；先按上式确定 `lastGridPrice`。
 2. 若上一档买入价仍大于 `lastGridPrice`，且该价位尚未存在，追加最后一网。
 3. 最后一网生成后立即停止该层继续向下生成。
-4. 价格跌破 `minPrice` 后不再生成任何网格，不做场外弹药预留。
+4. 计划内不存在 `buyPrice < minPrice` 的档位；市价跌破 `minPrice` 后不再自动加码。
 
 触发最后一网决策的时机：
 
 - 下一档理论买入价 `calculatedLastPrice <= minPrice`（自然步长进入边界）。
-- 或该层已达 `maxGridCount` 等上限，且上一档仍高于 `minPrice`（此时若 `calculatedLastPrice > minPrice`，最后一网取 `minPrice`）。
+- 或该层已达 `maxGridCount` 等上限，且上一档仍高于 `minPrice`（最后一网取 `minPrice`）。
 
 伪代码：
 
@@ -534,7 +530,7 @@ for each layer:
       appendNormalGrid(calculatedLastPrice)
       continue
 
-    const lastGridPrice = Math.min(calculatedLastPrice, minPrice)
+    const lastGridPrice = roundUpToTick(minPrice)
 
     if lastBuyPrice > lastGridPrice and !hasPrice(lastGridPrice):
       appendBottomGrid(lastGridPrice)
@@ -543,8 +539,7 @@ for each layer:
 
   // maxGridCount 用尽且仍未触达 minPrice 时，补最后一网
   if lastBuyPrice > minPrice:
-    calculatedLastPrice = calculateNextBuyPrice()
-    lastGridPrice = Math.min(calculatedLastPrice, minPrice)
+    lastGridPrice = roundUpToTick(minPrice)
     if lastBuyPrice > lastGridPrice and !hasPrice(lastGridPrice):
       appendBottomGrid(lastGridPrice)
 ```
@@ -1438,7 +1433,7 @@ leg.buyShares >= 0
 leg.sellShares >= 0
 leg.reservedShares >= 0
 leg.sellShares + leg.reservedShares == leg.buyShares
-每层最后一档 buyPrice == lastGridPrice，且 lastGridPrice == min(calculatedLastPrice, minPrice)
+每层最后一档 buyPrice == lastGridPrice，且 lastGridPrice == round_up_to_tick(minPrice)；所有档 buyPrice >= minPrice
 最后一档 buyPrice 可以低于 minPrice（当计算价更低时）
 dynamicGridEnabled 时同层 index >= 2 的 stepRatio 大于 index 1（首档间距仍用 initialStep）
 dynamicGridEnabled 时所有 stepRatio < 1 且 buyPrice > 0
@@ -1466,14 +1461,14 @@ DOD：
 | 验收项 | 验证方式 |
 | --- | --- |
 | 总投入不超过总弹药 | 单测构造多组价格、步长、加码系数，断言 `totalBudgetRequired <= totalBudget` |
-| 最后一网价格规则 | 单测断言每层最后一档为 `min(计算价, minPrice)`：计算价更低时允许低于 `minPrice`，否则等于 `minPrice` |
+| 最后一网价格规则 | 单测断言每层最后一档夹到 `minPrice`，且全部 `buyPrice >= minPrice` |
 | 聚合不破坏配对 | 单测断言聚合前后 `GridLeg` 数量和每条腿的卖出价不变 |
 | 成本入模 | 单测断言佣金、滑点改变净利润，且成本覆盖步长可计算 |
 | 底仓拆分 | 单测断言 `basePositionShares = sum(reservedShares)` |
 | 动态与静态可区分 | 单测同一参数下 `dynamicGridEnabled: true` 与 `false` 的 legs 或聚合结果不同 |
 | 层内步长逐档放大 | 单测断言 `generateAllPriceLadders` 同层 `indexInLayer >= 2` 的 `stepRatio` 大于首档下行间距 |
 | 动态步长约束 | 单测断言动态模式下所有档位 `stepRatio < 1` 且 `buyPrice > 0` |
-| 动态下兜底网 | 单测在 `dynamicGridEnabled: true` 时仍满足最后一网 `min(计算价, minPrice)` |
+| 动态下兜底网 | 单测在 `dynamicGridEnabled: true` 时仍满足最后一网夹到 `minPrice` |
 | 动态下总弹药反推 | 单测 `budgetMode: auto` 且动态开启时 `totalBudgetRequired <= totalBudget` |
 | 动态下聚合展示 | 单测默认参数：抄底模式无跨层组合行；稳健模式组合组数少于静态；聚合不破坏 legs 配对 |
 
@@ -1556,7 +1551,7 @@ DOD：
 | `minPrice` 非常接近 `basePrice` | 只生成少量档位或直接提示区间过窄 |
 | `totalBudget` 过小 | 不生成 0 股档位，提示资金不足 |
 | tick 取整导致相邻档位同价 | 合并或跳过重复价，warnings 标注 |
-| 动态步长快速放大 | 不允许价格小于等于 0；最后一网取 `min(计算价, minPrice)` 后停止 |
+| 动态步长快速放大 | 不允许价格小于等于 0；最后一网夹到 `minPrice` 后停止 |
 | 小网步长小于成本覆盖线 | 生成但红色警告 |
 | ETF 溢价率异常 | 不建议开新买单 |
 | 数据缺失估值 | 估值状态为 unknown，不阻止手动计算，但不输出开网建议 |

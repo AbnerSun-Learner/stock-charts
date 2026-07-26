@@ -134,6 +134,11 @@ type NextBuyPrice =
   | { kind: 'bottom'; price: number }
   | null;
 
+function resolveFloorBuyPrice(params: GridStrategyParamsV2): number {
+  // 买入价硬地板：取整后不得低于 minPrice
+  return roundToTick(params.minPrice, params.priceUnit, 'up');
+}
+
 function resolveNextBuyPrice(
   index: number,
   previousBuyPrice: number,
@@ -141,6 +146,8 @@ function resolveNextBuyPrice(
   stepRatio: number,
   params: GridStrategyParamsV2
 ): NextBuyPrice {
+  const floorBuy = resolveFloorBuyPrice(params);
+
   if (index === 0) {
     const rounded = roundToTick(startBuyPrice, params.priceUnit, 'down');
     if (rounded > params.minPrice) {
@@ -148,11 +155,7 @@ function resolveNextBuyPrice(
     }
     return {
       kind: 'bottom',
-      price: roundToTick(
-        Math.min(rounded, params.minPrice),
-        params.priceUnit,
-        'down'
-      ),
+      price: floorBuy,
     };
   }
 
@@ -166,15 +169,10 @@ function resolveNextBuyPrice(
     return { kind: 'normal', price: calculatedNext };
   }
 
-  // 最后一网：min(计算价, minPrice)。计算价更低时可低于 minPrice（最后一格防线）；
-  // minPrice 本身是市价跌破后的加码停止线，见设计文档 4.5 / 公理 B。
+  // 最后一网：夹到 minPrice 硬地板，不允许更深
   return {
     kind: 'bottom',
-    price: roundToTick(
-      Math.min(calculatedNext, params.minPrice),
-      params.priceUnit,
-      'down'
-    ),
+    price: floorBuy,
   };
 }
 
@@ -214,16 +212,7 @@ function appendMaxCountBottomGrid(
 ): void {
   if (lastBuyPrice <= params.minPrice) return;
 
-  const calculatedLastPrice = roundToTick(
-    lastBuyPrice * (1 - stepRatio),
-    params.priceUnit,
-    'down'
-  );
-  const lastGridPrice = roundToTick(
-    Math.min(calculatedLastPrice, params.minPrice),
-    params.priceUnit,
-    'down'
-  );
+  const lastGridPrice = resolveFloorBuyPrice(params);
   maybeAppendBottomGrid(
     params,
     layer,

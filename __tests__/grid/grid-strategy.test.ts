@@ -48,13 +48,14 @@ function assertLastGridPriceRule(
   (['small', 'medium', 'large'] as const).forEach(layer => {
     const legs = byLayer[layer];
     if (legs.length === 0) return;
+    legs.forEach(leg => {
+      expect(leg.buyPrice).toBeGreaterThanOrEqual(minPrice - 0.0001);
+    });
     const lastLeg = legs.reduce((a, b) => (a.buyPrice < b.buyPrice ? a : b));
     expect(lastLeg.isBottomGrid).toBe(true);
     expect(lastLeg.buyPrice).toBeGreaterThan(0);
-    // 计算价高于 minPrice 时最后一网落在 minPrice；计算价更低时允许低于 minPrice
-    if (lastLeg.buyPrice > minPrice + 0.0001) {
-      expect(lastLeg.buyPrice).toBeCloseTo(minPrice, 3);
-    }
+    // 硬地板：最后一网夹到 minPrice，不得更深
+    expect(lastLeg.buyPrice).toBeCloseTo(minPrice, 3);
   });
 }
 
@@ -89,13 +90,13 @@ describe('Phase 1 DOD: calculateGridStrategyV2', () => {
     );
   });
 
-  it('最后一网价格规则：min(计算价, minPrice)', () => {
+  it('最后一网价格规则：夹到 minPrice 硬地板', () => {
     const params = buildParams({ minPrice: 0.5, basePrice: 1.0 });
     const result = calculateGridStrategyV2(params, STATIC_OPTIONS);
     assertLastGridPriceRule(result, params.minPrice);
   });
 
-  it('计算价低于 minPrice 时最后一网可低于 minPrice', () => {
+  it('计算价低于 minPrice 时最后一网仍夹到 minPrice', () => {
     const params = buildParams({
       minPrice: 0.55,
       basePrice: 1.0,
@@ -108,7 +109,8 @@ describe('Phase 1 DOD: calculateGridStrategyV2', () => {
     );
 
     expect(lastSmall.isBottomGrid).toBe(true);
-    expect(lastSmall.buyPrice).toBeLessThan(params.minPrice);
+    expect(lastSmall.buyPrice).toBeCloseTo(params.minPrice, 3);
+    expect(lastSmall.buyPrice).toBeGreaterThanOrEqual(params.minPrice - 0.0001);
   });
 
   it('聚合不破坏配对：legs 数量与 sellPrice 不变', () => {
@@ -203,8 +205,10 @@ describe('Phase 1 DOD: calculateGridStrategyV2', () => {
     const result = calculateGridStrategyV2(params, STATIC_OPTIONS);
     const largeLegs = result.legs.filter(leg => leg.gridType === 'large');
 
+    expect(largeLegs.length).toBeGreaterThan(0);
     largeLegs.forEach(leg => {
-      expect(leg.buyPrice).toBeLessThanOrEqual(params.minPrice + 0.0001);
+      expect(leg.buyPrice).toBeGreaterThanOrEqual(params.minPrice - 0.0001);
+      expect(leg.buyPrice).toBeCloseTo(params.minPrice, 3);
     });
   });
 });
@@ -272,16 +276,14 @@ describe('Phase 1 DOD: 动态步长', () => {
     assertAggregationPreservesLegs(result);
   });
 
-  it('抄底模式默认参数无跨层组合行', () => {
+  it('抄底模式在 minPrice 硬地板处可跨层聚合', () => {
     const result = calculateGridStrategyV2(manualParams, DYNAMIC_AGGRESSIVE);
-    const { groupRows, detailRows } = classifyTableRows(result.aggregatedRows);
+    const { groupRows } = classifyTableRows(result.aggregatedRows);
 
     expect(result.legs.length).toBe(12);
-    expect(groupRows).toHaveLength(0);
-    expect(detailRows.length).toBe(result.legs.length);
-    expect(
-      result.aggregatedRows.every(r => r.childLegIds.length === 1)
-    ).toBe(true);
+    // 各层最后一网均夹到同一 minPrice，因此出现跨层组合行
+    expect(groupRows.length).toBeGreaterThanOrEqual(1);
+    expect(groupRows.some(row => row.childLegIds.length >= 2)).toBe(true);
   });
 
   it('稳健模式组合组数少于静态', () => {
@@ -293,9 +295,8 @@ describe('Phase 1 DOD: 动态步长', () => {
     ).groupRows;
 
     expect(staticGroups.length).toBe(5);
-    expect(dynamicGroups.length).toBe(1);
+    expect(dynamicGroups.length).toBeGreaterThan(0);
     expect(dynamicGroups.length).toBeLessThan(staticGroups.length);
-    expect(dynamicGroups[0]?.displayType).toBe('组合：小网+中网');
   });
 
   it.each([

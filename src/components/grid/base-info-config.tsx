@@ -75,7 +75,7 @@ export function BaseInfoConfig({
       label: "最低价",
       value: minPrice,
       onChange: onMinPriceChange,
-      tooltip: "网格交易的最低价格限制",
+      tooltip: "计划买入价硬地板：表格中所有买入价不低于此价，触及后该层收尾",
       precision: priceDecimals,
       min: 0.0001,
     },
