@@ -3,7 +3,7 @@
 > 日期：2026-07-26  
 > 范围：仅 `/view/grid`（`.grid-shell`）  
 > 视觉参考：[VoltAgent/awesome-design-md · Coinbase DESIGN.md](https://github.com/VoltAgent/awesome-design-md/tree/main/design-md/coinbase)  
-> 状态：待实现
+> 状态：已实现（分支 `feature/grid-coinbase-ui`）
 
 ## 1. 目标与约束
 
