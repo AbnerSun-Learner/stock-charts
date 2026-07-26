@@ -12,8 +12,8 @@ import { useGridCalculator } from '@/hooks/use-grid-calculator';
 import { useGridParams } from '@/hooks/use-grid-params';
 import { DEFAULT_GRID_PARAMS, type GridRow, type StressTest } from '@/types/grid';
 import type { AggregatedGridRow, GridLeg, GridStrategyState, StrategyWarning } from '@/types/grid-v2';
-import { Drawer, Grid, message } from 'antd';
-import { useEffect, useState } from 'react';
+import { Button, Drawer, Grid, message } from 'antd';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * 网格交易策略页（Coinbase 双态布局：idle 配参 / result 全宽结果）。
@@ -35,12 +35,17 @@ export default function GridStrategyPage() {
   >('stable');
   const [paramsDrawerOpen, setParamsDrawerOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const shellRef = useRef<HTMLElement | null>(null);
 
   const screens = Grid.useBreakpoint();
 
   useEffect(() => {
     setIsMobile(!(screens.md ?? false));
   }, [screens.md]);
+
+  useEffect(() => {
+    shellRef.current = document.querySelector('.grid-shell');
+  }, []);
 
   const { params, updateParam, updateBudgetMode, validateParams, errors, priceDecimals } =
     useGridParams(DEFAULT_GRID_PARAMS);
@@ -145,14 +150,16 @@ export default function GridStrategyPage() {
 
   const generateFooter = (
     <div className="space-y-2">
-      <button
-        type="button"
+      <Button
+        type="primary"
+        size="large"
+        shape="round"
+        block
         onClick={handleGenerateStrategy}
         disabled={errors.length > 0}
-        className="marketing-primary-btn w-full px-6 py-3.5 text-sm font-semibold tracking-wide disabled:pointer-events-none disabled:opacity-35"
       >
         生成策略
-      </button>
+      </Button>
       {errors.length > 0 ? (
         <p className="text-xs text-[var(--loss)]">{errors[0]}</p>
       ) : null}
@@ -161,14 +168,16 @@ export default function GridStrategyPage() {
 
   const regenerateFooter = (
     <div className="space-y-2">
-      <button
-        type="button"
+      <Button
+        type="primary"
+        size="large"
+        shape="round"
+        block
         onClick={handleRegenerate}
         disabled={errors.length > 0}
-        className="marketing-primary-btn w-full px-6 py-3.5 text-sm font-semibold tracking-wide disabled:pointer-events-none disabled:opacity-35"
       >
         重新生成
-      </button>
+      </Button>
       {errors.length > 0 ? (
         <p className="text-xs text-[var(--loss)]">{errors[0]}</p>
       ) : null}
@@ -327,14 +336,19 @@ export default function GridStrategyPage() {
                   width={isMobile ? undefined : 420}
                   height={isMobile ? '90%' : undefined}
                   destroyOnHidden={false}
+                  // 挂到 .grid-shell，继承页面 token / InputNumber 等作用域样式
+                  getContainer={() => shellRef.current ?? document.body}
+                  rootClassName="grid-params-drawer"
+                  styles={{
+                    body: { padding: 16 },
+                  }}
                 >
-                  <div className="p-0">
-                    <ErrorAlert errors={errors} />
-                    <GridParamsPanel
-                      {...paramsPanelProps}
-                      footer={regenerateFooter}
-                    />
-                  </div>
+                  <ErrorAlert errors={errors} />
+                  <GridParamsPanel
+                    {...paramsPanelProps}
+                    embedded
+                    footer={regenerateFooter}
+                  />
                 </Drawer>
               </>
             )}

@@ -24,7 +24,7 @@ export function GridAntdProvider({ children }: GridAntdProviderProps) {
           colorBgContainer: '#ffffff',
           zIndexPopupBase: 10000,
           colorBgSpotlight: '#ffffff',
-          colorTextLightSolid: '#0a0b0d',
+          colorTextLightSolid: '#ffffff',
           fontFamily:
             '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif',
         },
@@ -34,8 +34,13 @@ export function GridAntdProvider({ children }: GridAntdProviderProps) {
             fontSize: 16,
             fontWeightStrong: 600,
           },
+          Button: {
+            controlHeightLG: 44,
+            borderRadiusLG: 999,
+            fontWeight: 600,
+          },
           Drawer: {
-            paddingLG: 0,
+            paddingLG: 24,
           },
         },
       }}

@@ -37,6 +37,8 @@ export interface GridParamsPanelProps {
   onModeChange: (mode: 'stable' | 'aggressive') => void;
   /** 步长段是否默认展开（默认收起） */
   stepDefaultOpen?: boolean;
+  /** Drawer 内嵌时去掉外层卡片边框，避免双层盒子 */
+  embedded?: boolean;
   footer?: ReactNode;
 }
 
@@ -73,10 +75,11 @@ export function GridParamsPanel({
   mode,
   onModeChange,
   stepDefaultOpen = false,
+  embedded = false,
   footer,
 }: GridParamsPanelProps) {
   return (
-    <div className="grid-card">
+    <div className={embedded ? 'grid-params-panel--embedded' : 'grid-card'}>
       <div className="border-b border-[var(--border)]">
         <BaseInfoConfig
           minTradeUnit={minTradeUnit}

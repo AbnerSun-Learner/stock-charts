@@ -1,6 +1,7 @@
 'use client';
 
 import type { GridBudgetMode } from '@/types/grid-v2';
+import { Button } from 'antd';
 
 interface GridParamsSummaryBarProps {
   basePrice: number;
@@ -49,13 +50,9 @@ export function GridParamsSummaryBar({
           档位 <strong>{gridCount}</strong>
         </span>
       </div>
-      <button
-        type="button"
-        className="grid-summary-bar__edit"
-        onClick={onEdit}
-      >
+      <Button type="default" shape="round" onClick={onEdit}>
         修改参数
-      </button>
+      </Button>
     </div>
   );
 }

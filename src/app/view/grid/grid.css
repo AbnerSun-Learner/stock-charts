@@ -160,6 +160,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+.grid-shell .grid-params-panel--embedded {
+  overflow: hidden;
+  border-radius: var(--radius-compact);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
 .grid-shell .grid-summary-bar__edit {
   min-height: 36px;
   padding: 0.4rem 1rem;
@@ -277,7 +284,20 @@
 }
 
 .grid-shell .ant-drawer .ant-drawer-body {
-  padding: 0;
+  padding: 16px;
+}
+
+.grid-shell .grid-params-drawer.ant-drawer .ant-drawer-content {
+  background: var(--card);
+}
+
+.grid-shell .grid-params-drawer .ant-drawer-header {
+  border-bottom-color: var(--border);
+}
+
+.grid-shell .grid-params-drawer .ant-drawer-title {
+  color: var(--foreground);
+  font-weight: 600;
 }
 
 .grid-shell .ant-tooltip {
