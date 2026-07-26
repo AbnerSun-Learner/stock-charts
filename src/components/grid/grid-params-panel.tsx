@@ -115,7 +115,7 @@ export function GridParamsPanel({
               <h3 className="ds-section-title">步长与动态（进阶）</h3>
             </div>
             <p className="grid-step-details__hint mt-1">
-              小/中/大网步长与动态放大模式
+              价格步长设置；动态间距只疏密档位，不改单档金额
             </p>
           </div>
           <span className="grid-step-details__hint" aria-hidden>

@@ -70,16 +70,28 @@ export function GridStepConfig({
           </div>
         </div>
       </div>
+      <p className="mt-2 border-t border-[var(--border)] pt-2 text-[11px] leading-snug text-[var(--muted-foreground)]">
+        动态间距只放大<strong className="text-[var(--foreground)]">价格步长</strong>
+        （档位更疏），不改变单档买入金额；金额请用「金额加码系数」。
+      </p>
     </>
   );
 
+  const dynamicSpacingTooltip =
+    '放大价格步长（越跌档位越疏），不改变单档金额。单档买多少请调「金额加码系数」。';
+
   const dynamicSwitch = (
-    <div className="flex shrink-0 items-center gap-3 sm:pt-1">
+    <div className="flex shrink-0 items-center gap-2 sm:pt-1">
       <label
         htmlFor="dynamic-switch"
-        className="cursor-pointer text-xs font-medium text-[var(--foreground)]"
+        className="flex cursor-pointer items-center gap-1 text-xs font-medium text-[var(--foreground)]"
       >
         启用动态间距
+        <HelpTooltip
+          title={dynamicSpacingTooltip}
+          placement="topLeft"
+          maxWidth="16rem"
+        />
       </label>
       <button
         id="dynamic-switch"
@@ -232,7 +244,7 @@ export function GridStepConfig({
         {dynamicEnabled && (
           <div className="rounded-lg border border-[var(--border)] bg-[color-mix(in_srgb,var(--accent)_5%,var(--card))] px-3 py-2.5">
             <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
-              动态模式已激活，步长会随网格档位按所选模式逐级扩张。
+              已启用：价格步长随档位逐级放大（档位更疏），不改变单档买入金额。
             </p>
           </div>
         )}
@@ -268,7 +280,7 @@ export function GridStepConfig({
                       稳健模式
                     </div>
                     <div className="text-xs leading-relaxed text-[var(--muted-foreground)]">
-                      兼顾利润与防守，适合常规波动
+                      步长放大较缓，档位更密一些，适合常规波动
                     </div>
                     <div className="mt-2 font-mono text-[11px] text-[var(--muted-foreground)]">
                       Scale = 0.3
@@ -300,7 +312,7 @@ export function GridStepConfig({
                       抄底模式
                     </div>
                     <div className="text-xs leading-relaxed text-[var(--muted-foreground)]">
-                      牺牲频率换取深度防守，适合接飞刀
+                      步长放大更快，档位更疏，适合更深接飞刀
                     </div>
                     <div className="mt-2 font-mono text-[11px] text-[var(--muted-foreground)]">
                       Scale = 0.6

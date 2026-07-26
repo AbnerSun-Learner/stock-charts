@@ -126,6 +126,11 @@ export function FundCoefficientConfig({
             >
               <span className="text-[var(--loss)]">*</span>
               金额加码系数
+              <HelpTooltip
+                title="控制越跌单档买入金额越大（资金维度）。与「动态间距」不同：动态间距只放大价格步长，不改变单档金额。"
+                placement="topLeft"
+                maxWidth="16rem"
+              />
             </label>
             <InputNumber
               id="amountMultiplier"
