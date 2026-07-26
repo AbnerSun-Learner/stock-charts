@@ -8,6 +8,8 @@ interface StatsCardsProps {
   amountPerGrid?: number;
   /** 隐藏已在主 KPI 行展示的指标，避免重复 */
   omitPrimary?: boolean;
+  /** 侧栏紧凑布局：指标卡两列排布 */
+  compact?: boolean;
 }
 
 interface StatCardItem {
@@ -21,6 +23,7 @@ export function StatsCards({
   stressTest,
   amountPerGrid,
   omitPrimary = false,
+  compact = false,
 }: StatsCardsProps) {
   const v2 = stressTest.v2;
   const primaryLabels = new Set(
@@ -184,7 +187,7 @@ export function StatsCards({
     .filter(section => section.cards.length > 0);
 
   return (
-    <div className="mb-8 space-y-6">
+    <div className={compact ? 'space-y-5' : 'mb-8 space-y-6'}>
       {amountPerGrid !== undefined && (
         <p className="text-xs text-[var(--muted-foreground)]">
           单格基础金额由总弹药反推：
@@ -199,7 +202,13 @@ export function StatsCards({
           <p className="mb-3 text-xs font-medium text-[var(--muted-foreground)]">
             {section.title}
           </p>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+          <div
+            className={
+              compact
+                ? 'grid grid-cols-2 gap-3'
+                : 'grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4'
+            }
+          >
             {section.cards.map((item, i) => (
               <div
                 key={`${section.title}-${i}`}

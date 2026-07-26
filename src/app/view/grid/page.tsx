@@ -291,12 +291,31 @@ export default function GridStrategyPage() {
                 <div className="space-y-8">
                   <GridPrimaryKpiRow stressTest={stressTest} />
 
-                  <div className="grid-card p-4 sm:p-6 md:p-8">
-                    <LazyStrategyComparisonChart
-                      gridData={gridData}
-                      basePrice={params.basePrice}
-                      priceDecimals={priceDecimals}
-                    />
+                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-12 xl:gap-8">
+                    <div className="grid-card p-4 sm:p-6 md:p-8 xl:col-span-7">
+                      <LazyStrategyComparisonChart
+                        gridData={gridData}
+                        basePrice={params.basePrice}
+                        priceDecimals={priceDecimals}
+                      />
+                    </div>
+
+                    <div className="grid-card p-4 sm:p-6 md:p-8 xl:col-span-5">
+                      <div className="mb-5 border-b border-[var(--border)] pb-4">
+                        <h3 className="ds-section-title">资金与收益明细</h3>
+                        <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                          资金压力、滚动收益与底仓
+                        </p>
+                      </div>
+                      <StatsCards
+                        stressTest={stressTest}
+                        amountPerGrid={
+                          params.budgetMode === 'auto' ? amountPerGrid : undefined
+                        }
+                        omitPrimary
+                        compact
+                      />
+                    </div>
                   </div>
 
                   <div className="grid-card p-4 sm:p-6 md:p-8">
@@ -310,13 +329,6 @@ export default function GridStrategyPage() {
                       </p>
                     </div>
 
-                    <StatsCards
-                      stressTest={stressTest}
-                      amountPerGrid={
-                        params.budgetMode === 'auto' ? amountPerGrid : undefined
-                      }
-                      omitPrimary
-                    />
                     <div className="overflow-x-auto">
                       <GridResultTable
                         aggregatedRows={aggregatedRows}
