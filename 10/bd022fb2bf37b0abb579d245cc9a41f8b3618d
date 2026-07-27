@@ -1,0 +1,28 @@
+src/app/globals.css
+  h_245285a78fca97 933-941,949-954,957-958
+  s_a4ba9f143a86c8::t_87eb9f4bd4b4cb 955-956
+src/components/family/family-ledger-page.tsx
+  h_245285a78fca97 26,33,59-62,96-102,128-129,337-364,371,375-377,461-462,481
+  s_a4ba9f143a86c8::t_d58ede62ff8573 373-374,378,458-460,463
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "10bd022fb2bf37b0abb579d245cc9a41f8b3618d",
+  "prompts": {},
+  "humans": {
+    "h_245285a78fca97": {
+      "author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  },
+  "sessions": {
+    "s_a4ba9f143a86c8": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1ed36823-1bfa-4423-8b7a-c90ab1156ad9",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
