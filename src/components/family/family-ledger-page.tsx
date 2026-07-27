@@ -455,7 +455,12 @@ export function FamilyLedgerPage() {
             label="金额"
             rules={[{ required: true, message: '请输入金额' }]}
           >
-            <InputNumber min={0} precision={2} className="w-full" />
+            <InputNumber
+              min={0}
+              precision={2}
+              className="w-full min-w-[10rem]"
+              style={{ width: '100%', minWidth: '10rem' }}
+            />
           </Form.Item>
           {sideWatch === 'asset' && (
             <>
