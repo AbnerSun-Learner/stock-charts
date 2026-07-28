@@ -69,6 +69,86 @@ describe('buildFamilyAssetHistory', () => {
     ]);
   });
 
+  it('某类笔钱晚于成员图起始日出现时，更早快照日补 amount 为 0', () => {
+    const history = buildFamilyAssetHistory([
+      {
+        date: '2026-07-22',
+        memberId: 'm1',
+        memberName: '我',
+        sortOrder: 0,
+        fourPot: 'liquid',
+        potOrder: 0,
+        totalAssets: 10,
+      },
+      {
+        date: '2026-07-22',
+        memberId: 'm1',
+        memberName: '我',
+        sortOrder: 0,
+        fourPot: 'stable',
+        potOrder: 1,
+        totalAssets: 20,
+      },
+      {
+        date: '2026-07-30',
+        memberId: 'm1',
+        memberName: '我',
+        sortOrder: 0,
+        fourPot: 'liquid',
+        potOrder: 0,
+        totalAssets: 10,
+      },
+      {
+        date: '2026-07-30',
+        memberId: 'm1',
+        memberName: '我',
+        sortOrder: 0,
+        fourPot: 'stable',
+        potOrder: 1,
+        totalAssets: 20,
+      },
+      {
+        date: '2026-07-30',
+        memberId: 'm1',
+        memberName: '我',
+        sortOrder: 0,
+        fourPot: 'long_term',
+        potOrder: 2,
+        totalAssets: 100,
+      },
+    ]);
+
+    expect(history[0].points).toEqual([
+      { date: '2026-07-22', amount: 10, fourPot: 'liquid', potOrder: 0 },
+      { date: '2026-07-22', amount: 20, fourPot: 'stable', potOrder: 1 },
+      { date: '2026-07-22', amount: 0, fourPot: 'long_term', potOrder: 2 },
+      {
+        date: '2026-07-30',
+        amount: 10,
+        fourPot: 'liquid',
+        potOrder: 0,
+        latestHouseholdAmount: 10,
+        latestShareRatio: 1,
+      },
+      {
+        date: '2026-07-30',
+        amount: 20,
+        fourPot: 'stable',
+        potOrder: 1,
+        latestHouseholdAmount: 20,
+        latestShareRatio: 1,
+      },
+      {
+        date: '2026-07-30',
+        amount: 100,
+        fourPot: 'long_term',
+        potOrder: 2,
+        latestHouseholdAmount: 100,
+        latestShareRatio: 1,
+      },
+    ]);
+  });
+
   it('保留金额为 0 的成员历史点', () => {
     const history = buildFamilyAssetHistory([
       {

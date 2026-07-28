@@ -7,7 +7,8 @@ import {
   STRUCTURE_FOUR_POTS,
   type AssetHistoryPoint,
 } from '@/types/family-finance';
-import { formatCny } from '@/lib/family-finance/format';
+import { formatCny, formatCompactCny } from '@/lib/family-finance/format';
+import { useFamilyAmountVisibility } from '@/components/family/family-amount-visibility';
 
 const Line = dynamic(() => import('@ant-design/charts').then(mod => mod.Line), {
   ssr: false,
@@ -31,13 +32,6 @@ function formatHistoryDate(value: string): string {
   return dateFormatter.format(new Date(`${value}T00:00:00+08:00`));
 }
 
-function formatCompactAmount(value: number): string {
-  return new Intl.NumberFormat('zh-CN', {
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  }).format(value);
-}
-
 function formatShareRatio(value: number | null): string {
   if (value === null) return '—';
   return new Intl.NumberFormat('zh-CN', {
@@ -46,11 +40,13 @@ function formatShareRatio(value: number | null): string {
   }).format(value);
 }
 
-function formatTooltipValue(point: AssetHistoryPoint): string {
-  if (point.latestShareRatio === undefined) return formatCny(point.amount);
-  return `${formatCny(point.amount)} · 当前占比 ${formatShareRatio(
-    point.latestShareRatio
-  )}`;
+function formatTooltipValue(
+  point: AssetHistoryPoint,
+  amountsVisible: boolean
+): string {
+  const amountText = formatCny(point.amount, { visible: amountsVisible });
+  if (point.latestShareRatio === undefined) return amountText;
+  return `${amountText} · 当前占比 ${formatShareRatio(point.latestShareRatio)}`;
 }
 
 /** 家庭或单个成员的独立资产历史折线图。 */
@@ -58,6 +54,7 @@ export function FamilyAssetHistoryLine({
   title,
   points,
 }: FamilyAssetHistoryLineProps) {
+  const amountsVisible = useFamilyAmountVisibility();
   const latestDate = points.reduce(
     (latest, point) => (point.date > latest ? point.date : latest),
     ''
@@ -79,7 +76,7 @@ export function FamilyAssetHistoryLine({
             三笔钱合计
           </div>
           <div className="family-asset-history-card__summary-value family-finance-monetary-value text-sm font-medium">
-            {formatCny(latest)}
+            {formatCny(latest, { visible: amountsVisible })}
           </div>
         </div>
       </div>
@@ -89,6 +86,7 @@ export function FamilyAssetHistoryLine({
         </div>
       ) : (
         <Line
+          key={amountsVisible ? 'amt-visible' : 'amt-masked'}
           data={data}
           xField="date"
           yField="amount"
@@ -104,7 +102,8 @@ export function FamilyAssetHistoryLine({
             x: { title: false, labelFormatter: formatHistoryDate },
             y: {
               title: false,
-              labelFormatter: (value: number) => formatCompactAmount(Number(value)),
+              labelFormatter: (value: number) =>
+                formatCompactCny(Number(value), { visible: amountsVisible }),
             },
           }}
           style={{ lineWidth: 2 }}
@@ -123,7 +122,7 @@ export function FamilyAssetHistoryLine({
             items: [
               (datum: AssetHistoryPoint & { type: string }) => ({
                 name: datum.type,
-                value: formatTooltipValue(datum),
+                value: formatTooltipValue(datum, amountsVisible),
               }),
             ],
           }}

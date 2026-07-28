@@ -7,6 +7,7 @@ import {
   type FourPotShare,
 } from '@/types/family-finance';
 import { formatCny } from '@/lib/family-finance/format';
+import { useFamilyAmountVisibility } from '@/components/family/family-amount-visibility';
 
 const Pie = dynamic(() => import('@ant-design/charts').then(mod => mod.Pie), {
   ssr: false,
@@ -41,6 +42,8 @@ export function FamilyAssetStructurePie({
   totalAssets,
   height = 280,
 }: FamilyAssetStructurePieProps) {
+  const amountsVisible = useFamilyAmountVisibility();
+
   if (shares.length === 0) return null;
 
   const data = shares.map(s => ({
@@ -53,6 +56,7 @@ export function FamilyAssetStructurePie({
     <div className="family-asset-structure-chart flex w-full flex-col items-center justify-center gap-5 sm:flex-row">
       <div className="min-w-0 flex-1">
         <Pie
+          key={amountsVisible ? 'amt-visible' : 'amt-masked'}
           data={data}
           angleField="value"
           colorField="type"
@@ -77,7 +81,8 @@ export function FamilyAssetStructurePie({
               {
                 field: 'value',
                 name: '金额',
-                valueFormatter: (v: number) => formatCny(Number(v)),
+                valueFormatter: (v: number) =>
+                  formatCny(Number(v), { visible: amountsVisible }),
               },
             ],
           }}
@@ -105,7 +110,7 @@ export function FamilyAssetStructurePie({
                   </span>
                 </div>
                 <div className="family-finance-monetary-value text-sm font-medium text-[var(--text-primary)]">
-                  {formatCny(share.amount)}
+                  {formatCny(share.amount, { visible: amountsVisible })}
                 </div>
               </div>
             </div>

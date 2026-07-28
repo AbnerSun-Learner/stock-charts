@@ -15,6 +15,7 @@ import type {
   PolicyType,
 } from '@/types/family-finance';
 import { parseMoney } from '@/lib/family-finance/aggregates';
+import { computeLedgerTransfer } from '@/lib/family-finance/ledger-transfer';
 import {
   assertMentalAccountDateRange,
   isValidMentalAccountPriority,
@@ -293,6 +294,86 @@ export class FamilyFinanceRepository {
   async deleteLedgerItem(id: string): Promise<void> {
     const { error } = await this.client.from('family_ledger_items').delete().eq('id', id);
     if (error) throw new Error(error.message);
+  }
+
+  /**
+   * 将源资产金额转移到目标资产；源余额可为 0，不删除条目。
+   * 目标更新失败时会尝试把源金额回滚，避免钱凭空消失。
+   */
+  async transferLedgerAmount(input: {
+    fromId: string;
+    toId: string;
+    amount: number;
+  }): Promise<{ source: FamilyLedgerItem; target: FamilyLedgerItem }> {
+    if (input.fromId === input.toId) {
+      throw new Error('不能转移到自身');
+    }
+    await this.requireUserId();
+
+    const { data, error } = await this.client
+      .from('family_ledger_items')
+      .select('*')
+      .in('id', [input.fromId, input.toId]);
+    if (error) throw new Error(error.message);
+
+    const rows = (data ?? []).map(mapLedgerItem);
+    const source = rows.find(r => r.id === input.fromId);
+    const target = rows.find(r => r.id === input.toId);
+    if (!source || !target) {
+      throw new Error('转移条目不存在');
+    }
+    if (source.side !== 'asset' || target.side !== 'asset') {
+      throw new Error('仅支持资产条目之间转移');
+    }
+
+    const { sourceAfter, targetAfter } = computeLedgerTransfer({
+      sourceAmount: source.amount,
+      targetAmount: target.amount,
+      transferAmount: input.amount,
+    });
+
+    const updatedAt = new Date().toISOString();
+    const { data: sourceRow, error: sourceError } = await this.client
+      .from('family_ledger_items')
+      .update({ amount: sourceAfter, updated_at: updatedAt })
+      .eq('id', input.fromId)
+      .eq('amount', source.amount)
+      .select('*')
+      .maybeSingle();
+    if (sourceError) throw new Error(sourceError.message);
+    if (!sourceRow) {
+      throw new Error('源条目余额已变更，请关闭后重新打开再转移');
+    }
+
+    const { data: targetRow, error: targetError } = await this.client
+      .from('family_ledger_items')
+      .update({ amount: targetAfter, updated_at: updatedAt })
+      .eq('id', input.toId)
+      .eq('amount', target.amount)
+      .select('*')
+      .maybeSingle();
+    if (targetError || !targetRow) {
+      const { data: rolledBack, error: rollbackError } = await this.client
+        .from('family_ledger_items')
+        .update({ amount: source.amount, updated_at: new Date().toISOString() })
+        .eq('id', input.fromId)
+        .eq('amount', sourceAfter)
+        .select('*')
+        .maybeSingle();
+      if (rollbackError || !rolledBack) {
+        throw new Error(
+          `目标更新失败且源回滚未确认，请核对两侧余额（${targetError?.message ?? '目标余额已变更'}；回滚：${rollbackError?.message ?? '未匹配到可回滚行'}）`
+        );
+      }
+      throw new Error(
+        targetError?.message ?? '目标条目余额已变更，源金额已回滚，请重试'
+      );
+    }
+
+    return {
+      source: mapLedgerItem(sourceRow),
+      target: mapLedgerItem(targetRow),
+    };
   }
 
   async listPolicies(): Promise<InsurancePolicy[]> {

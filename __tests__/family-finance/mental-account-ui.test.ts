@@ -67,6 +67,17 @@ describe('mental account priority UI contracts', () => {
     expect(ledger).toContain('ellipsis: { showTitle: false }');
   });
 
+  it('编辑资产时提供转移表单项且转空不删条目', () => {
+    const ledger = readFileSync(
+      join(root, 'src/components/family/family-ledger-page.tsx'),
+      'utf8'
+    );
+    expect(ledger).toContain('name="transferToId"');
+    expect(ledger).toContain('name="transferAmount"');
+    expect(ledger).toContain('transferLedgerAmount');
+    expect(ledger).toContain('转空后仍保留本条目');
+  });
+
   it('总览心理账户整行且保单下移全宽', () => {
     const overview = readFileSync(
       join(root, 'src/components/family/family-overview-page.tsx'),

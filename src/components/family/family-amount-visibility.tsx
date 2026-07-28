@@ -5,7 +5,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 const FamilyAmountVisibilityContext = createContext<boolean | null>(null);
 
 /**
- * 总览页金额可见性 Provider。
+ * 家庭财务金额可见性 Provider。
  * value=true 显示真实金额；false 时展示层走 ****。
  */
 export function FamilyAmountVisibilityProvider({
@@ -24,7 +24,7 @@ export function FamilyAmountVisibilityProvider({
 
 /**
  * 读取金额是否可见。
- * 无 Provider 时默认 true（ledger 等子路由不强制隐藏）。
+ * 无 Provider 时默认 true（未接入显隐的页面保持明文）。
  */
 export function useFamilyAmountVisibility(): boolean {
   const ctx = useContext(FamilyAmountVisibilityContext);

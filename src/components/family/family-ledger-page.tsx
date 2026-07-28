@@ -1,14 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { EyeFilled, EyeInvisibleFilled } from '@ant-design/icons';
 import {
   App,
   Button,
   Card,
+  Col,
   Form,
   Input,
   InputNumber,
   Modal,
+  Row,
   Select,
   Space,
   Table,
@@ -35,11 +38,15 @@ import {
 import {
   computeFourPotShares,
   computeLedgerTotals,
+  roundMoney,
 } from '@/lib/family-finance/aggregates';
 import { formatCny, formatDateTime } from '@/lib/family-finance/format';
+import { listTransferTargetOptions } from '@/lib/family-finance/ledger-transfer';
+import { FamilyAmountVisibilityProvider } from '@/components/family/family-amount-visibility';
 import { FamilyAssetStructurePie } from '@/components/family/family-asset-structure-pie';
 import { FamilyAssetHistoryLine } from '@/components/family/family-asset-history-line';
 import { buildFamilyAssetHistory } from '@/lib/family-finance/history';
+
 /**
  * 家庭资产记账主界面。
  */
@@ -60,8 +67,27 @@ export function FamilyLedgerPage() {
   const [assetFourPotFilter, setAssetFourPotFilter] = useState<StructureFourPot | null>(null);
   /** 资产表：成员筛选；null 表示全部 */
   const [assetMemberFilter, setAssetMemberFilter] = useState<string | null>(null);
+  /** 金额默认隐藏；每次进入页面重置，不持久化。 */
+  const [amountsVisible, setAmountsVisible] = useState(false);
   const [form] = Form.useForm();
   const sideWatch: LedgerSide = Form.useWatch('side', form) ?? 'asset';
+  const transferToIdWatch: string | undefined = Form.useWatch('transferToId', form);
+  const transferAmountWatch: number | undefined = Form.useWatch('transferAmount', form);
+  const isTransferring = Boolean(
+    editing && sideWatch === 'asset' && transferToIdWatch
+  );
+  const amountAfterTransfer =
+    editing != null && isTransferring
+      ? roundMoney(editing.amount - roundMoney(transferAmountWatch ?? 0))
+      : null;
+  const transferToExtra =
+    amountAfterTransfer == null
+      ? undefined
+      : amountAfterTransfer < 0
+        ? '转移金额不能超过当前余额'
+        : amountAfterTransfer === 0
+          ? '转移后本条目余额为 0，转空后仍保留本条目'
+          : `转移后本条目余额 ${formatCny(amountAfterTransfer)}`;
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -113,6 +139,8 @@ export function FamilyLedgerPage() {
       category: 'cash',
       amount: 0,
       memberId: members.find(m => m.role === 'self')?.id,
+      transferToId: undefined,
+      transferAmount: undefined,
     });
     setItemModalOpen(true);
   };
@@ -128,9 +156,20 @@ export function FamilyLedgerPage() {
       // 保险（资金标签）已下线：编辑时清空，需改选活钱/稳钱/长钱
       fourPot: row.fourPot === 'insurance' ? undefined : row.fourPot,
       note: row.note,
+      transferToId: undefined,
+      transferAmount: undefined,
     });
     setItemModalOpen(true);
   };
+
+  const transferTargetOptions = useMemo(() => {
+    if (!editing) return [];
+    return listTransferTargetOptions({
+      items,
+      members,
+      sourceId: editing.id,
+    });
+  }, [editing, items, members]);
 
   const saveItem = async () => {
     // 同步锁：避免 validateFields 完成前连点并行进入
@@ -139,25 +178,70 @@ export function FamilyLedgerPage() {
     }
     itemSavingRef.current = true;
     setItemSaving(true);
+    let transferCommitted = false;
     try {
       const values = await form.validateFields();
+      let amount = values.amount as number;
+      const willTransfer =
+        editing != null &&
+        values.side === 'asset' &&
+        typeof values.transferToId === 'string' &&
+        values.transferToId.length > 0 &&
+        editing.amount > 0;
+
+      if (willTransfer && editing) {
+        const transferred = await repo.transferLedgerAmount({
+          fromId: editing.id,
+          toId: values.transferToId,
+          amount: values.transferAmount,
+        });
+        transferCommitted = true;
+        // 金额以转移结果为准；源可为 0 且保留条目
+        amount = transferred.source.amount;
+        // 转移已落库：立刻清空转移表单并同步本地余额，避免 upsert 失败后重试二次扣款
+        setEditing(prev =>
+          prev && prev.id === transferred.source.id
+            ? { ...prev, amount: transferred.source.amount }
+            : prev
+        );
+        form.setFieldsValue({
+          transferToId: undefined,
+          transferAmount: undefined,
+          amount: transferred.source.amount,
+        });
+        // 同步列表，避免关闭弹窗后仍显示转移前余额
+        setItems(prev =>
+          prev.map(item => {
+            if (item.id === transferred.source.id) return transferred.source;
+            if (item.id === transferred.target.id) return transferred.target;
+            return item;
+          })
+        );
+      }
+
       await repo.upsertLedgerItem({
         id: editing?.id,
         side: values.side,
         category: values.category,
         name: values.name,
-        amount: values.amount,
+        amount,
         memberId: values.side === 'asset' ? values.memberId : null,
         fourPot: values.side === 'asset' ? (values.fourPot ?? null) : null,
         note: values.note ?? null,
       });
-      message.success(editing ? '已更新' : '已添加');
+      message.success(
+        willTransfer ? '已转移并更新' : editing ? '已更新' : '已添加'
+      );
       setItemModalOpen(false);
       await reload();
     } catch (e) {
       // 校验失败：不 toast，rethrow 让 Modal 保持打开
       if (e && typeof e === 'object' && 'errorFields' in e) {
         throw e;
+      }
+      // 转移已提交时刷新列表，避免关闭弹窗后看到过期余额
+      if (transferCommitted) {
+        void reload();
       }
       message.error(e instanceof Error ? e.message : '保存失败');
       throw e instanceof Error ? e : new Error('保存失败');
@@ -219,7 +303,9 @@ export function FamilyLedgerPage() {
         dataIndex: 'amount',
         align: 'right',
         render: (v: number) => (
-          <span className="family-finance-monetary-value">{formatCny(v)}</span>
+          <span className="family-finance-monetary-value">
+            {formatCny(v, { visible: amountsVisible })}
+          </span>
         ),
       },
       {
@@ -283,11 +369,23 @@ export function FamilyLedgerPage() {
   };
 
   return (
-    <div className="family-finance-page family-ledger-page space-y-6">
+    <FamilyAmountVisibilityProvider value={amountsVisible}>
+      <div className="family-finance-page family-ledger-page space-y-6">
       <header className="family-finance-header">
         <div>
           <div className="family-finance-eyebrow">资产记账</div>
-          <h1>家庭资产记账</h1>
+          <div className="family-finance-header__title-row">
+            <h1>家庭资产记账</h1>
+            <button
+              type="button"
+              className="family-amount-visibility-toggle"
+              aria-label={amountsVisible ? '隐藏金额' : '显示金额'}
+              aria-pressed={amountsVisible}
+              onClick={() => setAmountsVisible(v => !v)}
+            >
+              {amountsVisible ? <EyeFilled /> : <EyeInvisibleFilled />}
+            </button>
+          </div>
           <p>维护成员资产和家庭负债，保存后会同步更新家庭财务总览。</p>
         </div>
         <Button
@@ -418,6 +516,7 @@ export function FamilyLedgerPage() {
       <Modal
         title={editing ? '编辑条目' : '添加条目'}
         open={itemModalOpen}
+        width={640}
         onCancel={() => {
           if (itemSavingRef.current) return;
           setItemModalOpen(false);
@@ -428,69 +527,148 @@ export function FamilyLedgerPage() {
         destroyOnClose
       >
         <Form form={form} layout="vertical" className="mt-2">
-          <Form.Item name="side" label="类型" rules={[{ required: true }]}>
-            <Select
-              options={[
-                { value: 'asset', label: '资产' },
-                { value: 'liability', label: '负债' },
-              ]}
-              onChange={(side: LedgerSide) => {
-                form.setFieldsValue({
-                  category: side === 'asset' ? 'cash' : 'mortgage',
-                  memberId:
-                    side === 'asset' ? members.find(m => m.role === 'self')?.id ?? null : null,
-                  fourPot: null,
-                });
-              }}
-            />
-          </Form.Item>
-          <Form.Item name="category" label="分类" rules={[{ required: true }]}>
-            <Select options={categoryOptions} />
-          </Form.Item>
-          <Form.Item name="name" label="名称" rules={[{ required: true, message: '请输入名称' }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="amount"
-            label="金额"
-            rules={[{ required: true, message: '请输入金额' }]}
-          >
-            <InputNumber
-              min={0}
-              precision={2}
-              className="w-full min-w-[10rem]"
-              style={{ width: '100%', minWidth: '10rem' }}
-            />
-          </Form.Item>
-          {sideWatch === 'asset' && (
-            <>
-              <Form.Item
-                name="memberId"
-                label="成员"
-                rules={[{ required: true, message: '资产必须选择成员' }]}
-              >
-                <Select options={members.map(m => ({ value: m.id, label: m.name }))} />
-              </Form.Item>
-              <Form.Item
-                name="fourPot"
-                label="四笔钱"
-                rules={[{ required: true, message: '请选择四笔钱分类' }]}
-              >
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="side" label="类型" rules={[{ required: true }]}>
                 <Select
-                  allowClear
-                  options={STRUCTURE_FOUR_POTS.map(k => ({
-                    value: k,
-                    label: FOUR_POT_LABELS[k],
-                  }))}
+                  options={[
+                    { value: 'asset', label: '资产' },
+                    { value: 'liability', label: '负债' },
+                  ]}
+                  onChange={(side: LedgerSide) => {
+                    form.setFieldsValue({
+                      category: side === 'asset' ? 'cash' : 'mortgage',
+                      memberId:
+                        side === 'asset'
+                          ? members.find(m => m.role === 'self')?.id ?? null
+                          : null,
+                      fourPot: null,
+                      transferToId: undefined,
+                      transferAmount: undefined,
+                    });
+                  }}
                 />
               </Form.Item>
-            </>
-          )}
-          <Form.Item name="note" label="备注">
-            <Input.TextArea rows={2} />
-          </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="category" label="分类" rules={[{ required: true }]}>
+                <Select options={categoryOptions} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="name"
+                label="名称"
+                rules={[{ required: true, message: '请输入名称' }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="amount"
+                label="金额"
+                rules={[{ required: true, message: '请输入金额' }]}
+              >
+                <InputNumber
+                  min={0}
+                  precision={2}
+                  disabled={isTransferring}
+                  className="w-full min-w-[10rem]"
+                  style={{ width: '100%', minWidth: '10rem' }}
+                />
+              </Form.Item>
+            </Col>
+            {sideWatch === 'asset' && (
+              <>
+                <Col span={12}>
+                  <Form.Item
+                    name="memberId"
+                    label="成员"
+                    rules={[{ required: true, message: '资产必须选择成员' }]}
+                  >
+                    <Select options={members.map(m => ({ value: m.id, label: m.name }))} />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="fourPot"
+                    label="四笔钱"
+                    rules={[{ required: true, message: '请选择四笔钱分类' }]}
+                  >
+                    <Select
+                      allowClear
+                      options={STRUCTURE_FOUR_POTS.map(k => ({
+                        value: k,
+                        label: FOUR_POT_LABELS[k],
+                      }))}
+                    />
+                  </Form.Item>
+                </Col>
+              </>
+            )}
+            {editing && sideWatch === 'asset' && editing.amount > 0 && (
+              <>
+                <Col span={12}>
+                  <Form.Item
+                    name="transferToId"
+                    label="转移至"
+                    extra={transferToExtra}
+                  >
+                    <Select
+                      allowClear
+                      showSearch
+                      optionFilterProp="label"
+                      placeholder="不转移"
+                      options={transferTargetOptions}
+                      onChange={() => {
+                        form.setFieldsValue({ transferAmount: undefined });
+                      }}
+                    />
+                  </Form.Item>
+                </Col>
+                {transferToIdWatch ? (
+                  <Col span={12}>
+                    <Form.Item
+                      name="transferAmount"
+                      label="转移金额"
+                      rules={[
+                        { required: true, message: '请输入转移金额' },
+                        {
+                          validator: async (_, value: number | null | undefined) => {
+                            const n = roundMoney(value ?? 0);
+                            if (!(n > 0)) {
+                              throw new Error('转移金额必须大于 0');
+                            }
+                            if (editing && n > editing.amount) {
+                              throw new Error('转移金额不能超过当前余额');
+                            }
+                          },
+                        },
+                      ]}
+                    >
+                      <InputNumber
+                        min={0.01}
+                        max={editing.amount}
+                        precision={2}
+                        className="w-full min-w-[10rem]"
+                        style={{ width: '100%', minWidth: '10rem' }}
+                        placeholder={`最多 ${formatCny(editing.amount)}`}
+                      />
+                    </Form.Item>
+                  </Col>
+                ) : null}
+              </>
+            )}
+            <Col span={24}>
+              <Form.Item name="note" label="备注">
+                <Input.TextArea rows={2} />
+              </Form.Item>
+            </Col>
+          </Row>
         </Form>
       </Modal>
-    </div>
+      </div>
+    </FamilyAmountVisibilityProvider>
   );
 }
