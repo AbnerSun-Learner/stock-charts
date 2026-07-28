@@ -1,0 +1,57 @@
+__tests__/family-finance/ledger-amount-visibility-ui.test.ts
+  h_245285a78fca97 1-22
+__tests__/family-finance/mental-account-ui.test.ts
+  h_245285a78fca97 70-80
+docs/superpowers/plans/2026-07-28-family-ledger-amount-visibility.md
+  h_245285a78fca97 1-37
+docs/superpowers/specs/2026-07-28-family-ledger-transfer-design.md
+  h_245285a78fca97 1-66
+src/components/family/family-ledger-page.tsx
+  h_245285a78fca97 4,9,14,41,44-45,49,70-71,74-90,142-143,159-160,165-172,181,184-221,233,242-244,307,372-373,377-388,519,530-532,534-537,542-544,546-547,549-558,560-562,564,566-567,569-571,573-578,581-584,589-624,627-635,639-644,647-654,656-660,662-663,666-668,672
+  s_ef36b17e87ed97::t_34c9cf249e3d61 173,227,232,234,245,306,308,533,538-541,545,548,585-588,625-626,636-638,645-646,655,661,664-665,671
+src/lib/family-finance/ledger-transfer.ts
+  h_245285a78fca97 1-70
+src/components/family/family-asset-history-line.tsx
+  h_245285a78fca97 10-11,44-49,57,79,89,106,125
+  s_ef36b17e87ed97::t_0d030cdea1a793 43,105
+docs/superpowers/specs/2026-07-28-family-ledger-amount-visibility-design.md
+  h_245285a78fca97 1-80
+src/lib/supabase/family-finance-repository.ts
+  h_245285a78fca97 18,299-376
+  s_ef36b17e87ed97::t_52fd8f8d473b38 377-378
+__tests__/family-finance/history.test.ts
+  h_245285a78fca97 72-151
+src/components/family/family-amount-visibility.tsx
+  h_245285a78fca97 8,27
+__tests__/family-finance/ledger-transfer.test.ts
+  h_245285a78fca97 1-112
+src/app/globals.css
+  h_245285a78fca97 756,762,777,782
+src/components/family/family-asset-structure-pie.tsx
+  h_245285a78fca97 10,45-46,59,85,113
+  s_ef36b17e87ed97::t_8c84d9e28899d6 84
+src/lib/family-finance/history.ts
+  h_245285a78fca97 2,37,45-48,58-66,72-73,78-116
+  s_ef36b17e87ed97::t_91f17ca6c81f7f 36,38,67-71,74-77,117
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "08bceea54b7dae241f853ced74ac11c3b0a167ca",
+  "prompts": {},
+  "humans": {
+    "h_245285a78fca97": {
+      "author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  },
+  "sessions": {
+    "s_ef36b17e87ed97": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1ecc51a8-7e0e-4299-b97d-3c15c75f25d6",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
