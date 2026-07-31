@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 
 test.describe('网格策略', () => {
   test('默认参数可生成策略结果', async ({ page }) => {
@@ -67,8 +68,31 @@ test.describe('网格策略', () => {
     expect(hintBox!.y).toBeLessThan(tableBox!.y);
     expect(btnBox!.y).toBeLessThan(tableBox!.y);
 
-    await downloadBtn.click();
+    const visibleExpandableGroupCount = await page
+      .locator(
+        '[aria-label="网格结果表，可横向滚动"]:not([aria-hidden="true"]) .ant-table-row-expand-icon-collapsed'
+      )
+      .count();
+    expect(visibleExpandableGroupCount).toBeGreaterThan(0);
+    const downloadPromise = page.waitForEvent('download');
 
+    await downloadBtn.click();
+    await expect(
+      page.locator(
+        '[aria-hidden="true"] .grid-result-expanded-table'
+      )
+    ).toHaveCount(visibleExpandableGroupCount);
+    const download = await downloadPromise;
+    const downloadPath = await download.path();
+    expect(downloadPath).not.toBeNull();
+    const png = await readFile(downloadPath!);
+    expect([...png.subarray(0, 8)]).toEqual([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
+    expect(png.byteLength).toBeGreaterThan(1000);
+    expect(png.readUInt32BE(16)).toBeGreaterThan(0);
+    expect(png.readUInt32BE(16)).toBeLessThanOrEqual(8192);
+    expect(png.readUInt32BE(20)).toBeGreaterThan(0);
     await expect(page.getByText(/已下载 网格策略-/)).toBeVisible({
       timeout: 15_000,
     });

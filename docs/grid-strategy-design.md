@@ -510,9 +510,11 @@ lastGridPrice = round_up_to_tick(minPrice)
 流程：
 
 1. 不直接 `break`；先按上式确定 `lastGridPrice`。
-2. 若上一档买入价仍大于 `lastGridPrice`，且该价位尚未存在，追加最后一网。
-3. 最后一网生成后立即停止该层继续向下生成。
-4. 计划内不存在 `buyPrice < minPrice` 的档位；市价跌破 `minPrice` 后不再自动加码。
+2. 若当前层末档已等于 `lastGridPrice`，将该普通档替换为兜底档；否则追加兜底档。
+3. 三层价格梯全部生成后，使用 4.7 节完全相同的全局排序与固定锚点规则聚类。
+4. 只删除真实聚合组内与同层兜底档共组的普通档；删除后重新聚类，直到结果稳定。
+5. 对保留的档位按层重排 `indexInLayer`，再进入资金分配。
+6. 计划内不存在 `buyPrice < minPrice` 的档位；市价跌破 `minPrice` 后不再自动加码。
 
 触发最后一网决策的时机：
 
@@ -532,7 +534,9 @@ for each layer:
 
     const lastGridPrice = roundUpToTick(minPrice)
 
-    if lastBuyPrice > lastGridPrice and !hasPrice(lastGridPrice):
+    if currentLastBuyPrice == lastGridPrice:
+      replaceLastNormalGridWithBottomGrid()
+    else if !hasPrice(lastGridPrice):
       appendBottomGrid(lastGridPrice)
 
     break
@@ -540,8 +544,21 @@ for each layer:
   // maxGridCount 用尽且仍未触达 minPrice 时，补最后一网
   if lastBuyPrice > minPrice:
     lastGridPrice = roundUpToTick(minPrice)
-    if lastBuyPrice > lastGridPrice and !hasPrice(lastGridPrice):
+    if currentLastBuyPrice == lastGridPrice:
+      replaceLastNormalGridWithBottomGrid()
+    else if !hasPrice(lastGridPrice):
       appendBottomGrid(lastGridPrice)
+
+allRows = flatten(layerRows)
+
+repeat:
+  clusters = clusterByBuyPrice(allRows)
+  duplicates = normal rows sharing a cluster and gridType with a bottom row
+  if duplicates is empty:
+    break
+  remove duplicates from allRows
+
+reindex each layer in allRows
 ```
 
 #### 4.5.2 兜底网资金
@@ -1434,7 +1451,7 @@ leg.sellShares >= 0
 leg.reservedShares >= 0
 leg.sellShares + leg.reservedShares == leg.buyShares
 每层最后一档 buyPrice == lastGridPrice，且 lastGridPrice == round_up_to_tick(minPrice)；所有档 buyPrice >= minPrice
-最后一档 buyPrice 可以低于 minPrice（当计算价更低时）
+最低价兜底聚合组内每个网格层最多一条 leg
 dynamicGridEnabled 时同层 index >= 2 的 stepRatio 大于 index 1（首档间距仍用 initialStep）
 dynamicGridEnabled 时所有 stepRatio < 1 且 buyPrice > 0
 currentPrice <= minPrice 时 state == stopped
@@ -1462,6 +1479,7 @@ DOD：
 | --- | --- |
 | 总投入不超过总弹药 | 单测构造多组价格、步长、加码系数，断言 `totalBudgetRequired <= totalBudget` |
 | 最后一网价格规则 | 单测断言每层最后一档夹到 `minPrice`，且全部 `buyPrice >= minPrice` |
+| 同层最低价去重 | 单测覆盖单个近价档、tick 阈值主导、连续相邻 tick、`minPrice` 非 tick 对齐及跨层 anchor 场景；断言最低价组每层只保留一条腿，且不误删上一聚合组普通档 |
 | 聚合不破坏配对 | 单测断言聚合前后 `GridLeg` 数量和每条腿的卖出价不变 |
 | 成本入模 | 单测断言佣金、滑点改变净利润，且成本覆盖步长可计算 |
 | 底仓拆分 | 单测断言 `basePositionShares = sum(reservedShares)` |

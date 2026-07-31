@@ -5,6 +5,7 @@ import type {
   GridStrategyParamsV2,
   PriceLadderEntry,
 } from '@/types/grid-v2';
+import { clusterByBuyPrice } from '@/lib/grid/aggregation-threshold';
 import { roundToTick } from '@/lib/grid/trade-cost';
 
 interface LayerDefinition {
@@ -23,9 +24,10 @@ export function generateAllPriceLadders(
 ): PriceLadderEntry[] {
   const layers = buildLayerDefinitions(params);
   const maxGridCount = options.maxGridCount ?? 10;
-  return layers.flatMap(layer =>
+  const entries = layers.flatMap(layer =>
     generateLayerPriceLadder(params, options, layer, maxGridCount)
   );
+  return removeBottomClusterDuplicates(entries, params);
 }
 
 function buildLayerDefinitions(params: GridStrategyParamsV2): LayerDefinition[] {
@@ -87,7 +89,6 @@ function generateLayerPriceLadder(
         entries,
         seenPrices,
         stepRatio,
-        previousBuyPrice,
         buyPrice.price
       );
       stopped = true;
@@ -182,12 +183,28 @@ function maybeAppendBottomGrid(
   entries: PriceLadderEntry[],
   seenPrices: Set<number>,
   stepRatio: number,
-  previousBuyPrice: number,
   lastGridPrice: number
 ): void {
+  const currentLastEntry = entries[entries.length - 1];
+  if (currentLastEntry?.buyPrice === lastGridPrice) {
+    entries.pop();
+    seenPrices.delete(currentLastEntry.buyPrice);
+    appendLadderEntry(
+      entries,
+      seenPrices,
+      layer,
+      entries.length,
+      lastGridPrice,
+      stepRatio,
+      true,
+      params.priceUnit
+    );
+    return;
+  }
+
   if (
     !seenPrices.has(lastGridPrice) &&
-    (entries.length === 0 || previousBuyPrice > lastGridPrice)
+    (!currentLastEntry || currentLastEntry.buyPrice > lastGridPrice)
   ) {
     appendLadderEntry(
       entries,
@@ -219,9 +236,58 @@ function appendMaxCountBottomGrid(
     entries,
     seenPrices,
     stepRatio,
-    lastBuyPrice,
     lastGridPrice
   );
+}
+
+function removeBottomClusterDuplicates(
+  entries: PriceLadderEntry[],
+  params: GridStrategyParamsV2
+): PriceLadderEntry[] {
+  let normalized = entries;
+
+  while (true) {
+    const duplicateEntries = new Set<PriceLadderEntry>();
+    const clusters = clusterByBuyPrice(
+      normalized,
+      params.smallGridStep,
+      params.priceUnit
+    );
+
+    clusters.forEach(cluster => {
+      const bottomTypes = new Set(
+        cluster
+          .filter(entry => entry.isBottomGrid)
+          .map(entry => entry.gridType)
+      );
+      cluster.forEach(entry => {
+        if (!entry.isBottomGrid && bottomTypes.has(entry.gridType)) {
+          duplicateEntries.add(entry);
+        }
+      });
+    });
+
+    if (duplicateEntries.size === 0) {
+      return reindexLayerEntries(normalized);
+    }
+
+    normalized = normalized.filter(entry => !duplicateEntries.has(entry));
+  }
+}
+
+function reindexLayerEntries(
+  entries: PriceLadderEntry[]
+): PriceLadderEntry[] {
+  const nextIndex: Record<GridLayerType, number> = {
+    small: 0,
+    medium: 0,
+    large: 0,
+  };
+
+  return entries.map(entry => ({
+    ...entry,
+    indexInLayer: nextIndex[entry.gridType]++,
+  }));
 }
 
 function appendLadderEntry(

@@ -4,6 +4,7 @@ import type {
   GridLeg,
   GridStrategyParamsV2,
 } from '@/types/grid-v2';
+import { clusterByBuyPrice } from '@/lib/grid/aggregation-threshold';
 import { roundToTick } from '@/lib/grid/trade-cost';
 
 /**
@@ -13,47 +14,13 @@ export function aggregateGridLegs(
   legs: GridLeg[],
   params: GridStrategyParamsV2
 ): AggregatedGridRow[] {
-  if (legs.length === 0) return [];
-
-  const sorted = [...legs].sort((a, b) => b.buyPrice - a.buyPrice);
-
-  const rows: AggregatedGridRow[] = [];
-  let clusterIndex = 0;
-  let currentCluster: GridLeg[] = [sorted[0]];
-  let anchorPrice = sorted[0].buyPrice;
-
-  for (let i = 1; i < sorted.length; i += 1) {
-    const leg = sorted[i];
-    const thresholdPct = getAggregationThresholdPct(
-      params.smallGridStep,
-      params.priceUnit,
-      anchorPrice
-    );
-    const diffPct =
-      (Math.abs(leg.buyPrice - anchorPrice) / anchorPrice) * 100;
-
-    if (diffPct <= thresholdPct) {
-      currentCluster.push(leg);
-    } else {
-      rows.push(buildAggregatedRow(currentCluster, clusterIndex, params));
-      clusterIndex += 1;
-      currentCluster = [leg];
-      anchorPrice = leg.buyPrice;
-    }
-  }
-
-  rows.push(buildAggregatedRow(currentCluster, clusterIndex, params));
-  return rows;
-}
-
-function getAggregationThresholdPct(
-  smallGridStep: number,
-  priceUnit: number,
-  anchorPrice: number
-): number {
-  const tickThresholdPct =
-    anchorPrice > 0 ? (priceUnit / anchorPrice) * 100 : 0;
-  return Math.max(smallGridStep / 2, tickThresholdPct);
+  return clusterByBuyPrice(
+    legs,
+    params.smallGridStep,
+    params.priceUnit
+  ).map((cluster, clusterIndex) =>
+    buildAggregatedRow(cluster, clusterIndex, params)
+  );
 }
 
 function buildAggregatedRow(

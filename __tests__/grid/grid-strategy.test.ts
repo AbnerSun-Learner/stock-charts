@@ -113,6 +113,116 @@ describe('Phase 1 DOD: calculateGridStrategyV2', () => {
     expect(lastSmall.buyPrice).toBeGreaterThanOrEqual(params.minPrice - 0.0001);
   });
 
+  it('最低价兜底不应保留落入同一聚合组的同层普通档', () => {
+    const params = buildParams({
+      basePrice: 0.85,
+      minPrice: 0.5,
+      smallGridStep: 10,
+      mediumGridStep: 20,
+      largeGridStep: 30,
+    });
+    const ladder = generateAllPriceLadders(params, STATIC_OPTIONS);
+    const smallBuyPrices = ladder
+      .filter(entry => entry.gridType === 'small')
+      .map(entry => entry.buyPrice);
+
+    expect(smallBuyPrices).toEqual([0.85, 0.765, 0.688, 0.619, 0.557, 0.5]);
+
+    const result = calculateGridStrategyV2(params, STATIC_OPTIONS);
+    const bottomRow = result.aggregatedRows.find(
+      row => row.buyPriceLow === 0.5
+    );
+    const childLegs = result.legs.filter(leg =>
+      bottomRow?.childLegIds.includes(leg.id)
+    );
+    const layerCounts = childLegs.reduce(
+      (counts, leg) => ({
+        ...counts,
+        [leg.gridType]: counts[leg.gridType] + 1,
+      }),
+      { small: 0, medium: 0, large: 0 }
+    );
+
+    expect(layerCounts).toEqual({ small: 1, medium: 1, large: 1 });
+  });
+
+  it('tick 阈值连续压缩时最低价组仍应保持同层唯一', () => {
+    const params = buildParams({
+      basePrice: 0.11,
+      minPrice: 0.1001,
+      priceUnit: 0.001,
+      smallGridStep: 0.1,
+      mediumGridStep: 25,
+      largeGridStep: 50,
+    });
+    const result = calculateGridStrategyV2(params, {
+      ...STATIC_OPTIONS,
+      maxGridCount: 10,
+    });
+    const smallBottomPrices = result.legs
+      .filter(leg => leg.gridType === 'small' && leg.isBottomGrid)
+      .map(leg => leg.buyPrice);
+    const bottomLegIds = new Set(
+      result.legs.filter(leg => leg.isBottomGrid).map(leg => leg.id)
+    );
+    const bottomRow = result.aggregatedRows.find(row =>
+      row.childLegIds.some(id => bottomLegIds.has(id))
+    );
+    const layerCounts = result.legs
+      .filter(leg => bottomRow?.childLegIds.includes(leg.id))
+      .reduce(
+        (counts, leg) => ({
+          ...counts,
+          [leg.gridType]: counts[leg.gridType] + 1,
+        }),
+        { small: 0, medium: 0, large: 0 }
+      );
+
+    expect(smallBottomPrices).toEqual([0.101]);
+    expect(layerCounts).toEqual({ small: 1, medium: 1, large: 1 });
+  });
+
+  it('跨层锚点已将普通档分组时不应误删该档', () => {
+    const params = buildParams({
+      basePrice: 341.433,
+      minPrice: 111.084,
+      priceUnit: 0.001,
+      smallGridStep: 17,
+      mediumGridStep: 40.6,
+      largeGridStep: 62.3,
+    });
+    const options: GridStrategyOptionsV2 = {
+      dynamicGridEnabled: true,
+      dynamicGridMode: 'aggressive',
+      maxGridCount: 2,
+    };
+    const ladder = generateAllPriceLadders(params, options);
+    const mediumBuyPrices = ladder
+      .filter(entry => entry.gridType === 'medium')
+      .map(entry => entry.buyPrice);
+
+    expect(mediumBuyPrices).toEqual([202.811, 120.469, 111.084]);
+
+    const result = calculateGridStrategyV2(params, options);
+    const bottomLegIds = new Set(
+      result.legs.filter(leg => leg.isBottomGrid).map(leg => leg.id)
+    );
+    const bottomRow = result.aggregatedRows.find(row =>
+      row.childLegIds.some(id => bottomLegIds.has(id))
+    );
+    const layerCounts = result.legs
+      .filter(leg => bottomRow?.childLegIds.includes(leg.id))
+      .reduce(
+        (counts, leg) => ({
+          ...counts,
+          [leg.gridType]: counts[leg.gridType] + 1,
+        }),
+        { small: 0, medium: 0, large: 0 }
+      );
+
+    expect(layerCounts).toEqual({ small: 1, medium: 1, large: 1 });
+  });
+
   it('聚合不破坏配对：legs 数量与 sellPrice 不变', () => {
     const result = calculateGridStrategyV2(buildParams(), STATIC_OPTIONS);
     assertAggregationPreservesLegs(result);

@@ -13,11 +13,13 @@ jest.mock('modern-screenshot', () => ({
 }));
 
 const mockedDomToPng = domToPng as jest.MockedFunction<typeof domToPng>;
+const VALID_PNG_DATA_URL =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2kJ0AAAAASUVORK5CYII=';
 
 describe('export-grid-table-png', () => {
   beforeEach(() => {
     mockedDomToPng.mockReset();
-    mockedDomToPng.mockResolvedValue('data:image/png;base64,mock');
+    mockedDomToPng.mockResolvedValue(VALID_PNG_DATA_URL);
   });
 
   it('formatExportDate 应输出 YYYYMMDD', () => {
@@ -52,11 +54,40 @@ describe('export-grid-table-png', () => {
         height: 480,
       })
     );
-    expect(dataUrl).toBe('data:image/png;base64,mock');
+    expect(dataUrl).toBe(VALID_PNG_DATA_URL);
     expect(scrollContainer.style.overflow).toBe('auto');
     expect(scrollContainer.style.width).toBe('100%');
 
     outer.remove();
+  });
+
+  it('captureElementAsPngDataUrl 应限制异常宽度', async () => {
+    const element = document.createElement('div');
+    Object.defineProperty(element, 'scrollWidth', { value: 1_000_000 });
+    Object.defineProperty(element, 'scrollHeight', { value: 480 });
+
+    await captureElementAsPngDataUrl(element);
+
+    expect(mockedDomToPng).toHaveBeenCalledWith(
+      element,
+      expect.objectContaining({
+        width: 4096,
+        height: 480,
+      })
+    );
+  });
+
+  it('captureElementAsPngDataUrl 应拒绝伪 PNG Data URL', async () => {
+    mockedDomToPng.mockResolvedValueOnce(
+      'data:,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+    );
+    const element = document.createElement('div');
+    Object.defineProperty(element, 'scrollWidth', { value: 960 });
+    Object.defineProperty(element, 'scrollHeight', { value: 480 });
+
+    await expect(captureElementAsPngDataUrl(element)).rejects.toThrow(
+      '截图结果不是有效的 PNG'
+    );
   });
 
   it('downloadDataUrlPng 应触发下载链接', () => {

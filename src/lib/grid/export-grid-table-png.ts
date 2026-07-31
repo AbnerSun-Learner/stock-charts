@@ -2,6 +2,8 @@ import { domToPng } from 'modern-screenshot';
 
 export const GRID_TABLE_EXPORT_PREFIX = '网格策略-';
 export const GRID_TABLE_EXPORT_EXT = '.png';
+const MAX_CAPTURE_WIDTH = 4096;
+const PNG_DATA_URL_PREFIX = 'data:image/png;base64,iVBORw0KGgo';
 
 /** 格式化导出文件名日期部分 */
 export function formatExportDate(date: Date): string {
@@ -33,20 +35,29 @@ export async function captureElementAsPngDataUrl(
   const prevOverflow = captureTarget.style.overflow;
   const prevParentOverflow = parent?.style.overflow ?? '';
   const prevWidth = captureTarget.style.width;
+  const captureWidth = Math.min(
+    Math.max(captureTarget.scrollWidth, 1),
+    MAX_CAPTURE_WIDTH
+  );
+  const captureHeight = Math.max(captureTarget.scrollHeight, 1);
 
   captureTarget.style.overflow = 'visible';
-  captureTarget.style.width = `${captureTarget.scrollWidth}px`;
+  captureTarget.style.width = `${captureWidth}px`;
   if (parent) {
     parent.style.overflow = 'visible';
   }
 
   try {
-    return await domToPng(captureTarget, {
+    const dataUrl = await domToPng(captureTarget, {
       backgroundColor: '#ffffff',
       scale: 2,
-      width: captureTarget.scrollWidth,
-      height: captureTarget.scrollHeight,
+      width: captureWidth,
+      height: captureHeight,
     });
+    if (!dataUrl.startsWith(PNG_DATA_URL_PREFIX)) {
+      throw new Error('截图结果不是有效的 PNG');
+    }
+    return dataUrl;
   } finally {
     captureTarget.style.overflow = prevOverflow;
     captureTarget.style.width = prevWidth;

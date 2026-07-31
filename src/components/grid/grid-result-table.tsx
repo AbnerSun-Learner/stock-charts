@@ -14,7 +14,14 @@ import type { AggregatedGridRow, GridLeg } from '@/types/grid-v2';
 import { message, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { Download } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState, type RefObject } from 'react';
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type RefObject,
+} from 'react';
 import { flushSync } from 'react-dom';
 
 interface GridResultTableProps {
@@ -170,6 +177,7 @@ interface GridResultTableViewProps {
   priceDecimals: number;
   containerRef?: RefObject<HTMLDivElement>;
   containerClassName?: string;
+  containerStyle?: CSSProperties;
   ariaHidden?: boolean;
 }
 
@@ -183,11 +191,13 @@ function GridResultTableView({
   priceDecimals,
   containerRef,
   containerClassName = '',
+  containerStyle,
   ariaHidden = false,
 }: GridResultTableViewProps) {
   return (
     <div
       ref={containerRef}
+      style={containerStyle}
       aria-hidden={ariaHidden || undefined}
       className={`overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--ds-shadow-sm)] [-webkit-overflow-scrolling:touch] ${containerClassName}`}
       aria-label="网格结果表，可横向滚动"
@@ -228,10 +238,12 @@ export function GridResultTable({
   basePrice,
   priceDecimals,
 }: GridResultTableProps) {
+  const visibleTableRef = useRef<HTMLDivElement>(null);
   const exportCaptureRef = useRef<HTMLDivElement>(null);
   const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isExportSnapshotActive, setIsExportSnapshotActive] = useState(false);
+  const [exportTableWidth, setExportTableWidth] = useState(0);
   const legRowMap = useMemo(
     () => buildLegGridRowMap(legs, basePrice),
     [legs, basePrice]
@@ -406,20 +418,26 @@ export function GridResultTable({
   ];
 
   const handleDownloadPng = useCallback(async (): Promise<string> => {
-    flushSync(() => {
-      setIsExportSnapshotActive(true);
-    });
-
-    await new Promise<void>(resolve => {
-      window.setTimeout(resolve, 300);
-    });
-
-    const element = exportCaptureRef.current;
-    if (!element) {
+    const visibleTableWidth = visibleTableRef.current?.scrollWidth;
+    if (!visibleTableWidth) {
       throw new Error('导出表格未就绪');
     }
 
+    flushSync(() => {
+      setExportTableWidth(visibleTableWidth);
+      setIsExportSnapshotActive(true);
+    });
+
     try {
+      await new Promise<void>(resolve => {
+        window.setTimeout(resolve, 300);
+      });
+
+      const element = exportCaptureRef.current;
+      if (!element) {
+        throw new Error('导出表格未就绪');
+      }
+
       return await exportGridTablePng(element);
     } finally {
       setIsExportSnapshotActive(false);
@@ -466,6 +484,7 @@ export function GridResultTable({
         legRowMap={legRowMap}
         firstPositionByType={firstPositionByType}
         priceDecimals={priceDecimals}
+        containerRef={visibleTableRef}
       />
 
       {isExportSnapshotActive ? (
@@ -477,7 +496,8 @@ export function GridResultTable({
           firstPositionByType={firstPositionByType}
           priceDecimals={priceDecimals}
           containerRef={exportCaptureRef}
-          containerClassName="pointer-events-none fixed left-[-10000px] top-0 z-[-1] w-max overflow-visible shadow-none"
+          containerClassName="pointer-events-none fixed left-[-10000px] top-0 z-[-1] overflow-visible shadow-none"
+          containerStyle={{ width: exportTableWidth }}
           ariaHidden
         />
       ) : null}
