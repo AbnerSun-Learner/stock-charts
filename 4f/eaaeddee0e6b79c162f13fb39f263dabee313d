@@ -1,0 +1,27 @@
+docs/superpowers/specs/2026-08-07-vercel-deploy-bark-failure-notify-design.md
+  h_245285a78fca97 1-67
+.github/workflows/notify-bark.yml
+  h_245285a78fca97 12,21-22,32-34,36-40,43-45,51
+  s_86ef004a901349::t_e58b7779206cd2 35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "4feaaeddee0e6b79c162f13fb39f263dabee313d",
+  "prompts": {},
+  "humans": {
+    "h_245285a78fca97": {
+      "author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  },
+  "sessions": {
+    "s_86ef004a901349": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "34b09c26-b888-4f87-9547-0206d4aef63b",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
