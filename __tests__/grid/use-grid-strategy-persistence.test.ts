@@ -24,15 +24,15 @@ import type {
   SavedGridStrategyV1,
 } from '@/types/grid-strategy-storage';
 
-jest.mock('@/lib/supabase/auth', () => ({
-  getBrowserSession: jest.fn(),
+const getUserMock = jest.fn();
+
+jest.mock('@/lib/supabase/client', () => ({
+  createBrowserSupabaseClient: () => ({
+    auth: {
+      getUser: getUserMock,
+    },
+  }),
 }));
-
-import { getBrowserSession } from '@/lib/supabase/auth';
-
-const getBrowserSessionMock = getBrowserSession as jest.MockedFunction<
-  typeof getBrowserSession
->;
 
 function buildPayload(): GridStrategySavePayload {
   const validation = validateGridParams(DEFAULT_GRID_PARAMS);
@@ -96,7 +96,7 @@ describe('useGridStrategyPersistence', () => {
       rename: jest.fn(),
       delete: jest.fn(),
     };
-    getBrowserSessionMock.mockResolvedValue(null);
+    getUserMock.mockResolvedValue({ data: { user: null }, error: null });
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -136,12 +136,13 @@ describe('useGridStrategyPersistence', () => {
     expect(repository.list).not.toHaveBeenCalled();
   });
 
-  it('有 session 且存在 pending-save 时恢复并清理', async () => {
+  it('有用户且存在 pending-save 时恢复并清理', async () => {
     const payload = buildPayload();
     writePendingGridStrategySave(payload, window.sessionStorage);
-    getBrowserSessionMock.mockResolvedValue({
-      user: { id: 'user-1' } as User,
-    } as never);
+    getUserMock.mockResolvedValue({
+      data: { user: { id: 'user-1' } as User },
+      error: null,
+    });
 
     await mount();
     await act(async () => {
@@ -163,9 +164,10 @@ describe('useGridStrategyPersistence', () => {
   });
 
   it('openLibrary 有 session 时加载元数据', async () => {
-    getBrowserSessionMock.mockResolvedValue({
-      user: { id: 'user-1' } as User,
-    } as never);
+    getUserMock.mockResolvedValue({
+      data: { user: { id: 'user-1' } as User },
+      error: null,
+    });
     repository.list.mockResolvedValue([meta()]);
     await mount();
     await act(async () => {
@@ -177,9 +179,10 @@ describe('useGridStrategyPersistence', () => {
   });
 
   it('create 成功后更新 currentStrategy 与列表排序', async () => {
-    getBrowserSessionMock.mockResolvedValue({
-      user: { id: 'user-1' } as User,
-    } as never);
+    getUserMock.mockResolvedValue({
+      data: { user: { id: 'user-1' } as User },
+      error: null,
+    });
     const created: SavedGridStrategyV1 = {
       ...meta({
         id: 'strategy-2',
@@ -199,9 +202,10 @@ describe('useGridStrategyPersistence', () => {
   });
 
   it('会话失效打开登录但不触发删除回调', async () => {
-    getBrowserSessionMock.mockResolvedValue({
-      user: { id: 'user-1' } as User,
-    } as never);
+    getUserMock.mockResolvedValue({
+      data: { user: { id: 'user-1' } as User },
+      error: null,
+    });
     repository.list.mockRejectedValue(new Error('登录状态已失效，请重新登录'));
     await mount();
     await act(async () => {
@@ -213,9 +217,10 @@ describe('useGridStrategyPersistence', () => {
 
   it('有 pending-library 时自动打开抽屉', async () => {
     writePendingGridStrategyLibrary(window.sessionStorage);
-    getBrowserSessionMock.mockResolvedValue({
-      user: { id: 'user-1' } as User,
-    } as never);
+    getUserMock.mockResolvedValue({
+      data: { user: { id: 'user-1' } as User },
+      error: null,
+    });
     repository.list.mockResolvedValue([meta()]);
     await mount();
     await act(async () => {

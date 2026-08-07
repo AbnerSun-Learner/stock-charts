@@ -35,11 +35,8 @@ const GRID_PARAM_NUMBER_KEYS = [
   'slippageTicks',
 ] as const satisfies ReadonlyArray<keyof GridParams>;
 
-const BUDGET_MODES: ReadonlySet<GridBudgetMode> = new Set(['auto', 'manual']);
-const DYNAMIC_MODES: ReadonlySet<'stable' | 'aggressive'> = new Set([
-  'stable',
-  'aggressive',
-]);
+const BUDGET_MODES = new Set<GridBudgetMode>(['auto', 'manual']);
+const DYNAMIC_MODES = new Set<'stable' | 'aggressive'>(['stable', 'aggressive']);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -146,7 +143,7 @@ function parseSnapshot(value: unknown): GridStrategySnapshotV1 {
   }
   return {
     gridData: value.gridData as GridRow[],
-    stressTest: value.stressTest as StressTest,
+    stressTest: value.stressTest as unknown as StressTest,
     legs: value.legs as GridLeg[],
     aggregatedRows: value.aggregatedRows as AggregatedGridRow[],
     amountPerGrid: assertFiniteNumber(value.amountPerGrid),

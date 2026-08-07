@@ -325,3 +325,102 @@
     transition: none;
   }
 }
+
+.grid-shell .grid-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.grid-shell .grid-summary-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.grid-shell .grid-summary-bar__save,
+.grid-shell .grid-summary-bar__actions .ant-btn {
+  min-height: 44px;
+}
+
+.grid-shell .grid-summary-bar__reason {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  max-width: 14rem;
+}
+
+.grid-shell .grid-strategy-library__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.grid-shell .grid-strategy-library__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-compact);
+  background: var(--card);
+}
+
+.grid-shell .grid-strategy-library__item--current {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 6%, var(--card));
+}
+
+.grid-shell .grid-strategy-library__main {
+  min-width: 0;
+  flex: 1;
+}
+
+.grid-shell .grid-strategy-library__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.grid-shell .grid-strategy-library__name {
+  font-weight: 600;
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grid-shell .grid-strategy-library__badge {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.grid-shell .grid-strategy-library__time {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.grid-shell .grid-strategy-library__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.grid-shell .grid-strategy-library__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 12rem;
+}

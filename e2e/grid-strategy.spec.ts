@@ -146,4 +146,26 @@ test.describe('网格策略', () => {
     await expect(errorAlert).toContainText('最低价必须小于基准价');
     await expect(page.getByRole('button', { name: '生成策略' })).toBeDisabled();
   });
+
+  test('未登录保存与我的策略弹出网格登录弹窗', async ({ page }) => {
+    await page.goto('/view/grid');
+    await expect(page.getByRole('button', { name: '我的策略' })).toBeVisible();
+
+    await page.getByRole('button', { name: '我的策略' }).click();
+    const libraryLogin = page.getByRole('dialog', { name: '登录以查看我的策略' });
+    await expect(libraryLogin).toBeVisible();
+    await expect(page.getByText(/家庭账号|已授权/)).toHaveCount(0);
+    await libraryLogin.getByRole('button', { name: 'Close' }).click();
+    await expect(libraryLogin).toBeHidden();
+
+    await page.getByRole('button', { name: '生成策略' }).click();
+    await expect(page.getByRole('button', { name: '保存策略' })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole('button', { name: '保存策略' })).toBeEnabled();
+    await page.getByRole('button', { name: '保存策略' }).click();
+    const saveLogin = page.getByRole('dialog', { name: '登录以保存网格策略' });
+    await expect(saveLogin).toBeVisible();
+    await expect(page.getByText(/家庭账号|已授权/)).toHaveCount(0);
+  });
 });

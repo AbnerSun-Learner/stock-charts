@@ -6,6 +6,7 @@ import {
   type SavedGridStrategyV1,
 } from '@/types/grid-strategy-storage';
 import {
+  assertSuccessfulGridSnapshot,
   normalizeGridStrategyName,
   parseGridStrategyMetadata,
   parseSavedGridStrategy,
@@ -18,7 +19,7 @@ function mapPostgrestError(error: { code?: string; message: string }): Error {
   if (error.code === '42501') {
     return new Error('没有权限访问该策略');
   }
-  return new Error(error.message);
+  return new Error('操作失败，请稍后重试');
 }
 
 /**
@@ -70,6 +71,7 @@ export class GridStrategyRepository {
   ): Promise<SavedGridStrategyV1> {
     const userId = await this.requireUserId();
     const normalizedName = normalizeGridStrategyName(name);
+    assertSuccessfulGridSnapshot(payload.resultSnapshot);
     const { data, error } = await this.client
       .from('grid_strategies')
       .insert({
@@ -83,7 +85,7 @@ export class GridStrategyRepository {
       .single();
 
     if (error) throw mapPostgrestError(error);
-    if (!data) throw new Error('策略不存在或无权访问');
+    if (!data) throw new Error('保存失败，请重试');
     return parseSavedGridStrategy(data);
   }
 
@@ -93,6 +95,7 @@ export class GridStrategyRepository {
     payload: GridStrategySavePayload
   ): Promise<SavedGridStrategyV1> {
     const userId = await this.requireUserId();
+    assertSuccessfulGridSnapshot(payload.resultSnapshot);
     const updatedAt = new Date().toISOString();
     const { data, error } = await this.client
       .from('grid_strategies')

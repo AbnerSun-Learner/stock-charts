@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
-import { getBrowserSession } from '@/lib/supabase/auth';
 import { GridStrategyRepository } from '@/lib/supabase/grid-strategy-repository';
 import type {
   GridStrategyMetadata,
@@ -120,9 +119,10 @@ export function useGridStrategyPersistence(
     let cancelled = false;
     (async () => {
       try {
-        const session = await getBrowserSession();
+        const client = createBrowserSupabaseClient();
+        const { data, error } = await client.auth.getUser();
         if (cancelled) return;
-        const nextUser = session?.user ?? null;
+        const nextUser = !error && data.user ? data.user : null;
         setUser(nextUser);
 
         const storage = getSessionStorage();
@@ -132,14 +132,29 @@ export function useGridStrategyPersistence(
         if (nextUser) {
           const pendingSave = readPendingGridStrategySave(storage);
           if (pendingSave) {
-            clearPendingGridStrategySave(storage);
             onRestorePendingSave(pendingSave);
+            clearAllGridStrategyPendingIntents(storage);
             return;
           }
           if (readPendingGridStrategyLibrary(storage)) {
             setLibraryOpen(true);
-            await refreshList();
-            clearPendingGridStrategyLibrary(storage);
+            try {
+              const rows = await repo.list();
+              if (!cancelled) {
+                setStrategies(rows);
+                clearPendingGridStrategyLibrary(storage);
+              }
+            } catch (listError) {
+              if (!cancelled) {
+                if (!handleAuthError(listError)) {
+                  setListError(
+                    listError instanceof Error
+                      ? listError.message
+                      : '加载策略列表失败'
+                  );
+                }
+              }
+            }
           }
         }
       } finally {
@@ -149,7 +164,7 @@ export function useGridStrategyPersistence(
     return () => {
       cancelled = true;
     };
-  }, [onRestorePendingSave, refreshList]);
+  }, [handleAuthError, onRestorePendingSave, repo]);
 
   const openLibrary = useCallback(async () => {
     const storage = getSessionStorage();
@@ -210,9 +225,16 @@ export function useGridStrategyPersistence(
           updatedAt: created.updatedAt,
         };
         setCurrentStrategy(meta);
-        setStrategies(prev => sortByUpdatedAtDesc([meta, ...prev.filter(s => s.id !== meta.id)]));
+        setStrategies(prev =>
+          sortByUpdatedAtDesc([meta, ...prev.filter(s => s.id !== meta.id)])
+        );
+        const storage = getSessionStorage();
+        if (storage) clearPendingGridStrategySave(storage);
       } catch (error) {
-        handleAuthError(error);
+        if (handleAuthError(error)) {
+          const storage = getSessionStorage();
+          if (storage) writePendingGridStrategySave(payload, storage);
+        }
         throw error;
       } finally {
         setWriteLoading(false);
@@ -241,7 +263,10 @@ export function useGridStrategyPersistence(
           sortByUpdatedAtDesc([meta, ...prev.filter(s => s.id !== meta.id)])
         );
       } catch (error) {
-        handleAuthError(error);
+        if (handleAuthError(error)) {
+          const storage = getSessionStorage();
+          if (storage) writePendingGridStrategySave(payload, storage);
+        }
         throw error;
       } finally {
         setWriteLoading(false);

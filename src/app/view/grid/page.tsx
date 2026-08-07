@@ -1,40 +1,69 @@
 'use client';
 
+import { LoginModal } from '@/components/auth/login-modal';
+import { UserMenu } from '@/components/auth/user-menu';
 import { ErrorAlert } from '@/components/grid/error-alert';
 import { GridAntdProvider } from '@/components/grid/grid-antd-provider';
 import { GridParamsPanel } from '@/components/grid/grid-params-panel';
 import { GridParamsSummaryBar } from '@/components/grid/grid-params-summary-bar';
 import { GridPrimaryKpiRow } from '@/components/grid/grid-primary-kpi-row';
 import { GridResultTable } from '@/components/grid/grid-result-table';
+import { GridStrategyLibraryDrawer } from '@/components/grid/grid-strategy-library-drawer';
+import { GridStrategyNameModal } from '@/components/grid/grid-strategy-name-modal';
 import { LazyStrategyComparisonChart } from '@/components/grid/lazy-strategy-comparison-chart';
 import { StatsCards } from '@/components/grid/stats-cards';
 import { useGridCalculator } from '@/hooks/use-grid-calculator';
 import { useGridParams } from '@/hooks/use-grid-params';
-import { DEFAULT_GRID_PARAMS, type GridRow, type StressTest } from '@/types/grid';
-import type { AggregatedGridRow, GridLeg, GridStrategyState, StrategyWarning } from '@/types/grid-v2';
-import { Button, Drawer, Grid, message } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { useGridStrategyPersistence } from '@/hooks/use-grid-strategy-persistence';
+import type { GridRunResult } from '@/lib/grid-run-calculation';
+import {
+  getGridStrategySaveState,
+  hasDiscardableGridChanges,
+  isDraftConfigDirty,
+} from '@/lib/grid/grid-strategy-workflow';
+import { DEFAULT_GRID_PARAMS } from '@/types/grid';
+import type {
+  GridStrategyConfigV1,
+  GridStrategyMetadata,
+  GridStrategySavePayload,
+  SavedGridStrategyV1,
+} from '@/types/grid-strategy-storage';
+import { App, Button, Drawer, Grid, message } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 /**
- * 网格交易策略页（Coinbase 双态布局：idle 配参 / result 全宽结果）。
+ * 网格交易策略页（Coinbase 双态布局 + 云端保存）。
  */
 export default function GridStrategyPage() {
-  const [gridData, setGridData] = useState<GridRow[]>([]);
-  const [stressTest, setStressTest] = useState<StressTest | null>(null);
-  const [aggregatedRows, setAggregatedRows] = useState<AggregatedGridRow[]>([]);
-  const [legs, setLegs] = useState<GridLeg[]>([]);
-  const [amountPerGrid, setAmountPerGrid] = useState<number>(0);
-  const [warnings, setWarnings] = useState<StrategyWarning[]>([]);
-  const [calculationErrors, setCalculationErrors] = useState<string[]>([]);
-  const [strategyState, setStrategyState] = useState<GridStrategyState | null>(
-    null
+  return (
+    <div className="relative overflow-x-hidden text-[var(--foreground)]">
+      <GridAntdProvider>
+        <GridStrategyPageInner />
+      </GridAntdProvider>
+    </div>
   );
+}
+
+function GridStrategyPageInner() {
+  const { modal } = App.useApp();
+  const [result, setResult] = useState<GridRunResult | null>(null);
+  const [generatedConfig, setGeneratedConfig] =
+    useState<GridStrategyConfigV1 | null>(null);
+  const [generatedDirty, setGeneratedDirty] = useState(false);
   const [dynamicGridEnabled, setDynamicGridEnabled] = useState(false);
   const [dynamicGridMode, setDynamicGridMode] = useState<
     'stable' | 'aggressive'
   >('stable');
   const [paramsDrawerOpen, setParamsDrawerOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [nameModalOpen, setNameModalOpen] = useState(false);
+  const [nameModalMode, setNameModalMode] = useState<'create' | 'rename'>(
+    'create'
+  );
+  const [renameTarget, setRenameTarget] = useState<GridStrategyMetadata | null>(
+    null
+  );
+  const [nameModalError, setNameModalError] = useState<string | null>(null);
   const shellRef = useRef<HTMLElement | null>(null);
 
   const screens = Grid.useBreakpoint();
@@ -47,8 +76,15 @@ export default function GridStrategyPage() {
     shellRef.current = document.querySelector('.grid-shell');
   }, []);
 
-  const { params, updateParam, updateBudgetMode, validateParams, errors, priceDecimals } =
-    useGridParams(DEFAULT_GRID_PARAMS);
+  const {
+    params,
+    updateParam,
+    updateBudgetMode,
+    replaceParams,
+    validateParams,
+    errors,
+    priceDecimals,
+  } = useGridParams(DEFAULT_GRID_PARAMS);
 
   const { calculateGrid } = useGridCalculator({
     params,
@@ -57,10 +93,90 @@ export default function GridStrategyPage() {
     dynamicGridMode,
   });
 
+  const draftConfig: GridStrategyConfigV1 = useMemo(
+    () => ({
+      params,
+      dynamicGridEnabled,
+      dynamicGridMode,
+    }),
+    [params, dynamicGridEnabled, dynamicGridMode]
+  );
+
+  const draftDirty = isDraftConfigDirty(draftConfig, generatedConfig);
+
+  const applyOpenedStrategy = useCallback(
+    (strategy: SavedGridStrategyV1) => {
+      replaceParams(strategy.config.params);
+      setDynamicGridEnabled(strategy.config.dynamicGridEnabled);
+      setDynamicGridMode(strategy.config.dynamicGridMode);
+      setGeneratedConfig(strategy.config);
+      setResult(strategy.resultSnapshot);
+      setGeneratedDirty(false);
+      setParamsDrawerOpen(false);
+    },
+    [replaceParams]
+  );
+
+  const persistence = useGridStrategyPersistence({
+    onOpenStrategy: applyOpenedStrategy,
+    onRestorePendingSave: (payload: GridStrategySavePayload) => {
+      replaceParams(payload.config.params);
+      setDynamicGridEnabled(payload.config.dynamicGridEnabled);
+      setDynamicGridMode(payload.config.dynamicGridMode);
+      setGeneratedConfig(payload.config);
+      setResult(payload.resultSnapshot);
+      setGeneratedDirty(true);
+      setNameModalMode('create');
+      setRenameTarget(null);
+      setNameModalError(null);
+      setNameModalOpen(true);
+      message.success('已恢复待保存策略，请命名后保存');
+    },
+    onDeleteCurrentStrategy: () => {
+      setGeneratedDirty(true);
+    },
+  });
+
   const hasResult =
-    gridData.length > 0 &&
-    stressTest !== null &&
-    calculationErrors.length === 0;
+    result !== null &&
+    result.gridData.length > 0 &&
+    result.stressTest !== null &&
+    result.calculationErrors.length === 0;
+
+  const saveState = getGridStrategySaveState({
+    hasResult,
+    hasCloudId: persistence.currentStrategy !== null,
+    draftDirty,
+    generatedDirty,
+  });
+
+  const buildSavePayload = (): GridStrategySavePayload | null => {
+    if (!generatedConfig || !result || !hasResult) return null;
+    return {
+      config: generatedConfig,
+      resultSnapshot: result,
+    };
+  };
+
+  const confirmDiscardIfNeeded = (onConfirm: () => void) => {
+    const discardable = hasDiscardableGridChanges({
+      hasResult,
+      hasCloudId: persistence.currentStrategy !== null,
+      draftDirty,
+      generatedDirty,
+    });
+    if (!discardable) {
+      onConfirm();
+      return;
+    }
+    modal.confirm({
+      title: '放弃未保存的更改？',
+      content: '当前有未保存的结果或尚未重新生成的参数修改，打开其他策略将覆盖当前页面。',
+      okText: '放弃并打开',
+      cancelText: '取消',
+      onOk: onConfirm,
+    });
+  };
 
   const applyCalculationResult = () => {
     const validation = validateParams();
@@ -69,22 +185,21 @@ export default function GridStrategyPage() {
       return false;
     }
 
-    const result = calculateGrid();
+    const next = calculateGrid();
 
-    setGridData(result.gridData);
-    setStressTest(result.stressTest);
-    setAggregatedRows(result.aggregatedRows);
-    setLegs(result.legs);
-    setAmountPerGrid(result.amountPerGrid);
-    setWarnings(result.warnings);
-    setCalculationErrors(result.calculationErrors);
-    setStrategyState(result.state);
-
-    if (result.calculationErrors.length > 0) {
-      message.error(result.calculationErrors[0]);
+    if (next.calculationErrors.length > 0) {
+      setResult(next);
+      message.error(next.calculationErrors[0]);
       return false;
     }
 
+    setResult(next);
+    setGeneratedConfig({
+      params: { ...params },
+      dynamicGridEnabled,
+      dynamicGridMode,
+    });
+    setGeneratedDirty(true);
     message.success('策略已生成');
     return true;
   };
@@ -109,6 +224,96 @@ export default function GridStrategyPage() {
           .getElementById('grid-primary-kpis')
           ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
+    }
+  };
+
+  const handleSaveClick = () => {
+    if (saveState.disabled) return;
+    const payload = buildSavePayload();
+    if (!payload) return;
+
+    if (persistence.currentStrategy) {
+      void (async () => {
+        try {
+          await persistence.updateCurrentStrategy(payload);
+          setGeneratedDirty(false);
+          message.success('策略已更新');
+        } catch (error) {
+          message.error(error instanceof Error ? error.message : '更新失败');
+        }
+      })();
+      return;
+    }
+
+    if (persistence.requireLoginForSave(payload)) return;
+
+    setNameModalMode('create');
+    setRenameTarget(null);
+    setNameModalError(null);
+    setNameModalOpen(true);
+  };
+
+  const handleNameSubmit = async (name: string) => {
+    setNameModalError(null);
+    try {
+      if (nameModalMode === 'rename' && renameTarget) {
+        await persistence.renameStrategy(renameTarget.id, name);
+        message.success('已重命名');
+        setNameModalOpen(false);
+        return;
+      }
+      const payload = buildSavePayload();
+      if (!payload) {
+        setNameModalError('当前没有可保存的结果');
+        return;
+      }
+      await persistence.createStrategy(name, payload);
+      setGeneratedDirty(false);
+      setNameModalOpen(false);
+      message.success('策略已保存');
+    } catch (error) {
+      setNameModalError(error instanceof Error ? error.message : '保存失败');
+    }
+  };
+
+  const handleOpenStrategy = (id: string) => {
+    confirmDiscardIfNeeded(() => {
+      void persistence.openStrategy(id).catch(error => {
+        message.error(error instanceof Error ? error.message : '打开失败');
+      });
+    });
+  };
+
+  const handleDeleteStrategy = (strategy: GridStrategyMetadata) => {
+    modal.confirm({
+      title: '删除该策略？',
+      content: '只删除该保存记录，不影响其他策略。删除后可在当前页重新保存。',
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          await persistence.deleteStrategy(strategy.id);
+          message.success('已删除');
+        } catch (error) {
+          message.error(error instanceof Error ? error.message : '删除失败');
+          throw error;
+        }
+      },
+    });
+  };
+
+  const handleSignedOut = () => {
+    const wasCloud = persistence.currentStrategy !== null;
+    persistence.handleSignedOut();
+    if (wasCloud) {
+      replaceParams(DEFAULT_GRID_PARAMS);
+      setDynamicGridEnabled(false);
+      setDynamicGridMode('stable');
+      setResult(null);
+      setGeneratedConfig(null);
+      setGeneratedDirty(false);
+      setParamsDrawerOpen(false);
     }
   };
 
@@ -184,6 +389,16 @@ export default function GridStrategyPage() {
     </div>
   );
 
+  const summaryParams = generatedConfig?.params ?? params;
+  const calculationErrors = result?.calculationErrors ?? [];
+  const warnings = result?.warnings ?? [];
+  const strategyState = result?.state ?? null;
+  const stressTest = result?.stressTest ?? null;
+  const gridData = result?.gridData ?? [];
+  const aggregatedRows = result?.aggregatedRows ?? [];
+  const legs = result?.legs ?? [];
+  const amountPerGrid = result?.amountPerGrid ?? 0;
+
   const statusBlocks = (
     <>
       {warnings.length > 0 && hasResult && (
@@ -216,157 +431,229 @@ export default function GridStrategyPage() {
     </>
   );
 
+  const loginTitle =
+    persistence.loginPurpose === 'library'
+      ? '登录以查看我的策略'
+      : '登录以保存网格策略';
+  const loginDescription =
+    '使用 GitHub 账号登录后即可保存和管理网格策略。任意已登录 GitHub 账号均可使用，不限家庭白名单。';
+
   return (
-    <div className="relative overflow-x-hidden text-[var(--foreground)]">
-      <GridAntdProvider>
-        <div className="relative">
-          <div className="site-container site-container--grid py-6 sm:py-8">
-            <header className="mb-6 sm:mb-8">
-              <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--foreground)] sm:text-3xl">
-                网格交易策略
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm text-[var(--muted-foreground)]">
-                配置价格边界与弹药，生成档位并查看资金压力与收益推演
-              </p>
-            </header>
-
-            {!hasResult ? (
-              <>
-                <ErrorAlert errors={errors} />
-                <ErrorAlert
-                  errors={calculationErrors}
-                  title="策略生成失败"
-                />
-
-                <div className="grid grid-cols-12 gap-4 sm:gap-8 xl:gap-10">
-                  <div className="col-span-12 xl:col-span-4">
-                    <GridParamsPanel
-                      {...paramsPanelProps}
-                      footer={generateFooter}
-                    />
-                  </div>
-
-                  <div className="col-span-12 xl:col-span-8">
-                    <div className="flex min-h-[320px] items-center justify-center rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card)] px-4 sm:min-h-[480px] sm:px-6 lg:min-h-[520px]">
-                      <div className="max-w-sm text-center">
-                        <p className="mb-2 text-sm font-medium text-[var(--foreground)]">
-                          {calculationErrors.length > 0
-                            ? '未能生成有效档位'
-                            : '尚无计算结果'}
-                        </p>
-                        <p className="text-[13px] leading-relaxed text-[var(--muted-foreground)]">
-                          {calculationErrors.length > 0
-                            ? calculationErrors[0]
-                            : '完成左侧参数配置后点击「生成策略」，策略优势推演与明细表格将在此呈现'}
-                        </p>
-                        {calculationErrors.length > 0 ? (
-                          <button
-                            type="button"
-                            className="mt-4 text-sm font-semibold text-[var(--accent)]"
-                            onClick={() => setCalculationErrors([])}
-                          >
-                            返回修改
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <GridParamsSummaryBar
-                  basePrice={params.basePrice}
-                  minPrice={params.minPrice}
-                  totalBudget={params.totalBudget}
-                  amountPerGrid={params.amountPerGrid}
-                  budgetMode={params.budgetMode}
-                  gridCount={gridData.length}
-                  priceDecimals={priceDecimals}
-                  onEdit={() => setParamsDrawerOpen(true)}
-                />
-
-                {statusBlocks}
-
-                <div className="space-y-8">
-                  <GridPrimaryKpiRow stressTest={stressTest} />
-
-                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-12 xl:gap-8">
-                    <div className="grid-card flex h-full flex-col p-4 sm:p-6 md:p-8 xl:col-span-7">
-                      <LazyStrategyComparisonChart
-                        gridData={gridData}
-                        basePrice={params.basePrice}
-                        priceDecimals={priceDecimals}
-                      />
-                    </div>
-
-                    <div className="grid-card h-full p-4 sm:p-6 md:p-8 xl:col-span-5">
-                      <div className="mb-5 border-b border-[var(--border)] pb-4">
-                        <h3 className="ds-section-title">资金与收益明细</h3>
-                        <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                          资金压力、滚动收益与底仓
-                        </p>
-                      </div>
-                      <StatsCards
-                        stressTest={stressTest}
-                        amountPerGrid={
-                          params.budgetMode === 'auto' ? amountPerGrid : undefined
-                        }
-                        omitPrimary
-                        compact
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid-card p-4 sm:p-6 md:p-8">
-                    <div className="mb-6 border-b border-[var(--border)] pb-4 sm:mb-8 sm:pb-6">
-                      <h3 className="ds-section-title text-lg">
-                        网格计算结果
-                      </h3>
-                      <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                        共 {gridData.length} 个网格档位 ·{' '}
-                        {aggregatedRows.length} 个聚合组
-                      </p>
-                    </div>
-
-                    <div className="overflow-x-auto">
-                      <GridResultTable
-                        aggregatedRows={aggregatedRows}
-                        legs={legs}
-                        basePrice={params.basePrice}
-                        priceDecimals={priceDecimals}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Drawer
-                  title="修改参数"
-                  open={paramsDrawerOpen}
-                  onClose={() => setParamsDrawerOpen(false)}
-                  placement={isMobile ? 'bottom' : 'right'}
-                  width={isMobile ? undefined : 420}
-                  height={isMobile ? '90%' : undefined}
-                  destroyOnHidden={false}
-                  // 挂到 .grid-shell，继承页面 token / InputNumber 等作用域样式
-                  getContainer={() => shellRef.current ?? document.body}
-                  rootClassName="grid-params-drawer"
-                  styles={{
-                    body: { padding: 16 },
-                  }}
-                >
-                  <ErrorAlert errors={errors} />
-                  <GridParamsPanel
-                    {...paramsPanelProps}
-                    embedded
-                    footer={regenerateFooter}
-                  />
-                </Drawer>
-              </>
-            )}
+    <div className="relative">
+      <div className="site-container site-container--grid py-6 sm:py-8">
+        <header className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--foreground)] sm:text-3xl">
+              网格交易策略
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm text-[var(--muted-foreground)]">
+              配置价格边界与弹药，生成档位并查看资金压力与收益推演
+              {persistence.currentStrategy ? (
+                <>
+                  {' · '}
+                  <span className="text-[var(--foreground)]">
+                    {persistence.currentStrategy.name}
+                  </span>
+                </>
+              ) : null}
+            </p>
           </div>
-        </div>
-      </GridAntdProvider>
+          <div className="grid-header-actions">
+            <Button
+              shape="round"
+              onClick={() => void persistence.openLibrary()}
+            >
+              我的策略
+            </Button>
+            {persistence.user ? (
+              <UserMenu
+                user={persistence.user}
+                onSignedOut={handleSignedOut}
+              />
+            ) : null}
+          </div>
+        </header>
+
+        {!hasResult ? (
+          <>
+            <ErrorAlert errors={errors} />
+            <ErrorAlert errors={calculationErrors} title="策略生成失败" />
+
+            <div className="grid grid-cols-12 gap-4 sm:gap-8 xl:gap-10">
+              <div className="col-span-12 xl:col-span-4">
+                <GridParamsPanel
+                  {...paramsPanelProps}
+                  footer={generateFooter}
+                />
+              </div>
+
+              <div className="col-span-12 xl:col-span-8">
+                <div className="flex min-h-[320px] items-center justify-center rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--card)] px-4 sm:min-h-[480px] sm:px-6 lg:min-h-[520px]">
+                  <div className="max-w-sm text-center">
+                    <p className="mb-2 text-sm font-medium text-[var(--foreground)]">
+                      {calculationErrors.length > 0
+                        ? '未能生成有效档位'
+                        : '尚无计算结果'}
+                    </p>
+                    <p className="text-[13px] leading-relaxed text-[var(--muted-foreground)]">
+                      {calculationErrors.length > 0
+                        ? calculationErrors[0]
+                        : '完成左侧参数配置后点击「生成策略」，策略优势推演与明细表格将在此呈现'}
+                    </p>
+                    {calculationErrors.length > 0 ? (
+                      <button
+                        type="button"
+                        className="mt-4 text-sm font-semibold text-[var(--accent)]"
+                        onClick={() => setResult(null)}
+                      >
+                        返回修改
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <GridParamsSummaryBar
+              basePrice={summaryParams.basePrice}
+              minPrice={summaryParams.minPrice}
+              totalBudget={summaryParams.totalBudget}
+              amountPerGrid={summaryParams.amountPerGrid}
+              budgetMode={summaryParams.budgetMode}
+              gridCount={gridData.length}
+              priceDecimals={priceDecimals}
+              onEdit={() => setParamsDrawerOpen(true)}
+              saveLabel={saveState.label}
+              saveDisabled={saveState.disabled}
+              saveLoading={persistence.writeLoading}
+              saveReason={saveState.reason}
+              onSave={handleSaveClick}
+            />
+
+            {statusBlocks}
+
+            <div className="space-y-8">
+              {stressTest ? <GridPrimaryKpiRow stressTest={stressTest} /> : null}
+
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-12 xl:gap-8">
+                <div className="grid-card flex h-full flex-col p-4 sm:p-6 md:p-8 xl:col-span-7">
+                  <LazyStrategyComparisonChart
+                    gridData={gridData}
+                    basePrice={summaryParams.basePrice}
+                    priceDecimals={priceDecimals}
+                  />
+                </div>
+
+                <div className="grid-card h-full p-4 sm:p-6 md:p-8 xl:col-span-5">
+                  <div className="mb-5 border-b border-[var(--border)] pb-4">
+                    <h3 className="ds-section-title">资金与收益明细</h3>
+                    <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                      资金压力、滚动收益与底仓
+                    </p>
+                  </div>
+                  {stressTest ? (
+                    <StatsCards
+                      stressTest={stressTest}
+                      amountPerGrid={
+                        summaryParams.budgetMode === 'auto'
+                          ? amountPerGrid
+                          : undefined
+                      }
+                      omitPrimary
+                      compact
+                    />
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="grid-card p-4 sm:p-6 md:p-8">
+                <div className="mb-6 border-b border-[var(--border)] pb-4 sm:mb-8 sm:pb-6">
+                  <h3 className="ds-section-title text-lg">网格计算结果</h3>
+                  <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                    共 {gridData.length} 个网格档位 · {aggregatedRows.length}{' '}
+                    个聚合组
+                  </p>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <GridResultTable
+                    aggregatedRows={aggregatedRows}
+                    legs={legs}
+                    basePrice={summaryParams.basePrice}
+                    priceDecimals={priceDecimals}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Drawer
+              title="修改参数"
+              open={paramsDrawerOpen}
+              onClose={() => setParamsDrawerOpen(false)}
+              placement={isMobile ? 'bottom' : 'right'}
+              width={isMobile ? undefined : 420}
+              height={isMobile ? '90%' : undefined}
+              destroyOnHidden={false}
+              getContainer={() => shellRef.current ?? document.body}
+              rootClassName="grid-params-drawer"
+              styles={{
+                body: { padding: 16 },
+              }}
+            >
+              <ErrorAlert errors={errors} />
+              <GridParamsPanel
+                {...paramsPanelProps}
+                embedded
+                footer={regenerateFooter}
+              />
+            </Drawer>
+          </>
+        )}
+      </div>
+
+      <LoginModal
+        open={persistence.loginOpen}
+        onClose={() => persistence.setLoginOpen(false)}
+        redirectTo="/view/grid"
+        title={loginTitle}
+        description={loginDescription}
+      />
+
+      <GridStrategyLibraryDrawer
+        open={persistence.libraryOpen}
+        strategies={persistence.strategies}
+        currentStrategyId={persistence.currentStrategy?.id ?? null}
+        loading={persistence.listLoading}
+        error={persistence.listError}
+        actionId={persistence.actionId}
+        isMobile={isMobile}
+        onClose={persistence.closeLibrary}
+        onRetry={() => void persistence.openLibrary()}
+        onOpenStrategy={handleOpenStrategy}
+        onRenameStrategy={strategy => {
+          setNameModalMode('rename');
+          setRenameTarget(strategy);
+          setNameModalError(null);
+          setNameModalOpen(true);
+        }}
+        onDeleteStrategy={handleDeleteStrategy}
+      />
+
+      <GridStrategyNameModal
+        open={nameModalOpen}
+        mode={nameModalMode}
+        initialName={
+          nameModalMode === 'rename' ? renameTarget?.name : undefined
+        }
+        loading={persistence.writeLoading}
+        error={nameModalError}
+        onCancel={() => {
+          if (!persistence.writeLoading) setNameModalOpen(false);
+        }}
+        onSubmit={handleNameSubmit}
+      />
     </div>
   );
 }
