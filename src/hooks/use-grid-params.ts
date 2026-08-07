@@ -7,6 +7,8 @@ interface UseGridParamsReturn {
   params: GridParams;
   updateParam: (key: keyof GridParams, value: number | null) => void;
   updateBudgetMode: (mode: GridBudgetMode) => void;
+  /** 整体替换参数（加载云端策略） */
+  replaceParams: (next: GridParams) => void;
   validateParams: () => { isValid: boolean; errors: string[] };
   errors: string[];
   priceDecimals: number;
@@ -36,10 +38,15 @@ export function useGridParams(initialParams: GridParams): UseGridParamsReturn {
     setParams(prev => ({ ...prev, budgetMode: mode }));
   }, []);
 
+  const replaceParams = useCallback((next: GridParams) => {
+    setParams(next);
+  }, []);
+
   return {
     params,
     updateParam,
     updateBudgetMode,
+    replaceParams,
     validateParams,
     errors,
     priceDecimals,
