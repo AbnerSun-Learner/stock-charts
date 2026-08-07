@@ -1,0 +1,23 @@
+__tests__/grid/grid-strategy-storage.test.ts
+  s_e46d264967b9d5::t_838110df32b3f5 1-161
+src/lib/grid/grid-strategy-storage.ts
+  s_e46d264967b9d5::t_43f53d7689c1f9 1-199
+src/types/grid-strategy-storage.ts
+  s_e46d264967b9d5::t_fbd580c782b470 1-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "554d08f1c38d575da801ab0c6093abb378865b54",
+  "prompts": {},
+  "sessions": {
+    "s_e46d264967b9d5": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "b395ce73-ae6e-43c9-bf8c-7d35e3b4ce03",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
