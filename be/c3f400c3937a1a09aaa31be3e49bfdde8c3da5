@@ -1,0 +1,39 @@
+__tests__/grid/use-grid-strategy-persistence.test.ts
+  s_e46d264967b9d5::t_68b5f7de3f76d1 27,29-35,99,139,142-145,167-170,182-185,205-208,220-223
+e2e/grid-strategy-authenticated.spec.ts
+  s_e46d264967b9d5::t_0a67cd2f75275e 1-77
+e2e/grid-strategy.spec.ts
+  s_e46d264967b9d5::t_0d977964c3ca78 149-170
+src/app/view/grid/grid.css
+  s_e46d264967b9d5::t_87058ccec6fb28 328-426
+src/app/view/grid/page.tsx
+  s_e46d264967b9d5::t_acebec0fff3a5c 3-4,11-12,17-32,35,38-43,45-52,59-66,79-87,96-139,141-179,188,190-192,196-202,230-319,392-401,434-440,442-486,488,490-511,513-533,535-546,549-554,556-569,571-577,580-585,587-656
+src/components/grid/grid-params-summary-bar.tsx
+  s_e46d264967b9d5::t_b664b6f83ccfcb 4,15-19,23,34-38,44-56,76-90
+src/components/grid/grid-strategy-library-drawer.tsx
+  s_e46d264967b9d5::t_e6ba80c8c46653 1-147
+src/components/grid/grid-strategy-name-modal.tsx
+  s_e46d264967b9d5::t_7c0601eb5bfa46 1-80
+src/hooks/use-grid-strategy-persistence.ts
+  s_e46d264967b9d5::t_d424933fcbf9d9 122-123,125,136,141-157,167,228-232,234-237,266-269
+src/lib/grid/grid-strategy-storage.ts
+  s_e46d264967b9d5::t_349d73ae650ea0 38-39,146
+src/lib/supabase/grid-strategy-repository.ts
+  s_e46d264967b9d5::t_5ff3b5d062d529 9,22,74,88,98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "bec3f400c3937a1a09aaa31be3e49bfdde8c3da5",
+  "prompts": {},
+  "sessions": {
+    "s_e46d264967b9d5": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "b395ce73-ae6e-43c9-bf8c-7d35e3b4ce03",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
