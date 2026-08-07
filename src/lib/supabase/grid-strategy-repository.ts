@@ -12,12 +12,29 @@ import {
   parseSavedGridStrategy,
 } from '@/lib/grid/grid-strategy-storage';
 
-function mapPostgrestError(error: { code?: string; message: string }): Error {
+function mapPostgrestError(error: {
+  code?: string;
+  message: string;
+  details?: string;
+  hint?: string;
+}): Error {
+  // 保留原始错误便于本地排查（不展示给用户）
+  console.error('[grid_strategies]', error.code, error.message, error.details, error.hint);
+
   if (error.code === '23505') {
     return new Error('已有同名策略，请更换名称');
   }
   if (error.code === '42501') {
     return new Error('没有权限访问该策略');
+  }
+  // 表未创建 / schema cache 未刷新
+  if (
+    error.code === '42P01' ||
+    error.code === 'PGRST205' ||
+    /relation .* does not exist/i.test(error.message) ||
+    /could not find the table/i.test(error.message)
+  ) {
+    return new Error('策略保存表尚未就绪，请先应用数据库 migration 后重试');
   }
   return new Error('操作失败，请稍后重试');
 }
