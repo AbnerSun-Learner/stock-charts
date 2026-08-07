@@ -9,7 +9,7 @@ permissions:
 jobs:
   notify:
     if: >
-      github.event.deployment_status.state == 'success' &&
+      contains(fromJSON('["success","failure","error"]'), github.event.deployment_status.state) &&
       github.event.deployment.creator.login == 'vercel[bot]' &&
       github.event.deployment.environment == 'Production'
     runs-on: ubuntu-latest
@@ -18,6 +18,8 @@ jobs:
         env:
           BARK_KEY: ${{ secrets.BARK_KEY }}
           DEPLOY_URL: ${{ github.event.deployment_status.environment_url }}
+          DEPLOY_STATE: ${{ github.event.deployment_status.state }}
+          DEPLOY_DESC: ${{ github.event.deployment_status.description }}
           REPO_NAME: ${{ github.repository }}
           COMMIT_SHA: ${{ github.event.deployment.sha }}
           GH_TOKEN: ${{ github.token }}
@@ -27,17 +29,26 @@ jobs:
             exit 0
           fi
 
-          SHORT_SHA="${COMMIT_SHA:0:7}"
-          BRANCH=$(gh api "repos/${REPO_NAME}/commits/${COMMIT_SHA}/branches-where-head" --jq '.[0].name // "main"')
-          COMMIT_MSG=$(gh api "repos/${REPO_NAME}/commits/${COMMIT_SHA}" --jq '.commit.message | split("\n") | .[0]')
+          # 元数据查询失败时仍继续推送，避免告警链路整体中断
+          BRANCH=$(gh api "repos/${REPO_NAME}/commits/${COMMIT_SHA}/branches-where-head" --jq '.[0].name // "main"' || echo "unknown")
+          COMMIT_MSG=$(gh api "repos/${REPO_NAME}/commits/${COMMIT_SHA}" --jq '.commit.message | split("\n") | .[0]' || echo "(获取失败)")
+
+          if [ "$DEPLOY_STATE" = "success" ]; then
+            TITLE="Vercel 部署成功"
+          else
+            TITLE="Vercel 部署失败"
+          fi
 
           BODY=$(printf "仓库: %s\n分支: %s\nCommit Message: %s" "$REPO_NAME" "$BRANCH" "$COMMIT_MSG")
+          if [ "$DEPLOY_STATE" != "success" ] && [ -n "$DEPLOY_DESC" ]; then
+            BODY=$(printf "%s\n错误: %s" "$BODY" "$DEPLOY_DESC")
+          fi
 
           curl -sf -X POST "https://api.day.app/push" \
             -H 'Content-Type: application/json; charset=utf-8' \
             -d "$(jq -n \
               --arg key "$BARK_KEY" \
-              --arg title "Vercel 部署成功" \
+              --arg title "$TITLE" \
               --arg body "$BODY" \
               --arg group "stock-charts" \
               --arg url "${DEPLOY_URL:-https://github.com/${REPO_NAME}}" \
