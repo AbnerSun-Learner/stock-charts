@@ -1,0 +1,19 @@
+src/lib/supabase/grid-strategy-repository.ts
+  s_363317803f81d5::t_5bc5e9b1383613 15-23,30-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "907d2780fba7765b78798e0d9f0e3185e9ce16eb",
+  "prompts": {},
+  "sessions": {
+    "s_363317803f81d5": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "96321f8b-6c25-4201-b55c-7fe01b6caf6b",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
