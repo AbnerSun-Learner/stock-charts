@@ -1,0 +1,37 @@
+__tests__/grid/grid-strategy-pending-save.test.ts
+  s_427c911496f372::t_da221a99dc03a1 1-78
+__tests__/grid/grid-strategy-workflow.test.ts
+  s_427c911496f372::t_dade560f5edcfb 1-108
+src/hooks/use-grid-params.ts
+  s_427c911496f372::t_539063dca201f2 10-11,41-44,49
+src/lib/grid/grid-strategy-pending-save.ts
+  s_427c911496f372::t_4326af3b7075b5 1-154
+src/lib/grid/grid-strategy-workflow.ts
+  s_427c911496f372::t_027583f33e2374 1-78
+__tests__/grid/use-grid-params.test.ts
+  s_e46d264967b9d5::t_6ffe3df8cfa627 1-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "cc60ee5eb8091f5dbedade57151eeef745c97739",
+  "prompts": {},
+  "sessions": {
+    "s_427c911496f372": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "096f10cc-312a-4dee-a832-25a8fd12750c",
+        "model": "zai-org/GLM-5.2/TeleAI-002"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    },
+    "s_e46d264967b9d5": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "b395ce73-ae6e-43c9-bf8c-7d35e3b4ce03",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
