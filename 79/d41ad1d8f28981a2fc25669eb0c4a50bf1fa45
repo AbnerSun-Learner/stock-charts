@@ -1,0 +1,14 @@
+src/lib/family-finance/history.ts
+  h_245285a78fca97 92,99,102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "79d41ad1d8f28981a2fc25669eb0c4a50bf1fa45",
+  "prompts": {},
+  "humans": {
+    "h_245285a78fca97": {
+      "author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
