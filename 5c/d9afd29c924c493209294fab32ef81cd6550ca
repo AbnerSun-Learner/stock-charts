@@ -1,0 +1,19 @@
+docs/superpowers/specs/2026-08-07-grid-strategy-save-design.md
+  s_e46d264967b9d5::t_9b1bf8c956065a 1-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "5cd9afd29c924c493209294fab32ef81cd6550ca",
+  "prompts": {},
+  "sessions": {
+    "s_e46d264967b9d5": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "b395ce73-ae6e-43c9-bf8c-7d35e3b4ce03",
+        "model": "unknown"
+      },
+      "human_author": "AbnerSun <sunyujiejohn@sina.com>"
+    }
+  }
+}
