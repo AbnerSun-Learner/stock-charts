@@ -89,16 +89,17 @@ function padMissingPotPoints(
   latestDate: string,
   latestHouseholdAmountByPot: Map<StructureFourPot, number>
 ): AssetHistoryPoint[] {
-  const dates = [...new Set(points.map(p => p.date))].sort();
+  const dates = Array.from(new Set(points.map(p => p.date))).sort();
   const potMeta = new Map<StructureFourPot, number>();
   for (const point of points) {
     potMeta.set(point.fourPot, point.potOrder);
   }
   const existing = new Set(points.map(p => `${p.date}|${p.fourPot}`));
   const padded = [...points];
+  const potEntries = Array.from(potMeta.entries());
 
   for (const date of dates) {
-    for (const [fourPot, potOrder] of potMeta) {
+    for (const [fourPot, potOrder] of potEntries) {
       const key = `${date}|${fourPot}`;
       if (existing.has(key)) continue;
       padded.push(
