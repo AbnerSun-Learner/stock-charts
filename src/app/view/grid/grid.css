@@ -688,19 +688,6 @@
   text-align: center;
 }
 
-.grid-shell .grid-strategy-library__empty-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 3.25rem;
-  height: 3.25rem;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--accent) 10%, var(--card));
-  color: var(--accent);
-  font-size: 1.15rem;
-  font-weight: 700;
-}
-
 .grid-shell .grid-strategy-library__empty-hint {
   margin: 0;
   max-width: 16rem;

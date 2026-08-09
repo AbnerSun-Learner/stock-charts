@@ -148,9 +148,6 @@ export function GridStrategyLibraryDrawer({
   } else if (strategies.length === 0) {
     body = (
       <div className="grid-strategy-library__empty">
-        <div className="grid-strategy-library__empty-mark" aria-hidden>
-          策
-        </div>
         <Empty description="还没有保存的策略" />
         <p className="grid-strategy-library__empty-hint">
           生成策略后，点击「保存策略」即可收入此处
