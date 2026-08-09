@@ -133,10 +133,8 @@
   top: 0;
   z-index: 20;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-bottom: 1.25rem;
   padding: 0.875rem 1.25rem;
   border: 1px solid var(--border);
@@ -144,6 +142,76 @@
   background: color-mix(in srgb, var(--card) 92%, transparent);
   backdrop-filter: blur(8px);
   box-shadow: var(--ds-shadow-sm);
+}
+
+.grid-shell .grid-summary-bar--dirty {
+  border-color: color-mix(in srgb, var(--accent-warm) 45%, var(--border));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--accent-warm) 8%, var(--card)),
+      color-mix(in srgb, var(--card) 94%, transparent)
+    );
+}
+
+.grid-shell .grid-summary-bar__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.grid-shell .grid-summary-bar--dirty .grid-summary-bar__identity {
+  border-bottom-color: color-mix(in srgb, var(--accent-warm) 28%, var(--border));
+}
+
+.grid-shell .grid-summary-bar__strategy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.65rem;
+  min-width: 0;
+}
+
+.grid-shell .grid-summary-bar__strategy-label {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.grid-shell .grid-summary-bar__strategy-name {
+  min-width: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grid-shell .grid-summary-bar__strategy--local .grid-summary-bar__strategy-name {
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+.grid-shell .grid-summary-bar__dirty-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--accent-warm) 70%, var(--foreground));
+}
+
+.grid-shell .grid-summary-bar__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
 }
 
 .grid-shell .grid-summary-bar__meta {
@@ -158,6 +226,22 @@
   font-weight: 600;
   color: var(--foreground);
   font-variant-numeric: tabular-nums;
+}
+
+.grid-shell .grid-summary-bar__dirty-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--accent-warm) 16%, var(--card));
+  color: color-mix(in srgb, var(--accent-warm) 75%, var(--foreground));
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.grid-shell .grid-summary-bar__regen.ant-btn-primary {
+  min-height: 44px;
 }
 
 .grid-shell .grid-params-panel--embedded {
@@ -843,6 +927,93 @@
   100% {
     transform: translateX(100%);
   }
+}
+
+.grid-shell .grid-chart-tooltip {
+  min-width: min(320px, calc(100vw - 2rem));
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-compact);
+  box-shadow: var(--ds-shadow-lg);
+}
+
+.grid-shell .grid-chart-tooltip__head {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.grid-shell .grid-chart-tooltip__eyebrow {
+  display: inline-block;
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.grid-shell .grid-chart-tooltip__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.grid-shell .grid-chart-tooltip__meta,
+.grid-shell .grid-chart-tooltip__muted {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.grid-shell .grid-chart-tooltip__block {
+  margin-bottom: 0.75rem;
+}
+
+.grid-shell .grid-chart-tooltip__series {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+.grid-shell .grid-chart-tooltip__swatch {
+  display: inline-block;
+  width: 0.75rem;
+  height: 2px;
+  border-radius: 999px;
+}
+
+.grid-shell .grid-chart-tooltip__value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.grid-shell .grid-chart-tooltip__value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.grid-shell .grid-chart-tooltip__foot {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.grid-shell .grid-chart-tooltip__advantage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.grid-shell .grid-chart-tooltip__dot {
+  color: var(--border);
 }
 
 @media (prefers-reduced-motion: reduce) {

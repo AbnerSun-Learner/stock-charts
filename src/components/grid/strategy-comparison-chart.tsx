@@ -1,19 +1,17 @@
-"use client";
+'use client';
 
 /**
- * 策略对比折线图组件
- * 展示网格策略 vs 一次性买入的浮亏对比
- * 使用 recharts 实现交互式图表
+ * 策略对比折线图：网格策略 vs 一次全仓死拿的浮亏对比（recharts）。
  */
 
-import { TOOLTIP_Z_INDEX } from "@/components/shared/help-tooltip";
+import { TOOLTIP_Z_INDEX } from '@/components/shared/help-tooltip';
 import {
   buildStrategyComparisonData,
   computeTooltipMetrics,
   type StrategyComparisonPoint,
-} from "@/lib/strategy-comparison";
-import type { GridRow } from "@/types/grid";
-import { useEffect, useMemo, useState } from "react";
+} from '@/lib/strategy-comparison';
+import type { GridRow } from '@/types/grid';
+import { useEffect, useMemo, useState } from 'react';
 import {
   CartesianGrid,
   Legend,
@@ -23,7 +21,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from "recharts";
+} from 'recharts';
 
 interface StrategyComparisonChartProps {
   gridData: GridRow[];
@@ -31,23 +29,43 @@ interface StrategyComparisonChartProps {
   priceDecimals: number;
 }
 
+interface ChartColors {
+  lumpSum: string;
+  grid: string;
+  text: string;
+  textLight: string;
+  gridLine: string;
+  tooltipBg: string;
+  tooltipBorder: string;
+  buyPoint: string;
+  buyPointBorder: string;
+}
+
 interface CustomTooltipProps {
   active?: boolean;
   payload?: ReadonlyArray<{ payload?: StrategyComparisonPoint }>;
-  colors: {
-    tooltipBg: string;
-    tooltipBorder: string;
-  };
+  colors: ChartColors;
   priceDecimals: number;
 }
 
-// 回本需涨可能为 Infinity（跌幅 >= 100%），需要单独文案
+/** 与 `.grid-shell` token 对齐的图表色（recharts 需实色字符串） */
+const CHART_COLORS: ChartColors = {
+  lumpSum: '#cf202f', // --loss
+  grid: '#05b169', // --profit
+  text: '#0a0b0d', // --foreground
+  textLight: '#5b616e', // --muted-foreground
+  gridLine: '#dee1e6', // --border
+  tooltipBg: '#ffffff', // --card
+  tooltipBorder: '#dee1e6', // --border
+  buyPoint: '#0052ff', // --accent
+  buyPointBorder: '#003ecc', // --accent-secondary
+};
+
 function formatBreakEvenRise(value: number): string {
-  if (!Number.isFinite(value)) return "无法回本";
+  if (!Number.isFinite(value)) return '无法回本';
   return `+${value.toFixed(1)}%`;
 }
 
-// 自定义 Tooltip 组件（定义在外部以避免重新创建）
 function CustomTooltip({
   active,
   payload,
@@ -72,153 +90,130 @@ function CustomTooltip({
 
   return (
     <div
-      className="p-4 rounded-lg border shadow-xl"
+      className="grid-chart-tooltip"
       style={{
         backgroundColor: colors.tooltipBg,
         borderColor: colors.tooltipBorder,
-        minWidth: "min(320px, calc(100vw - 2rem))",
         zIndex: TOOLTIP_Z_INDEX,
       }}
     >
-      {/* 标题 */}
-      <div className="mb-3 pb-3 border-b border-slate-200">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium text-indigo-600">
-            档位 {data.gridPosition.toFixed(2)}
-          </span>
-        </div>
-        <div className="text-sm font-semibold text-slate-800">
+      <div className="grid-chart-tooltip__head">
+        <span className="grid-chart-tooltip__eyebrow">
+          档位 {data.gridPosition.toFixed(2)}
+        </span>
+        <div className="grid-chart-tooltip__title">
           买入触发价 {data.priceLabel}
         </div>
-        <div className="text-xs text-slate-600 mt-1">
-          买入价 ¥{data.gridBuyPrice.toFixed(priceDecimals)} ·{" "}
+        <div className="grid-chart-tooltip__meta">
+          买入价 ¥{data.gridBuyPrice.toFixed(priceDecimals)} ·{' '}
           {data.gridBuyShares.toLocaleString()} 股 · ¥
           {data.gridBuyAmount.toLocaleString()}
         </div>
       </div>
 
-      {/* 一次全仓死拿 */}
-      <div className="mb-3 space-y-1">
-        <div className="text-xs font-medium text-slate-600 flex items-center gap-1">
-          <div className="w-3 h-0.5 bg-red-500"></div>
+      <div className="grid-chart-tooltip__block">
+        <div className="grid-chart-tooltip__series">
+          <span
+            className="grid-chart-tooltip__swatch"
+            style={{ background: colors.lumpSum }}
+          />
           一次全仓死拿
         </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-lg font-bold text-red-600">
+        <div className="grid-chart-tooltip__value-row">
+          <span
+            className="grid-chart-tooltip__value"
+            style={{ color: colors.lumpSum }}
+          >
             -¥{Math.abs(lumpSumLossAmount / 1000).toFixed(1)}k
           </span>
-          <span className="text-xs text-slate-500">
+          <span className="grid-chart-tooltip__muted">
             (跌幅 -{Math.abs(lumpSumDropRate).toFixed(1)}%)
           </span>
         </div>
-        <div className="text-xs text-slate-600">
-          回本需涨{" "}
-          <span className="font-semibold text-red-600">
+        <div className="grid-chart-tooltip__muted">
+          回本需涨{' '}
+          <span className="font-semibold" style={{ color: colors.lumpSum }}>
             {formatBreakEvenRise(lumpSumBreakEvenRise)}
           </span>
         </div>
       </div>
 
-      {/* 本策略 */}
-      <div className="mb-3 space-y-1">
-        <div className="text-xs font-medium text-slate-600 flex items-center gap-1">
-          <div className="w-3 h-0.5 bg-green-500"></div>
+      <div className="grid-chart-tooltip__block">
+        <div className="grid-chart-tooltip__series">
+          <span
+            className="grid-chart-tooltip__swatch"
+            style={{ background: colors.grid }}
+          />
           本策略
         </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-lg font-bold text-green-600">
+        <div className="grid-chart-tooltip__value-row">
+          <span
+            className="grid-chart-tooltip__value"
+            style={{ color: colors.grid }}
+          >
             -¥{Math.abs(gridLossAmount / 1000).toFixed(1)}k
           </span>
-          <span className="text-xs text-slate-500">
+          <span className="grid-chart-tooltip__muted">
             (跌幅 -{Math.abs(gridDropRate).toFixed(1)}%)
           </span>
         </div>
-        <div className="text-xs text-slate-600">
-          回本需涨{" "}
-          <span className="font-semibold text-green-600">
+        <div className="grid-chart-tooltip__muted">
+          回本需涨{' '}
+          <span className="font-semibold" style={{ color: colors.grid }}>
             {formatBreakEvenRise(gridBreakEvenRise)}
           </span>
         </div>
       </div>
 
-      {/* 策略优势 */}
-      <div className="pt-3 border-t border-slate-200">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-xs font-medium text-slate-600 flex items-center gap-1">
-            <svg
-              className="w-4 h-4 text-green-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            策略优势
-          </div>
-        </div>
-        <div className="flex items-center gap-3 text-xs text-slate-600">
-          <div className="flex items-baseline gap-1">
-            <span>少亏</span>
-            <span className="font-bold text-green-600">
+      <div className="grid-chart-tooltip__foot">
+        <div className="grid-chart-tooltip__series">策略优势</div>
+        <div className="grid-chart-tooltip__advantage">
+          <span>
+            少亏{' '}
+            <strong style={{ color: colors.grid }}>
               ¥{Math.abs(lessLoss / 1000).toFixed(1)}k
-            </span>
-          </div>
-          <span className="text-slate-300">·</span>
-          <div className="flex items-baseline gap-1">
-            <span>回本门槛</span>
-            <span className="font-semibold text-green-600">
+            </strong>
+          </span>
+          <span className="grid-chart-tooltip__dot" aria-hidden>
+            ·
+          </span>
+          <span>
+            回本门槛{' '}
+            <strong style={{ color: colors.grid }}>
               -{Math.abs(breakEvenThreshold).toFixed(1)}%
-            </span>
-          </div>
+            </strong>
+          </span>
         </div>
       </div>
     </div>
   );
 }
 
+/**
+ * 策略优势推演折线图。
+ */
 export function StrategyComparisonChart({
   gridData,
   basePrice,
   priceDecimals,
 }: StrategyComparisonChartProps) {
   const [isCompactChart, setIsCompactChart] = useState(false);
+  const colors = CHART_COLORS;
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
     const update = () => setIsCompactChart(mediaQuery.matches);
     update();
-    mediaQuery.addEventListener("change", update);
-    return () => mediaQuery.removeEventListener("change", update);
+    mediaQuery.addEventListener('change', update);
+    return () => mediaQuery.removeEventListener('change', update);
   }, []);
 
-  // 数据计算下沉到 lib/strategy-comparison 纯函数，组件仅负责渲染
   const chartData = useMemo(
     () => buildStrategyComparisonData(gridData, basePrice, priceDecimals),
     [gridData, basePrice, priceDecimals]
   );
 
   if (chartData.length === 0) return null;
-
-  // 专业金融配色方案
-  const colors = {
-    lumpSum: "#ef4444",
-    grid: "#10b981",
-    primary: "#0066cc",
-    accent: "#ff6b35",
-    text: "#1a1a1a",
-    textLight: "#6b7280",
-    gridLine: "#e5e7eb",
-    background: "#fafafa",
-    tooltipBg: "#ffffff",
-    tooltipBorder: "#e5e7eb",
-    buyPoint: "#3b82f6",
-    buyPointBorder: "#60a5fa",
-  };
 
   const chartMargin = isCompactChart
     ? { top: 16, right: 12, left: 0, bottom: 48 }
@@ -230,35 +225,27 @@ export function StrategyComparisonChart({
     ? { fill: colors.textLight, fontSize: 10 }
     : { fill: colors.textLight, fontSize: 12 };
 
-  // 格式化 Y 轴 - 百分比显示（负数格式）
   function formatYAxis(value: number) {
-    if (value === 0) return "0%";
+    if (value === 0) return '0%';
     return `${value.toFixed(0)}%`;
   }
 
   return (
     <div className="w-full">
-      {/* 标题 */}
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-slate-800">
-          策略优势推演（抗跌能力）
-        </h3>
-        <p className="text-sm text-slate-600 mt-1">
-          模拟单边下跌行情：对比 一次全仓死拿 与 本策略 的浮亏差距
+      <div className="mb-5 border-b border-[var(--border)] pb-4">
+        <h3 className="ds-section-title">策略优势推演</h3>
+        <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+          模拟单边下跌：一次全仓死拿 vs 本策略的浮亏差距
         </p>
       </div>
 
-      {/* 图表 */}
       <div className="h-[360px] w-full sm:h-[440px] md:h-[520px] xl:h-[560px]">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={chartData}
-            margin={chartMargin}
-          >
+          <LineChart data={chartData} margin={chartMargin}>
             <CartesianGrid
               strokeDasharray="3 3"
               stroke={colors.gridLine}
-              opacity={0.3}
+              opacity={0.45}
             />
             <XAxis
               dataKey="priceLabel"
@@ -267,16 +254,16 @@ export function StrategyComparisonChart({
               {...(isCompactChart
                 ? {
                     angle: -35,
-                    textAnchor: "end" as const,
+                    textAnchor: 'end' as const,
                     height: 50,
-                    interval: "preserveStartEnd" as const,
+                    interval: 'preserveStartEnd' as const,
                   }
                 : { tickCount: 6 })}
               label={{
-                value: "股价",
-                position: "insideBottom",
+                value: '股价',
+                position: 'insideBottom',
                 offset: -10,
-                style: { fill: colors.text, fontSize: 14, fontWeight: 500 },
+                style: { fill: colors.text, fontSize: 13, fontWeight: 500 },
               }}
             />
             <YAxis
@@ -286,14 +273,14 @@ export function StrategyComparisonChart({
               tickFormatter={formatYAxis}
               domain={[(dataMin: number) => Math.floor(dataMin * 1.1), 0]}
               label={{
-                value: "浮动盈亏（%）",
+                value: '浮动盈亏（%）',
                 angle: -90,
-                position: "insideLeft",
-                style: { fill: colors.text, fontSize: 14, fontWeight: 500 },
+                position: 'insideLeft',
+                style: { fill: colors.text, fontSize: 13, fontWeight: 500 },
               }}
             />
             <Tooltip
-              content={(props) => (
+              content={props => (
                 <CustomTooltip
                   {...props}
                   colors={colors}
@@ -304,25 +291,24 @@ export function StrategyComparisonChart({
             />
             <Legend
               wrapperStyle={{
-                paddingTop: "20px",
-                fontSize: "14px",
+                paddingTop: '20px',
+                fontSize: '13px',
+                color: colors.textLight,
               }}
               iconType="line"
             />
 
-            {/* 一次全仓死拿线 */}
             <Line
               type="linear"
               dataKey="lumpSumFloatingLossRate"
               stroke={colors.lumpSum}
-              strokeWidth={1}
+              strokeWidth={1.5}
               strokeDasharray="8 4"
               dot={false}
               name="一次全仓死拿"
-              activeDot={{ r: 6 }}
+              activeDot={{ r: 5 }}
             />
 
-            {/* 本策略线 - 所有点都是买入点 */}
             <Line
               type="linear"
               dataKey="gridFloatingLossRate"
@@ -335,35 +321,32 @@ export function StrategyComparisonChart({
                 payload?: StrategyComparisonPoint;
               }) => {
                 const { cx = 0, cy = 0 } = props;
-
                 return (
                   <g>
-                    {/* 外圈边框 - 浅蓝色 */}
                     <circle
                       cx={cx}
                       cy={cy}
-                      r={8}
+                      r={7}
                       fill={colors.buyPointBorder}
-                      opacity={0.5}
+                      opacity={0.28}
                     />
-                    {/* 主圆点 - 蓝色 */}
                     <circle
                       cx={cx}
                       cy={cy}
-                      r={6}
+                      r={5}
                       fill={colors.buyPoint}
                       stroke="#ffffff"
                       strokeWidth={2}
-                      style={{ cursor: "pointer" }}
+                      style={{ cursor: 'pointer' }}
                     />
                   </g>
                 );
               }}
               activeDot={{
-                r: 8,
+                r: 7,
                 fill: colors.buyPoint,
-                stroke: "#ffffff",
-                strokeWidth: 3,
+                stroke: '#ffffff',
+                strokeWidth: 2,
               }}
             />
           </LineChart>

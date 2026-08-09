@@ -19,11 +19,23 @@ test.describe('网格策略', () => {
     await expect(page.getByRole('button', { name: '修改参数' })).toBeVisible({
       timeout: 15_000,
     });
+    await expect(page.getByText('当前结果')).toBeVisible();
+    await expect(page.getByText('未保存')).toBeVisible();
+    await expect(page.getByRole('heading', { name: '策略优势推演' })).toBeVisible();
 
     await page.getByRole('button', { name: '修改参数' }).click();
-    await expect(page.getByRole('button', { name: '重新生成' })).toBeVisible();
-    await page.getByRole('button', { name: '重新生成' }).click();
+    await page.locator('#basePrice').fill('1.25');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.grid-summary-bar__dirty-chip')).toBeVisible();
+    await expect(page.getByRole('button', { name: '去重新生成' })).toBeVisible();
+
+    await page.getByRole('button', { name: '去重新生成' }).click();
+    await expect(
+      page.getByRole('button', { name: '重新生成', exact: true })
+    ).toBeVisible();
+    await page.getByRole('button', { name: '重新生成', exact: true }).click();
     await expect(page.getByText('网格计算结果')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: '修改参数' })).toBeVisible();
   });
 
   test('生成后表格处于全宽结果区', async ({ page }) => {

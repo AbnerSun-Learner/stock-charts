@@ -445,14 +445,6 @@ function GridStrategyPageInner() {
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-[var(--muted-foreground)]">
               配置价格边界与弹药，生成档位并查看资金压力与收益推演
-              {persistence.currentStrategy ? (
-                <>
-                  {' · '}
-                  <span className="text-[var(--foreground)]">
-                    {persistence.currentStrategy.name}
-                  </span>
-                </>
-              ) : null}
             </p>
           </div>
           <div className="grid-header-actions">
@@ -521,6 +513,8 @@ function GridStrategyPageInner() {
               budgetMode={summaryParams.budgetMode}
               gridCount={gridData.length}
               priceDecimals={priceDecimals}
+              strategyName={persistence.currentStrategy?.name ?? null}
+              draftDirty={draftDirty}
               onEdit={() => setParamsDrawerOpen(true)}
               saveLabel={saveState.label}
               saveDisabled={saveState.disabled}
