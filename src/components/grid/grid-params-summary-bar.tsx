@@ -1,7 +1,8 @@
 'use client';
 
 import type { GridBudgetMode } from '@/types/grid-v2';
-import { Button, Tooltip } from 'antd';
+import { GridSaveStatusIsland } from '@/components/grid/grid-save-status-island';
+import { Button } from 'antd';
 
 interface GridParamsSummaryBarProps {
   basePrice: number;
@@ -20,7 +21,7 @@ interface GridParamsSummaryBarProps {
 }
 
 /**
- * 结果态顶部参数摘要条（sticky）+ 保存/更新 +「修改参数」。
+ * 结果态顶部参数摘要条（sticky）+ 保存状态岛 +「修改参数」。
  */
 export function GridParamsSummaryBar({
   basePrice,
@@ -40,19 +41,6 @@ export function GridParamsSummaryBar({
   const budgetLabel = budgetMode === 'auto' ? '总弹药' : '单格金额';
   const budgetValue =
     budgetMode === 'auto' ? totalBudget : amountPerGrid;
-
-  const saveButton = (
-    <Button
-      type="primary"
-      shape="round"
-      loading={saveLoading}
-      disabled={saveDisabled || saveLoading}
-      onClick={onSave}
-      className="grid-summary-bar__save"
-    >
-      {saveLabel}
-    </Button>
-  );
 
   return (
     <div className="grid-summary-bar">
@@ -74,16 +62,13 @@ export function GridParamsSummaryBar({
         </span>
       </div>
       <div className="grid-summary-bar__actions">
-        {saveReason ? (
-          <Tooltip title={saveReason}>
-            <span className="grid-summary-bar__save-wrap">{saveButton}</span>
-          </Tooltip>
-        ) : (
-          saveButton
-        )}
-        {saveReason ? (
-          <span className="grid-summary-bar__reason">{saveReason}</span>
-        ) : null}
+        <GridSaveStatusIsland
+          label={saveLabel}
+          disabled={saveDisabled}
+          loading={saveLoading}
+          reason={saveReason}
+          onSave={onSave}
+        />
         <Button type="default" shape="round" onClick={onEdit}>
           修改参数
         </Button>

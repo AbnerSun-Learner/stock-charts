@@ -9,7 +9,7 @@ import { GridParamsSummaryBar } from '@/components/grid/grid-params-summary-bar'
 import { GridPrimaryKpiRow } from '@/components/grid/grid-primary-kpi-row';
 import { GridResultTable } from '@/components/grid/grid-result-table';
 import { GridStrategyLibraryDrawer } from '@/components/grid/grid-strategy-library-drawer';
-import { GridStrategyNameModal } from '@/components/grid/grid-strategy-name-modal';
+import { GridStrategyNameOverlay } from '@/components/grid/grid-strategy-name-overlay';
 import { LazyStrategyComparisonChart } from '@/components/grid/lazy-strategy-comparison-chart';
 import { StatsCards } from '@/components/grid/stats-cards';
 import { useGridCalculator } from '@/hooks/use-grid-calculator';
@@ -237,7 +237,6 @@ function GridStrategyPageInner() {
         try {
           await persistence.updateCurrentStrategy(payload);
           setGeneratedDirty(false);
-          message.success('策略已更新');
         } catch (error) {
           message.error(error instanceof Error ? error.message : '更新失败');
         }
@@ -258,21 +257,19 @@ function GridStrategyPageInner() {
     try {
       if (nameModalMode === 'rename' && renameTarget) {
         await persistence.renameStrategy(renameTarget.id, name);
-        message.success('已重命名');
-        setNameModalOpen(false);
         return;
       }
       const payload = buildSavePayload();
       if (!payload) {
-        setNameModalError('当前没有可保存的结果');
-        return;
+        const err = new Error('当前没有可保存的结果');
+        setNameModalError(err.message);
+        throw err;
       }
       await persistence.createStrategy(name, payload);
       setGeneratedDirty(false);
-      setNameModalOpen(false);
-      message.success('策略已保存');
     } catch (error) {
       setNameModalError(error instanceof Error ? error.message : '保存失败');
+      throw error;
     }
   };
 
@@ -641,7 +638,7 @@ function GridStrategyPageInner() {
         onDeleteStrategy={handleDeleteStrategy}
       />
 
-      <GridStrategyNameModal
+      <GridStrategyNameOverlay
         open={nameModalOpen}
         mode={nameModalMode}
         initialName={
@@ -649,9 +646,7 @@ function GridStrategyPageInner() {
         }
         loading={persistence.writeLoading}
         error={nameModalError}
-        onCancel={() => {
-          if (!persistence.writeLoading) setNameModalOpen(false);
-        }}
+        onCancel={() => setNameModalOpen(false)}
         onSubmit={handleNameSubmit}
       />
     </div>
